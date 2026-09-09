@@ -1,0 +1,168 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-day2}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-day2}
+      POSTGRES_DB: ${POSTGRES_DB:-day2}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-day2} -d ${POSTGRES_DB:-day2}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  postgres_test:
+    image: postgres:16-alpine
+    profiles: ["test"]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-day2}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-day2}
+      POSTGRES_DB: day2_test
+    ports:
+      - "${POSTGRES_TEST_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-day2} -d day2_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  db-init:
+    build:
+      context: ./backend
+    command: >
+      sh -c "alembic upgrade head && python -m app.seeds"
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://day2:day2@postgres:5432/day2}
+      DATABASE_ECHO: "false"
+    volumes:
+      # sample_schedules: Path(__file__).parents[3]/docs/rasp_samples → /docs/...
+      - ./docs:/docs:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      APP_NAME: ${APP_NAME:-Day2}
+      API_V1_PREFIX: ${API_V1_PREFIX:-/api/v1}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://day2:day2@postgres:5432/day2}
+      DATABASE_ECHO: ${DATABASE_ECHO:-false}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost,http://localhost:8080}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:5173}
+      SPA_INTERNAL_URL: ${SPA_INTERNAL_URL:-http://frontend:5173}
+      OTP_HMAC_SECRET: ${OTP_HMAC_SECRET:-dev-otp-hmac-secret-change-me}
+      DEV_OTP_CODE: ${DEV_OTP_CODE:-123456}
+      OTP_TTL_SECONDS: ${OTP_TTL_SECONDS:-300}
+      OTP_MAX_ATTEMPTS: ${OTP_MAX_ATTEMPTS:-5}
+      OTP_MIN_INTERVAL_SECONDS: ${OTP_MIN_INTERVAL_SECONDS:-60}
+      OTP_DAILY_LIMIT: ${OTP_DAILY_LIMIT:-5}
+      OTP_IP_HOURLY_LIMIT: ${OTP_IP_HOURLY_LIMIT:-20}
+      SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME:-day2_session}
+      SESSION_TTL_DAYS: ${SESSION_TTL_DAYS:-30}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+      SESSION_COOKIE_SAMESITE: ${SESSION_COOKIE_SAMESITE:-lax}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-mock}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Day2}
+      SMTP_USE_SSL: ${SMTP_USE_SSL:-false}
+      SMTP_USE_TLS: ${SMTP_USE_TLS:-true}
+      CAPTCHA_PROVIDER: ${CAPTCHA_PROVIDER:-mock}
+      CAPTCHA_MOCK_TOKEN: ${CAPTCHA_MOCK_TOKEN:-ok}
+      SMARTCAPTCHA_SERVER_KEY: ${SMARTCAPTCHA_SERVER_KEY:-}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-https://day2.n8nginger.ru}
+      PREVIEW_HMAC_SECRET: ${PREVIEW_HMAC_SECRET:-dev-preview-hmac-secret-change-me}
+      PREVIEW_TOKEN_TTL_SECONDS: ${PREVIEW_TOKEN_TTL_SECONDS:-600}
+      IMPORT_MAX_FILE_BYTES: ${IMPORT_MAX_FILE_BYTES:-20971520}
+      IMPORT_CONFIDENCE_THRESHOLD: ${IMPORT_CONFIDENCE_THRESHOLD:-0.8}
+      IMPORT_AI_PROVIDER: ${IMPORT_AI_PROVIDER:-mock}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@example.com}
+      SEED_ADMIN_NICKNAME: ${SEED_ADMIN_NICKNAME:-admin}
+      SEED_EDITOR_EMAIL: ${SEED_EDITOR_EMAIL:-editor@example.com}
+      SEED_EDITOR_NICKNAME: ${SEED_EDITOR_NICKNAME:-editor}
+      SUPERADMIN_EMAILS: ${SUPERADMIN_EMAILS:-}
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./worker
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://day2:day2@postgres:5432/day2}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-https://day2.n8nginger.ru}
+      NOTIFICATION_BATCH_SIZE: ${NOTIFICATION_BATCH_SIZE:-50}
+      NOTIFICATION_JOB_INTERVAL_SECONDS: ${NOTIFICATION_JOB_INTERVAL_SECONDS:-60}
+      FX_JOB_CRON: ${FX_JOB_CRON:-15 1 * * *}
+      CBR_BASE_URL: ${CBR_BASE_URL:-https://www.cbr.ru/scripts/XML_daily.asp}
+      CBR_TIMEOUT_SECONDS: ${CBR_TIMEOUT_SECONDS:-15}
+      CBR_RETRIES: ${CBR_RETRIES:-3}
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      VITE_SMARTCAPTCHA_CLIENT_KEY: ${VITE_SMARTCAPTCHA_CLIENT_KEY:-}
+      VITE_TELEGRAM_SUPPORT_URL: ${VITE_TELEGRAM_SUPPORT_URL:-https://t.me/day2_support}
+      VITE_HAND_INPUT_MODES: ${VITE_HAND_INPUT_MODES:-wizard,table}
+      VITE_EQUITY_VS_RANDOM: ${VITE_EQUITY_VS_RANDOM:-false}
+    command: >
+      sh -c "npm ci && npm run build && npm run preview -- --host 0.0.0.0 --port 5173"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:5173/"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2.9-alpine
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  frontend_node_modules:

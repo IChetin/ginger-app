@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day2 — Styleguide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============ DAY2 DESIGN TOKENS · v2 (чёрный + золото) ============ */
+:root{
+  /* Фон и поверхности — тёплый чёрный */
+  --bg:#0B0A09;            /* фон приложения */
+  --surface:#141311;       /* карточки */
+  --surface-2:#1C1A16;     /* приподнятые элементы, hover */
+  --surface-3:#26231D;     /* pressed, выделение */
+  --line:rgba(255,255,255,.07);
+  --line-strong:rgba(255,255,255,.13);
+  --line-gold:rgba(217,179,106,.35);
+
+  /* Текст — тёплые оттенки */
+  --text:#F5F2EA;
+  --text-2:#A9A395;
+  --text-3:#6E6A5F;
+  --text-on-gold:#1C1503;
+
+  /* Золото */
+  --gold:#D9B36A;                                   /* текст, иконки, обводки */
+  --gold-hi:#F1D68E;                                /* верх градиента */
+  --gold-lo:#C79E48;                                /* низ градиента */
+  --gold-soft:rgba(217,179,106,.13);                /* подложки */
+  --gold-grad:linear-gradient(180deg,#F1D68E 0%,#D3A94F 100%);
+  --gold-grad-hover:linear-gradient(180deg,#F7E0A0 0%,#DDB55C 100%);
+  --gold-grad-press:linear-gradient(180deg,#E3C271 0%,#BD9440 100%);
+
+  /* Семантика */
+  --live:#43D9A3;   --live-soft:rgba(67,217,163,.13);
+  --warn:#F58F3C;   --warn-soft:rgba(245,143,60,.13);
+  --danger:#FF6B6B; --danger-soft:rgba(255,107,107,.13);
+  --info:#6CA8FF;   --info-soft:rgba(108,168,255,.13);
+
+  /* Геометрия */
+  --r-sm:10px; --r-md:12px; --r-lg:18px; --r-full:999px;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px; --sp-6:24px; --sp-8:32px; --sp-10:40px;
+  --shadow-2:0 8px 24px rgba(0,0,0,.5);
+  --glow-gold:0 4px 18px rgba(211,169,79,.22);
+  --font:'Manrope',system-ui,-apple-system,sans-serif;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.55;padding-bottom:120px}
+.num{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---- каркас стайлгайда ---- */
+.wrap{max-width:960px;margin:0 auto;padding:0 var(--sp-5)}
+.sg-header{padding:var(--sp-10) 0 var(--sp-6);border-bottom:1px solid var(--line)}
+.sg-section{padding:var(--sp-10) 0;border-bottom:1px solid var(--line)}
+.sg-eyebrow{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:var(--sp-2)}
+.sg-title{font-size:24px;font-weight:800;letter-spacing:-.01em;margin-bottom:var(--sp-2)}
+.sg-note{color:var(--text-2);max-width:640px;margin-bottom:var(--sp-6)}
+.sg-row{display:flex;flex-wrap:wrap;gap:var(--sp-3);align-items:center;margin-bottom:var(--sp-4)}
+.sg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:var(--sp-4)}
+.sg-label{font-size:12px;color:var(--text-3);font-weight:600;margin:var(--sp-5) 0 var(--sp-3)}
+code,pre{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:13px}
+pre{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:var(--sp-4);overflow-x:auto;color:var(--text-2)}
+
+/* ============ ЛОГОТИП ============ */
+.logo{display:inline-flex;align-items:center;gap:6px;font-weight:800;font-size:22px;letter-spacing:-.02em}
+.logo .chip2{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;background:var(--gold-grad);color:var(--text-on-gold);border-radius:9px;font-size:18px;font-weight:800;transform:rotate(-4deg);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+.logo--sm{font-size:17px}.logo--sm .chip2{width:24px;height:24px;font-size:14px;border-radius:7px}
+
+/* ============ ПАЛИТРА ============ */
+.swatch{border-radius:var(--r-md);border:1px solid var(--line);overflow:hidden}
+.swatch__color{height:64px}
+.swatch__meta{padding:var(--sp-3);background:var(--surface)}
+.swatch__name{font-weight:700;font-size:13px}
+.swatch__hex{font-size:12px;color:var(--text-3);font-family:ui-monospace,monospace}
+
+/* ============ ТИПОГРАФИКА ============ */
+.t-h1{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.2}
+.t-h2{font-size:20px;font-weight:800;letter-spacing:-.01em;line-height:1.25}
+.t-h3{font-size:16px;font-weight:700;line-height:1.3}
+.t-body{font-size:15px;font-weight:400;color:var(--text)}
+.t-body-2{font-size:14px;color:var(--text-2)}
+.t-caption{font-size:12px;color:var(--text-3)}
+.t-num{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* ============ КНОПКИ · v2 ============ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;font-family:var(--font);font-weight:700;letter-spacing:.01em;border-radius:var(--r-md);transition:background .15s,border-color .15s,transform .06s,box-shadow .15s;text-decoration:none}
+.btn:active{transform:translateY(1px)}
+.btn--lg{height:52px;padding:0 var(--sp-6);font-size:16px}
+.btn--md{height:44px;padding:0 var(--sp-5);font-size:15px}
+.btn--sm{height:36px;padding:0 var(--sp-4);font-size:13px;border-radius:var(--r-sm)}
+/* Главное действие: золотой «металл» — градиент + верхний блик, тёмный текст */
+.btn--primary{background:var(--gold-grad);color:var(--text-on-gold);font-weight:800;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),var(--glow-gold)}
+.btn--primary:hover{background:var(--gold-grad-hover)}
+.btn--primary:active{background:var(--gold-grad-press);box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
+/* Второстепенное: прозрачный фон, тонкая золотая обводка */
+.btn--secondary{background:transparent;color:var(--text);border:1px solid var(--line-gold)}
+.btn--secondary:hover{background:var(--gold-soft);border-color:var(--gold)}
+.btn--secondary:active{background:var(--gold-soft)}
+/* Тихое: только золотой текст */
+.btn--ghost{background:transparent;color:var(--gold)}
+.btn--ghost:hover{background:var(--gold-soft)}
+.btn--danger{background:transparent;color:var(--danger);border:1px solid rgba(255,107,107,.35)}
+.btn--danger:hover{background:var(--danger-soft)}
+.btn:disabled{background:var(--surface-2);color:var(--text-3);border:none;box-shadow:none;cursor:not-allowed;transform:none}
+.btn--icon{width:44px;padding:0;border-radius:var(--r-md)}
+.spinner{width:16px;height:16px;border:2px solid rgba(28,21,3,.3);border-top-color:var(--text-on-gold);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ============ ФОРМЫ ============ */
+.field{display:flex;flex-direction:column;gap:6px;max-width:340px}
+.field__label{font-size:13px;font-weight:600;color:var(--text-2)}
+.input{height:48px;padding:0 var(--sp-4);background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-md);color:var(--text);font-family:var(--font);font-size:15px;width:100%;transition:border-color .15s}
+.input::placeholder{color:var(--text-3)}
+.input:focus{outline:none;border-color:var(--gold)}
+.input--error{border-color:var(--danger)}
+.field__hint{font-size:12px;color:var(--text-3)}
+.field__error{font-size:12px;color:var(--danger)}
+.otp{display:flex;gap:8px}
+.otp__cell{width:46px;height:54px;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-md);color:var(--text);font-size:22px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums}
+.otp__cell:focus{outline:none;border-color:var(--gold)}
+.search{display:flex;align-items:center;gap:10px;height:44px;padding:0 var(--sp-4);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-full);color:var(--text-3)}
+.search input{background:none;border:none;color:var(--text);font-family:var(--font);font-size:15px;width:100%}
+.search input:focus{outline:none}
+.switch{position:relative;width:48px;height:28px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.switch__track{position:absolute;inset:0;background:var(--surface-3);border-radius:var(--r-full);transition:background .15s;cursor:pointer}
+.switch__track::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;background:#fff;border-radius:50%;transition:transform .15s}
+.switch input:checked + .switch__track{background:var(--gold-grad)}
+.switch input:checked + .switch__track::after{transform:translateX(20px)}
+.setting-row{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4);padding:var(--sp-4);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);max-width:420px}
+
+/* ============ ЧИПСЫ / ТАБЫ / БЕЙДЖИ ============ */
+.chip{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-full);color:var(--text-2);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)}
+.chip:hover{background:var(--surface-2)}
+.chip--active{background:var(--gold-soft);border-color:var(--line-gold);color:var(--gold)}
+.tabs{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:3px;gap:2px}
+.tabs__item{height:36px;padding:0 var(--sp-4);border:none;background:transparent;color:var(--text-2);font-family:var(--font);font-size:13px;font-weight:700;border-radius:var(--r-sm);cursor:pointer}
+.tabs__item--active{background:var(--surface-3);color:var(--text)}
+.badge{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:var(--r-full);font-size:12px;font-weight:700}
+.badge--live{background:var(--live-soft);color:var(--live)}
+.badge--announced{background:var(--info-soft);color:var(--info)}
+.badge--warn{background:var(--warn-soft);color:var(--warn)}
+.badge--cancelled{background:var(--danger-soft);color:var(--danger)}
+.badge--muted{background:var(--surface-2);color:var(--text-3)}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.dot--pulse{animation:pulse 1.6s ease-out infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(67,217,163,.5)}70%{box-shadow:0 0 0 7px rgba(67,217,163,0)}100%{box-shadow:0 0 0 0 rgba(67,217,163,0)}}
+.flight{display:inline-flex;align-items:center;justify-content:center;height:30px;padding:0 12px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:9px;font-size:12px;font-weight:800;color:var(--text-2);cursor:pointer}
+.flight--active{background:var(--gold-grad);border-color:transparent;color:var(--text-on-gold);transform:rotate(-2deg);box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+
+/* ============ КАРТОЧКИ ============ */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;max-width:420px}
+.series-card__poster{height:140px;background:linear-gradient(135deg,#26231D 0%,#171511 55%,#0B0A09 100%);display:flex;align-items:center;justify-content:center;position:relative}
+.series-card__poster-word{font-size:28px;font-weight:800;letter-spacing:.06em;color:rgba(217,179,106,.22)}
+.series-card__status{position:absolute;top:12px;left:12px}
+.series-card__bookmark{position:absolute;top:10px;right:10px}
+.series-card__body{padding:var(--sp-4)}
+.series-card__title{font-size:17px;font-weight:800;letter-spacing:-.01em}
+.series-card__meta{font-size:13px;color:var(--text-2);margin-top:4px}
+.series-card__foot{display:flex;align-items:center;justify-content:space-between;margin-top:var(--sp-3)}
+.bm{width:38px;height:38px;border-radius:12px;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;background:rgba(11,10,9,.65);color:var(--text-2);backdrop-filter:blur(4px)}
+.bm--on{color:var(--gold)}
+.event-row{display:flex;gap:var(--sp-4);padding:var(--sp-4);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);max-width:520px;align-items:flex-start}
+.event-row__time{text-align:center;min-width:56px}
+.event-row__time-main{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
+.event-row__time-sub{font-size:11px;color:var(--text-3);font-variant-numeric:tabular-nums}
+.event-row__body{flex:1;min-width:0}
+.event-row__name{font-weight:700;font-size:15px}
+.event-row__meta{font-size:13px;color:var(--text-2);margin-top:2px}
+.event-row__tags{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.day-head{display:flex;align-items:center;gap:10px;padding:var(--sp-2) 0;position:sticky;top:0}
+.day-head__chip{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:44px;height:48px;background:var(--surface-2);border:1px solid var(--line-gold);border-radius:12px}
+.day-head__num{font-size:17px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;color:var(--gold)}
+.day-head__mon{font-size:10px;color:var(--text-3);text-transform:uppercase;font-weight:700}
+.day-head__wd{font-size:14px;font-weight:700;color:var(--text-2)}
+
+/* ============ НАВИГАЦИЯ ============ */
+.appbar{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) var(--sp-4);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);max-width:420px}
+.bottom-nav{display:flex;background:rgba(20,19,17,.92);backdrop-filter:blur(12px);border:1px solid var(--line-strong);border-radius:var(--r-lg);padding:6px;max-width:420px;box-shadow:var(--shadow-2)}
+.bottom-nav__item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0;border:none;background:none;color:var(--text-3);font-family:var(--font);font-size:10px;font-weight:700;border-radius:var(--r-md);cursor:pointer;position:relative}
+.bottom-nav__item--active{color:var(--gold);background:var(--gold-soft)}
+.bottom-nav__badge{position:absolute;top:4px;right:calc(50% - 20px);min-width:16px;height:16px;padding:0 4px;background:var(--gold-grad);color:var(--text-on-gold);border-radius:var(--r-full);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.nav-ic{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* ============ ТРЕКЕР ============ */
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:var(--sp-4);min-width:150px}
+.stat__label{font-size:12px;color:var(--text-3);font-weight:600}
+.stat__value{font-size:20px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums}
+.stat__value--pos{color:var(--live)}
+.stat__value--neg{color:var(--danger)}
+.chart-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--sp-4);max-width:420px}
+
+/* ============ УВЕДОМЛЕНИЯ / ПУСТЫЕ СОСТОЯНИЯ ============ */
+.toast{display:flex;gap:12px;align-items:flex-start;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:var(--r-md);padding:var(--sp-3) var(--sp-4);max-width:420px;box-shadow:var(--shadow-2)}
+.toast__icon{width:34px;height:34px;border-radius:10px;background:var(--gold-grad);color:var(--text-on-gold);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0;transform:rotate(-4deg);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+.toast__title{font-size:14px;font-weight:700}
+.toast__body{font-size:13px;color:var(--text-2)}
+.empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:var(--sp-3);padding:var(--sp-8) var(--sp-5);background:var(--surface);border:1px dashed var(--line-gold);border-radius:var(--r-lg);max-width:420px}
+.empty__chip{width:52px;height:52px;border-radius:16px;background:var(--gold-soft);color:var(--gold);display:flex;align-items:center;justify-content:center;transform:rotate(-4deg)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ================= HEADER ================= -->
+  <header class="sg-header">
+    <div class="logo" style="margin-bottom:16px">Day<span class="chip2">2</span></div>
+    <h1 class="t-h1">Дизайн-система Day2 · v2</h1>
+    <p class="sg-note" style="margin-top:8px">Тёплый чёрный + золото. Принцип: глубокая спокойная база, воздух и тонкие границы вместо декора; золото — металл, а не краска: градиент с бликом только на действиях, обводки и текст — приглушённым тоном. Фирменный мотив — «фишка»: скруглённый квадрат с лёгким поворотом. Mobile-first.</p>
+  </header>
+
+  <!-- ================= 01 ПАЛИТРА ================= -->
+  <section class="sg-section">
+    <div class="sg-eyebrow">01 · Токены</div>
+    <h2 class="sg-title">Палитра</h2>
+    <div class="sg-grid">
+      <div class="swatch"><div class="swatch__color" style="background:#0B0A09"></div><div class="swatch__meta"><div class="swatch__name">Фон · --bg</div><div class="swatch__hex">#0B0A09 · тёплый чёрный</div></div></div>
+      <div class="swatch"><div class="swatch__color" style="background:#141311"></div><div class="swatch__meta"><div class="swatch__name">Поверхность · --surface</div><div class="swatch__hex">#141311 · 2: #1C1A16 · 3: #26231D</div></div></div>
+      <div class="swatch"><div class="swatch__color" style="background:linear-gradient(180deg,#F1D68E,#D3A94F)"></div><div class="swatch__meta"><div class="swatch__name">Золото-градиент · действия</div><div class="swatch__hex">#F1D68E → #D3A94F</div></div></div>
+      <div class="swatch"><div class="swatch__color" style="background:#D9B36A"></div><div class="swatch__meta"><div class="swatch__name">Золото · --gold</div><div class="swatch__hex">#D9B36A · текст, иконки, обводки</div></div></div>
+      <div class="swatch"><div class="swatch__color" style="background:#F5F2EA"></div><div class="swatch__meta"><div class="swatch__name">Текст · --text</div><div class="swatch__hex">#F5F2EA / #A9A395 / #6E6A5F</div></div></div>
+      <div class="swatch"><div class="swatch__color" style="background:linear-gradient(90deg,#43D9A3 25%,#F58F3C 25% 50%,#FF6B6B 50% 75%,#6CA8FF 75%)"></div><div class="swatch__meta"><div class="swatch__name">Семантика</div><div class="swatch__hex">live · warn · danger · info</div></div></div>
+    </div>
+    <p class="sg-note" style="margin-top:20px;margin-bottom:0">Правило золота: градиент с бликом — только одно главное действие на экран; всё остальное золото — плоский тон --gold в обводках, тексте и подложках --gold-soft. Warn сдвинут в оранжевый, чтобы не спорить с золотом.</p>
+  </section>
+
+  <!-- ================= 02 ТИПОГРАФИКА ================= -->
+  <section class="sg-section">
+    <div class="sg-eyebrow">02 · Токены</div>
+    <h2 class="sg-title">Типографика</h2>
+    <p class="sg-note">Manrope, единственная семья. Иерархия — весом и размером. Все числовые данные (время, деньги, ROI) — с табличными цифрами <code>font-variant-numeric: tabular-nums</code>, чтобы колонки не «плясали».</p>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div><span class="t-h1">Заголовок экрана · 26 / 800</span></div>
+      <div><span class="t-h2">Секция · 20 / 800</span></div>
+      <div><span class="t-h3">Карточка · 16 / 700</span></div>
+      <div><span class="t-body">Основной текст · 15 / 400 — расписания, описания, диалоги.</span></div>
+      <div><span class="t-body-2">Вторичный · 14 / 400 — мета-строки карточек.</span></div>
+      <div><span class="t-caption">Подпись · 12 / 400 — подсказки, время «у вас».</span></div>
+      <div class="num t-num">Числа: 44 000 ₽ · 19:00 · ROI 23,4 %</div>
+    </div>
+  </section>
+
+  <!-- ================= 03 ГЕОМЕТРИЯ ================= -->
+  <section class="sg-section">
+    <div class="sg-eyebrow">03 · Токены</div>
+    <h2 class="sg-title">Сетка, радиусы, тени</h2>
+    <p class="sg-note">Шаг сетки 4px (отступы 4–40). Радиусы: 10 — мелкие элементы, 12 — кнопки и поля, 18 — карточки. Тач-зоны ≥ 44px. Глубину дают ступени поверхностей; тени — только у плавающих слоёв (нижняя навигация, тосты) и мягкое золотое свечение у главного действия.</p>
+    <div class="sg-row">
+      <div style="width:90px;height:56px;background:var(--surface-2);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center" class="t-caption">r-sm 10</div>
+      <div style="width:90px;height:56px;background:var(--surface-2);border-radius:var(--r-md);display:flex;align-items:center;justify-content:center" class="t-caption">r-md 12</div>
+      <div style="width:90px;height:56px;background:var(--surface-2);border-radius:var(--r-lg);display:flex;align-items:center;justify-content:center" class="t-caption">r-lg 18</div>
+      <div style="width:90px;height:56px;background:var(--surface-2);border-radius:var(--r-full);display:flex;align-items:center;justify-content:center" class="t-caption">full</div>
+    </div>
+  </section>
+
+  <!-- ================= 04 КНОПКИ ================= -->
+  <section class="sg-section">
+    <div class="sg-eyebrow">04 · Компоненты</div>
+    <h2 class="sg-title">Кнопки · v2</h2>
+    <p class="sg-note">Primary — золотой «металл»: градиент, верхний блик, тёмный текст, мягкое свечение; одна на экран. Secondary — прозрачная с тонкой золотой обводкой. Ghost — золотой текст. Нажатие — смещение на 1px вниз.</p>
+    <div class="sg-label">Иерархия</div>
+    <div class="sg-row">
+      <button class="btn btn--primary btn--md">Напомнить</button>
+      <button class="btn btn--secondary btn--md">В закладки</button>
+      <button class="btn btn--ghost btn--md">Показать все</button>
+      <button class="btn btn--danger btn--md">Удалить результат</button>
+      <button class="btn btn--primary btn--md" disabled>Недоступно</button>
+    </div>
+    <div class="sg-label">Размеры и состояния</div>
+    <div class="sg-row">
+      <button class="btn btn--primary btn--lg">Войти по номеру</button>
+      <button class="btn btn--primary btn--md"><span class="spinner"></span>Отправляем код</button>
+      <button class="btn btn--secondary btn--sm">Добавить</button>
+      <button class="btn btn--secondary btn--icon btn--md" aria-label="В закладки">
+        <svg class="nav-ic" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- ================= 05 ФОРМЫ ================= -->
+  <section class="sg-section">
+    <div class="sg-eyebrow">05 · Компоненты</div>
+    <h2 class="sg-title">Формы</h2>
+    <div style="display:flex;flex-direction:column;gap:24px">
+      <div class="field">
+        <label class="field__label">Email</label>
+        <input class="input" placeholder="you@example.com" type="email" autocomplete="email">
+        <span class="field__hint">Письмо придёт в течение минуты. Проверьте папку «Спам»</span>
+      </div>
+      <div class="field">
+        <label class="field__label">Код из письма</label>
+        <div class="otp">
+          <input class="otp__cell" maxlength="1" value="4"><input class="otp__cell" maxlength="1" value="7"><input class="otp__cell" maxlength="1"><input class="otp__cell" maxlength="1"><input class="otp__cell" maxlength="1"><input class="otp__cell" maxlength="1">
+        </div>
+      </div>
+      <div class="field">
+        <label class="field__label">Никнейм</label>
+        <input class="input input--error" value="дилер!">
+        <span class="field__error">Только буквы, цифры и подчёркивание</span>
+      </div>
+      <div class="search" style="max-width:340px">
+        <svg class="nav-ic" style="width:18px;height:18px" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input placeholder="Серия, площадка, город">
+      </div>
+      <label class="setting-row">
+        <div><div class="t-h3">Напоминать за 24 часа</div><div class="t-caption">Для всех новых закладок</div></div>
+        <span class="switch"><input type="checkbox" checked><span class="switch__track"></span></span>
+      </label>
+    </div>
+  </section>
+
+  <!-- ================= 06 ЧИПСЫ / ТАБЫ / СТАТУСЫ ================= -->
+  <section class="sg-section">
+    <div class="sg-eyebrow">06 · Компоненты</div>
+    <h2 class="sg-title">Фильтры, табы, статусы, флайты</h2>
+    <div class="sg-label">Фильтры-чипсы</div>
+    <div class="sg-row">
+      <button class="chip chip--active">Все страны</button>
+      <button class="chip">🇷🇺 Россия</button>
+      <button class="chip">🇧🇾 Беларусь</button>
+      <button class="chip">🇨🇾 Кипр</button>
+      <button class="chip">До 30 000 ₽</button>
+    </div>
+    <div class="sg-label">Табы</div>
+    <div class="tabs">
+      <button class="tabs__item tabs__item--active">Расписание</button>
+      <button class="tabs__item">Структуры</button>
+      <button class="tabs__item">Отели</button>
+    </div>
+    <div class="sg-label">Статусы серий и турниров</div>
+    <div class="sg-row">
+      <span class="badge badge--live"><span class="dot dot--pulse"></span>Идёт</span>
+      <span class="badge badge--announced"><span class="dot"></span>Анонс</span>
+      <span class="badge badge--warn"><span class="dot"></span>Перенесён</span>
+      <span class="badge badge--cancelled"><span class="dot"></span>Отменён</span>
+      <span class="badge badge--muted">Завершена</span>
+    </div>
+    <div class="sg-label">Флайты (мотив «фишки»: активный — золотой, слегка повёрнут)</div>
+    <div class="sg-row">
+      <button class="flight">Day 1A</button>
+      <button class="flight flight--active">Day 1B</button>
+      <button class="flight">Day 1C</button>
+      <button class="flight">Day 2</button>
+    </div>
+  </section>
+
+  <!-- ================= 07 КАРТОЧКИ ================= -->
+  <section class="sg-section">
+    <div class="sg-eyebrow">07 · Компоненты</div>
+    <h2 class="sg-title">Карточки расписания</h2>
+    <div class="sg-label">Карточка серии (лента главной)</div>
+    <div class="card">
+      <div class="series-card__poster">
+        <span class="series-card__poster-word">RPT</span>
+        <span class="series-card__status badge badge--live"><span class="dot dot--pulse"></span>Идёт</span>
+        <button class="bm bm--on series-card__bookmark" aria-label="Убрать из закладок"><svg class="nav-ic" style="width:18px;height:18px" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z" fill="currentColor"/></svg></button>
+      </div>
+      <div class="series-card__body">
+        <div class="series-card__title">RPT Kaliningrad</div>
+        <div class="series-card__meta">1–11 августа · Sobranie Casino · 🇷🇺 Калининград</div>
+        <div class="series-card__foot">
+          <span class="t-caption num">28 турниров · от 5 000 ₽</span>
+          <button class="btn btn--ghost btn--sm">К расписанию</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sg-label">Разделитель дня + строки турниров</div>
+    <div style="max-width:520px;display:flex;flex-direction:column;gap:10px">
+      <div class="day-head">
+        <div class="day-head__chip"><span class="day-head__num">2</span><span class="day-head__mon">авг</span></div>
+        <span class="day-head__wd">Суббота</span>
+      </div>
+      <div class="event-row">
+        <div class="event-row__time num">
+          <div class="event-row__time-main">19:00</div>
+          <div class="event-row__time-sub">18:00 у вас</div>
+        </div>
+        <div class="event-row__body">
+          <div class="event-row__name">#4 Kaliningrad Knockout</div>
+          <div class="event-row__meta num">2 300 ₽ · Гарантия 3 000 000 ₽ · NLH</div>
+          <div class="event-row__tags"><span class="badge badge--muted">Баунти</span><span class="badge badge--muted">Ре-энтри ×2</span></div>
+        </div>
+        <button class="bm" aria-label="Напомнить"><svg class="nav-ic" style="width:18px;height:18px" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-6 6v4l-1.5 3h15L18 13V9a6 6 0 0 0-6-6z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></button>
+      </div>
+      <div class="event-row">
+        <div class="event-row__time num">
+          <div class="event-row__time-main">20:00</div>
+          <div class="event-row__time-sub">19:00 у вас</div>
+        </div>
+        <div class="event-row__body">
+          <div class="event-row__name">#5 Main Event · Day 1A</div>
+          <div class="event-row__meta num">44 000 ₽ · Гарантия 20 000 000 ₽ · NLH</div>
+          <div class="event-row__tags"><span class="badge badge--warn"><span class="dot"></span>Перенесён с 18:00</span></div>
+        </div>
+        <button class="bm bm--on" aria-label="Напоминание включено"><svg class="nav-ic" style="width:18px;height:18px" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-6 6v4l-1.5 3h15L18 13V9a6 6 0 0 0-6-6z" fill="currentColor"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 08 НАВИГАЦИЯ ================= -->
+  <section class="sg-section">
+    <div class="sg-eyebrow">08 · Компоненты</div>
+    <h2 class="sg-title">Навигация</h2>
+    <div class="sg-label">Верхняя панель</div>
+    <div class="appbar">
+      <div class="logo logo--sm">Day<span class="chip2">2</span></div>
+      <button class="bm" style="background:var(--surface-2)" aria-label="Профиль"><svg class="nav-ic" style="width:18px;height:18px" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-5.5 8-5.5s6.5 1.5 8 5.5"/></svg></button>
+    </div>
+    <div class="sg-label">Нижняя навигация (5 разделов MVP; плавающая, blur)</div>
+    <nav class="bottom-nav">
+      <button class="bottom-nav__item bottom-nav__item--active"><svg class="nav-ic" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Серии</button>
+      <button class="bottom-nav__item"><svg class="nav-ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 13h3M8 17h6"/></svg>Календарь</button>
+      <button class="bottom-nav__item"><span class="bottom-nav__badge num">3</span><svg class="nav-ic" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg>Закладки</button>
+      <button class="bottom-nav__item"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M4 19h16M6 16l4-5 3 3 5-7"/></svg>Трекер</button>
+      <button class="bottom-nav__item"><svg class="nav-ic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-5.5 8-5.5s6.5 1.5 8 5.5"/></svg>Профиль</button>
+    </nav>
+  </section>
+
+  <!-- ================= 09 ТРЕКЕР ================= -->
+  <section class="sg-section">
+    <div class="sg-eyebrow">09 · Компоненты</div>
+    <h2 class="sg-title">Трекер результатов</h2>
+    <div class="sg-label">Стат-карточки</div>
+    <div class="sg-row">
+      <div class="stat"><div class="stat__label">Профит</div><div class="stat__value stat__value--pos num">+284 500 ₽</div></div>
+      <div class="stat"><div class="stat__label">ROI</div><div class="stat__value stat__value--pos num">+23,4 %</div></div>
+      <div class="stat"><div class="stat__label">ABI</div><div class="stat__value num">18 300 ₽</div></div>
+      <div class="stat"><div class="stat__label">ITM</div><div class="stat__value num">31 %</div></div>
+    </div>
+    <div class="sg-label">График накопительного профита (стиль для Recharts)</div>
+    <div class="chart-card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+        <span class="t-h3">Профит за год</span><span class="t-caption">64 турнира</span>
+      </div>
+      <svg viewBox="0 0 380 140" width="100%" role="img" aria-label="График профита">
+        <defs>
+          <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#D9B36A" stop-opacity=".35"/>
+            <stop offset="100%" stop-color="#D9B36A" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <line x1="0" y1="100" x2="380" y2="100" stroke="rgba(255,255,255,.08)"/>
+        <path d="M0 105 L40 110 L80 98 L120 112 L160 90 L200 95 L240 60 L280 68 L320 40 L380 28 L380 140 L0 140 Z" fill="url(#g)"/>
+        <path d="M0 105 L40 110 L80 98 L120 112 L160 90 L200 95 L240 60 L280 68 L320 40 L380 28" fill="none" stroke="#D9B36A" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="380" cy="28" r="4" fill="#F1D68E"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ================= 10 УВЕДОМЛЕНИЯ ================= -->
+  <section class="sg-section" style="border-bottom:none">
+    <div class="sg-eyebrow">10 · Компоненты</div>
+    <h2 class="sg-title">Уведомления и пустые состояния</h2>
+    <div class="sg-label">Тост / превью push</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="toast">
+        <div class="toast__icon">2</div>
+        <div><div class="toast__title">Main Event через 2 часа</div><div class="toast__body num">Day 1B · сегодня 19:00 · Sobranie Casino</div></div>
+      </div>
+      <div class="toast" style="border-color:rgba(245,143,60,.4)">
+        <div class="toast__icon" style="background:var(--warn);color:#221200;box-shadow:none">!</div>
+        <div><div class="toast__title">Турнир перенесён</div><div class="toast__body num">#5 Main Event: 18:00 → 20:00</div></div>
+      </div>
+    </div>
+    <div class="sg-label">Пустое состояние</div>
+    <div class="empty">
+      <div class="empty__chip"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg></div>
+      <div class="t-h3">Пока нет закладок</div>
+      <div class="t-body-2">Отметьте серию или турнир — напомним к старту.</div>
+      <button class="btn btn--primary btn--md">Открыть расписание</button>
+    </div>
+  </section>
+
+  <!-- ================= TAILWIND ================= -->
+  <section class="sg-section" style="border-bottom:none;padding-top:0">
+    <div class="sg-eyebrow">Приложение</div>
+    <h2 class="sg-title">Токены для tailwind.config</h2>
+<pre>// tailwind.config.js → theme.extend
+colors: {
+  bg: '#0B0A09',
+  surface: { DEFAULT:'#141311', 2:'#1C1A16', 3:'#26231D' },
+  line: { DEFAULT:'rgba(255,255,255,.07)', strong:'rgba(255,255,255,.13)', gold:'rgba(217,179,106,.35)' },
+  ink:  { DEFAULT:'#F5F2EA', 2:'#A9A395', 3:'#6E6A5F', ongold:'#1C1503' },
+  gold: { DEFAULT:'#D9B36A', hi:'#F1D68E', lo:'#C79E48', soft:'rgba(217,179,106,.13)' },
+  live:'#43D9A3', warn:'#F58F3C', danger:'#FF6B6B', info:'#6CA8FF',
+},
+backgroundImage: {
+  'gold-grad':'linear-gradient(180deg,#F1D68E 0%,#D3A94F 100%)',
+  'gold-grad-hover':'linear-gradient(180deg,#F7E0A0 0%,#DDB55C 100%)',
+},
+borderRadius: { sm:'10px', md:'12px', lg:'18px' },
+fontFamily: { sans:['Manrope','system-ui','sans-serif'] },
+boxShadow: { gold:'0 4px 18px rgba(211,169,79,.22)' },
+// числа: класс-утилита .num { font-variant-numeric: tabular-nums }</pre>
+  </section>
+
+</div>
+</body>
+</html>

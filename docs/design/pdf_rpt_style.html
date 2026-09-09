@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Day2 — PDF расписания (формат RPT)</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#5A5348;font-family:'Manrope',system-ui,sans-serif;padding:24px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.cap{font-size:12px;font-weight:700;color:#E7DCC5;text-transform:uppercase;letter-spacing:.08em;text-align:center}
+.cap small{display:block;text-transform:none;letter-spacing:0;font-weight:500;color:#BFB49C;margin-top:4px;font-size:11.5px;max-width:700px}
+
+/* A4 = 794×1123 при 96dpi */
+.a4{width:794px;height:1123px;background:#FFFDF8;color:#1F1A0A;box-shadow:0 12px 40px rgba(0,0,0,.45);display:flex;flex-direction:column;overflow:hidden}
+.num{font-variant-numeric:tabular-nums}
+
+/* ШАПКА */
+.h{display:flex;align-items:center;gap:13px;padding:11px 14px 10px;border-bottom:2.5px solid #C89A3F;background:linear-gradient(100deg,#FFFDF8 55%,#FBF3DF)}
+.h__org{width:44px;height:44px;border-radius:10px;background:#fff;border:1px solid #DCCBA4;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#8A6A2B;flex-shrink:0}
+.h__t{flex:1;min-width:0}
+.h__k{font-size:8px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#A8873C}
+.h__n{font-size:19px;font-weight:800;letter-spacing:-.025em;line-height:1.05;margin-top:1px}
+.h__m{font-size:9.5px;color:#5C5334;margin-top:3px}
+.h__m b{color:#1F1A0A;font-weight:700}
+.h__gtd{text-align:right;flex-shrink:0;padding-right:4px}
+.h__gtd b{display:block;font-size:17px;font-weight:800;letter-spacing:-.02em;line-height:1}
+.h__gtd span{font-size:7.5px;color:#8A7B4E;text-transform:uppercase;letter-spacing:.08em;font-weight:800}
+.h__qr{width:50px;height:50px;background:#fff;border:1px solid #DCCBA4;border-radius:5px;padding:3px;flex-shrink:0}
+
+/* ТАБЛИЦА */
+.tw{flex:1;padding:0 14px;min-height:0;overflow:hidden}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+thead th{font-size:6.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#fff;background:#8A6A2B;padding:3.5px 4px;text-align:center;border-right:1px solid #A8873C}
+thead th:last-child{border-right:none}
+thead th.l{text-align:left}
+td{font-size:8.2px;padding:1.6px 4px;border-bottom:.5px solid #EDE4D0;line-height:1.2;text-align:center}
+td.tm{font-weight:800;font-variant-numeric:tabular-nums;width:38px}
+td.nm{text-align:left;font-weight:600}
+td.nm b{font-weight:800}
+td.nm i{font-style:normal;color:#8A6A2B;font-weight:700}
+td.n{font-variant-numeric:tabular-nums;font-weight:700}
+td.g{font-variant-numeric:tabular-nums;color:#4A4222}
+
+/* полоса дня */
+tr.day td{background:#2B2410;color:#F1D68E;font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:3px 8px;text-align:left;border-bottom:none}
+tr.day td span{color:#B79C63;font-weight:600;letter-spacing:.02em;margin-left:6px}
+
+/* акценты вместо кислотных цветов RPT */
+tr.main td{background:#F6E4B4;font-size:8.6px}
+tr.main td.nm{font-weight:800}
+tr.champ td{background:#FBF1DA}
+tr.champ td.nm{font-weight:800}
+tr.sat td{color:#6E6444}
+tr.sat td.nm{font-weight:500}
+tr.closed td{color:#9A9070;font-style:italic}
+.tag{display:inline-block;font-size:7px;font-weight:800;color:#8A6A2B;background:#F3EAD5;border:.5px solid #E0D0A8;border-radius:3px;padding:0 3px;margin-left:3px;vertical-align:1px;font-style:normal}
+
+/* ФУТЕР */
+.f{border-top:1.5px solid #C89A3F;padding:6px 14px 8px;display:flex;align-items:center;gap:10px;font-size:7.5px;color:#7A6E48;background:#FBF3DF}
+.f__lg{display:inline-flex;align-items:center;gap:3px;font-weight:800;font-size:11px;color:#1F1A0A}
+.f__lg i{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;background:linear-gradient(180deg,#E9C877,#C89A3F);border-radius:4px;font-size:9px;font-weight:800;font-style:normal;transform:rotate(-4deg)}
+.f__r{margin-left:auto;font-variant-numeric:tabular-nums;text-align:right}
+</style>
+</head>
+<body>
+
+<div class="cap">PDF расписания · формат RPT в айдентике Day2
+  <small>Одна колонка, все параметры в строке: время · турнир с гарантией · бай-ин · стек · длительность уровня · поздняя рег. · ITM. 61 турнир и 11 дней на одной A4</small>
+</div>
+
+<div class="a4">
+  <!-- ШАПКА -->
+  <div class="h">
+    <div class="h__org">RPT</div>
+    <div class="h__t">
+      <div class="h__k">Расписание серии</div>
+      <div class="h__n">RUSSIAN POKER TOUR КАЛИНИНГРАД</div>
+      <div class="h__m"><b>1–11 августа 2026</b> · Sobranie Poker Club · Калининград, Россия · время местное <b>UTC+2</b> · бай-ины в ₽</div>
+    </div>
+    <div class="h__gtd num"><b>₽35 000 000</b><span>гарантия серии</span></div>
+    <svg class="h__qr" viewBox="0 0 44 44"><rect width="44" height="44" fill="#fff"/><g fill="#1F1A0A"><rect x="1" y="1" width="11" height="11"/><rect x="4" y="4" width="5" height="5" fill="#fff"/><rect x="32" y="1" width="11" height="11"/><rect x="35" y="4" width="5" height="5" fill="#fff"/><rect x="1" y="32" width="11" height="11"/><rect x="4" y="35" width="5" height="5" fill="#fff"/><rect x="15" y="3" width="2.6" height="2.6"/><rect x="21" y="3" width="2.6" height="2.6"/><rect x="26" y="7" width="2.6" height="2.6"/><rect x="15" y="9" width="2.6" height="2.6"/><rect x="23" y="12" width="2.6" height="2.6"/><rect x="18" y="15" width="2.6" height="2.6"/><rect x="3" y="15" width="2.6" height="2.6"/><rect x="8" y="19" width="2.6" height="2.6"/><rect x="14" y="18" width="2.6" height="2.6"/><rect x="20" y="21" width="2.6" height="2.6"/><rect x="26" y="18" width="2.6" height="2.6"/><rect x="31" y="21" width="2.6" height="2.6"/><rect x="37" y="15" width="2.6" height="2.6"/><rect x="40" y="22" width="2.6" height="2.6"/><rect x="32" y="26" width="2.6" height="2.6"/><rect x="16" y="26" width="2.6" height="2.6"/><rect x="22" y="29" width="2.6" height="2.6"/><rect x="9" y="27" width="2.6" height="2.6"/><rect x="3" y="24" width="2.6" height="2.6"/><rect x="38" y="32" width="2.6" height="2.6"/><rect x="27" y="35" width="2.6" height="2.6"/><rect x="17" y="37" width="2.6" height="2.6"/><rect x="23" y="40" width="2.6" height="2.6"/><rect x="33" y="39" width="2.6" height="2.6"/><rect x="40" y="36" width="2.6" height="2.6"/><rect x="15" y="32" width="2.6" height="2.6"/></g></svg>
+  </div>
+
+  <!-- ТАБЛИЦА -->
+  <div class="tw">
+    <table>
+      <colgroup>
+        <col style="width:38px"><col><col style="width:74px"><col style="width:46px"><col style="width:52px"><col style="width:38px"><col style="width:50px">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>Время</th><th class="l">Турнир</th><th>Бай-ин</th><th>Стек</th><th>Уровни</th><th>Поздняя рег.</th><th>Уровень в день</th>
+        </tr>
+      </thead>
+      <tbody class="num">
+        <tr class="day"><td colspan="7">01 августа · суббота <span>5 турниров</span></td></tr>
+        <tr class="sat"><td class="tm">10:00</td><td class="nm">Satellite to Kaliningrad Championship (Day 1A) — 4 seats GTD</td><td class="n">3 000</td><td class="n">12 000</td><td>10 мин</td><td class="n">8</td><td></td></tr>
+        <tr class="champ"><td class="tm">12:00</td><td class="nm"><b>Kaliningrad Knockout Championship</b> PKO (Day 1A) <i>— 4 000 000 GTD</i><span class="tag">PKO</span></td><td class="n">14 000+6 000</td><td class="n">20 000</td><td>30 мин</td><td class="n">10</td><td>till 12%</td></tr>
+        <tr class="champ"><td class="tm">18:00</td><td class="nm"><b>Kaliningrad Knockout Championship</b> PKO (Day 1B) <i>— 4 000 000 GTD</i></td><td class="n">14 000+6 000</td><td class="n">20 000</td><td>25 мин</td><td class="n">10</td><td>till 12%</td></tr>
+        <tr><td class="tm">20:00</td><td class="nm">5-Cards Omaha Knockout Battle <i>— 400 000 GTD</i><span class="tag">PLO5</span></td><td class="n">10 000+5 000</td><td class="n">25 000</td><td>20/15 мин</td><td class="n">10</td><td></td></tr>
+        <tr><td class="tm">21:00</td><td class="nm">Knockout Masters Event <i>— 500 000 GTD</i></td><td class="n">15 000+5 000</td><td class="n">25 000</td><td>20/15 мин</td><td class="n">10</td><td></td></tr>
+
+        <tr class="day"><td colspan="7">02 августа · воскресенье <span>5 турниров</span></td></tr>
+        <tr class="sat"><td class="tm">11:00</td><td class="nm">Satellite to Kaliningrad Championship (Day 1C) — 4 seats GTD</td><td class="n">3 000</td><td class="n">12 000</td><td>10 мин</td><td class="n">8</td><td></td></tr>
+        <tr class="champ"><td class="tm">13:00</td><td class="nm"><b>Kaliningrad Knockout Championship</b> PKO (Day 1C) <i>— 4 000 000 GTD</i></td><td class="n">14 000+6 000</td><td class="n">20 000</td><td>25 мин</td><td class="n">10</td><td>till 12%</td></tr>
+        <tr class="main"><td class="tm">16:00</td><td class="nm"><b>RPT MAIN EVENT (Stage 1A)</b> — your stack → Day 1A <i>— 8 000 000 GTD</i></td><td class="n">11 000</td><td class="n">10 000</td><td>20/15 мин</td><td class="n">10</td><td>till 20%</td></tr>
+        <tr class="champ"><td class="tm">19:00</td><td class="nm"><b>Kaliningrad Knockout Championship</b> PKO (Day 1D) <i>— 4 000 000 GTD</i></td><td class="n">14 000+6 000</td><td class="n">20 000</td><td>15 мин</td><td class="n">10</td><td>till 12%</td></tr>
+        <tr><td class="tm">21:00</td><td class="nm">Deepstack Knockout Cup <i>— 600 000 GTD</i></td><td class="n">15 000+5 000</td><td class="n">30 000</td><td>20/15 мин</td><td class="n">12</td><td></td></tr>
+
+        <tr class="day"><td colspan="7">03 августа · понедельник <span>6 турниров</span></td></tr>
+        <tr class="sat"><td class="tm">10:00</td><td class="nm">Satellite to Grand Knockout Battle (Day 1A) — 4 seats GTD</td><td class="n">3 500</td><td class="n">12 000</td><td>10 мин</td><td class="n">8</td><td></td></tr>
+        <tr class="closed"><td class="tm">11:00</td><td class="nm">Kaliningrad Championship PKO (Final Day)</td><td>closed</td><td></td><td>30 мин</td><td></td><td></td></tr>
+        <tr class="champ"><td class="tm">12:00</td><td class="nm"><b>Grand Classic Knockout Battle</b> (Day 1A) <i>— 4 000 000 GTD</i></td><td class="n">14 000+10 000</td><td class="n">25 000</td><td>25 мин</td><td class="n">12</td><td>ITM 12%</td></tr>
+        <tr class="champ"><td class="tm">18:00</td><td class="nm"><b>Grand Classic Knockout Battle</b> (Day 1B) <i>— 4 000 000 GTD</i></td><td class="n">14 000+10 000</td><td class="n">25 000</td><td>20 мин</td><td class="n">12</td><td>ITM 12%</td></tr>
+        <tr><td class="tm">21:00</td><td class="nm">Deepstack Knockout Masters <i>— 500 000 GTD</i></td><td class="n">15 000+5 000</td><td class="n">30 000</td><td>20/15 мин</td><td class="n">12</td><td></td></tr>
+        <tr class="sat"><td class="tm">22:00</td><td class="nm">Satellite to Grand Knockout Battle (Day 1C) — 4 seats GTD</td><td class="n">3 500</td><td class="n">12 000</td><td>10 мин</td><td class="n">8</td><td></td></tr>
+
+        <tr class="day"><td colspan="7">04 августа · вторник <span>5 турниров</span></td></tr>
+        <tr class="sat"><td class="tm">10:00</td><td class="nm">Satellite to Grand Knockout Battle (Day 1C) — 4 seats GTD</td><td class="n">3 500</td><td class="n">12 000</td><td>10 мин</td><td class="n">8</td><td></td></tr>
+        <tr class="champ"><td class="tm">12:00</td><td class="nm"><b>Grand Classic Knockout Battle</b> (Day 1C) <i>— 4 000 000 GTD</i></td><td class="n">14 000+10 000</td><td class="n">25 000</td><td>25 мин</td><td class="n">12</td><td>ITM 12%</td></tr>
+        <tr class="main"><td class="tm">15:00</td><td class="nm"><b>RPT MAIN EVENT (Stage 1B)</b> — your stack → Day 1A <i>— 8 000 000 GTD</i></td><td class="n">11 000</td><td class="n">10 000</td><td>20/15 мин</td><td class="n">10</td><td>till 20%</td></tr>
+        <tr class="champ"><td class="tm">18:00</td><td class="nm"><b>Grand Classic Knockout Battle</b> (Day 1D) <i>— 4 000 000 GTD</i></td><td class="n">14 000+10 000</td><td class="n">25 000</td><td>15 мин</td><td class="n">12</td><td>ITM 12%</td></tr>
+        <tr><td class="tm">21:00</td><td class="nm">Ultra Deepstack Cup <i>— 500 000 GTD</i></td><td class="n">20 000</td><td class="n">50 000</td><td>20/15 мин</td><td class="n">12</td><td></td></tr>
+
+        <tr class="day"><td colspan="7">05 августа · среда <span>6 турниров</span></td></tr>
+        <tr class="sat"><td class="tm">10:00</td><td class="nm">Satellite to Russian Poker Open KO Event (Day 1A) — 4 seats GTD</td><td class="n">2 500</td><td class="n">12 000</td><td>10 мин</td><td class="n">8</td><td></td></tr>
+        <tr class="closed"><td class="tm">11:00</td><td class="nm">Grand Classic Knockout Battle (Final Day)</td><td>closed</td><td></td><td>30 мин</td><td></td><td></td></tr>
+        <tr class="champ"><td class="tm">12:00</td><td class="nm"><b>Russian Poker Open Knockout Event</b> (Day 1A) <i>— 2 000 000 GTD</i></td><td class="n">9 500+7 500</td><td class="n">20 000</td><td>20 мин</td><td class="n">10</td><td class="n">13</td></tr>
+        <tr class="champ"><td class="tm">17:00</td><td class="nm"><b>Russian Poker Open Knockout Event</b> (Day 1B) <i>— 2 000 000 GTD</i></td><td class="n">26 500+7 500</td><td class="n">50 000</td><td>25 мин</td><td class="n">12</td><td class="n">15</td></tr>
+        <tr><td class="tm">21:00</td><td class="nm">4-Cards Omaha Knockout Battle <i>— 400 000 GTD</i><span class="tag">PLO</span></td><td class="n">10 000+5 000</td><td class="n">25 000</td><td>20/15 мин</td><td class="n">10</td><td></td></tr>
+        <tr class="sat"><td class="tm">22:00</td><td class="nm">Satellite to Superknockout Event (Day 1) — 4 seats GTD</td><td class="n">5 000</td><td class="n">12 000</td><td>12/10 мин</td><td class="n">8</td><td></td></tr>
+
+        <tr class="day"><td colspan="7">06 августа · четверг <span>6 турниров</span></td></tr>
+        <tr class="sat"><td class="tm">10:00</td><td class="nm">Satellite to Superknockout Event (Day 1) — 4 seats GTD</td><td class="n">4 000</td><td class="n">12 000</td><td>12/10 мин</td><td class="n">8</td><td></td></tr>
+        <tr class="closed"><td class="tm">11:00</td><td class="nm">Russian Poker Open Event (Final Day)</td><td>closed</td><td></td><td>25/30 мин</td><td></td><td></td></tr>
+        <tr class="champ"><td class="tm">12:00</td><td class="nm"><b>Superknockout Event</b> (Day 1) <i>— 1 600 000 GTD</i></td><td class="n">15 000+15 000</td><td class="n">30 000</td><td>25/20 мин</td><td class="n">12</td><td>final table</td></tr>
+        <tr class="main"><td class="tm">15:00</td><td class="nm"><b>RPT MAIN EVENT (Stage 1C)</b> — your stack → Day 1A <i>— 8 000 000 GTD</i></td><td class="n">11 000</td><td class="n">10 000</td><td>20/15 мин</td><td class="n">10</td><td>till 20%</td></tr>
+        <tr><td class="tm">18:00</td><td class="nm">Turbo Deepstack Event <i>— 500 000 GTD</i></td><td class="n">15 000</td><td class="n">30 000</td><td>15 мин</td><td class="n">12</td><td></td></tr>
+        <tr><td class="tm">21:00</td><td class="nm">Stage to Highrollers Cup — your stack → Day 1 <i>— 4 000 000 GTD</i></td><td class="n">16 000</td><td class="n">15 000</td><td>20/15 мин</td><td class="n">10</td><td>till 20%</td></tr>
+
+        <tr class="day"><td colspan="7">07 августа · пятница <span>7 турниров</span></td></tr>
+        <tr class="sat"><td class="tm">10:00</td><td class="nm">Satellite to Highrollers Cup (Day 1) — 3 seats GTD</td><td class="n">9 500</td><td class="n">15 000</td><td>15/10 мин</td><td class="n">8</td><td></td></tr>
+        <tr class="closed"><td class="tm">11:00</td><td class="nm">Superknockout Event (Final Day)</td><td>closed</td><td></td><td>30 мин</td><td></td><td></td></tr>
+        <tr class="main"><td class="tm">12:00</td><td class="nm"><b>HIGHROLLERS CUP</b> by Pokerdom (Day 1) 9-max <i>— 4 000 000 GTD</i></td><td class="n">68 000</td><td class="n">75 000</td><td>30 мин</td><td class="n">14</td><td>2 tables</td></tr>
+        <tr><td class="tm">15:00</td><td class="nm">Knockout Masters Event PKO <i>— 600 000 GTD</i></td><td class="n">12 000+8 000</td><td class="n">25 000</td><td>20/15 мин</td><td class="n">10</td><td></td></tr>
+        <tr class="main"><td class="tm">18:00</td><td class="nm"><b>RPT MAIN EVENT (Stage 1D)</b> — your stack → Day 1A or 1B <i>— 8 000 000 GTD</i></td><td class="n">11 000</td><td class="n">10 000</td><td>20/15 мин</td><td class="n">10</td><td>till 20%</td></tr>
+        <tr class="champ"><td class="tm">22:00</td><td class="nm"><b>Grand Classic Superknockouts</b> (Day 1) <i>— 1 000 000 GTD</i></td><td class="n">19 000+10 000</td><td class="n">45 000</td><td>25 мин</td><td class="n">14</td><td class="n">9</td></tr>
+        <tr class="sat"><td class="tm">22:00</td><td class="nm">Satellite to Main Event (Day 1A) — 3 seats GTD</td><td class="n">6 000</td><td class="n">12 000</td><td>12/10 мин</td><td class="n">8</td><td></td></tr>
+
+        <tr class="day"><td colspan="7">08 августа · суббота <span>5 турниров</span></td></tr>
+        <tr class="main"><td class="tm">11:00</td><td class="nm"><b>RPT MAIN EVENT</b> (Day 1A) <i>— 8 000 000 GTD</i><span class="tag">TV</span></td><td class="n">44 000</td><td class="n">50 000</td><td>40 мин</td><td class="n">14</td><td>ITM 15%</td></tr>
+        <tr class="closed"><td class="tm">11:30</td><td class="nm">Highrollers Cup by Pokerdom (Final Day)<span class="tag">TV</span></td><td>closed</td><td></td><td>40 мин</td><td></td><td></td></tr>
+        <tr><td class="tm">17:00</td><td class="nm">Kings Classic Knockout Event <i>— 600 000 GTD</i></td><td class="n">10 000+10 000</td><td class="n">25 000</td><td>20/15 мин</td><td class="n">12</td><td></td></tr>
+        <tr><td class="tm">19:00</td><td class="nm">Ladies Knockout Event <i>— 200 000 GTD</i></td><td class="n">8 500+2 500</td><td class="n">20 000</td><td>20 мин</td><td class="n">10</td><td></td></tr>
+        <tr class="champ"><td class="tm">22:00</td><td class="nm"><b>Grand Classic Superknockouts</b> (Final Day) <i>— 1 000 000 GTD</i></td><td class="n">19 000+10 000</td><td class="n">45 000</td><td>25/20 мин</td><td class="n">5</td><td></td></tr>
+
+        <tr class="day"><td colspan="7">09 августа · воскресенье <span>5 турниров</span></td></tr>
+        <tr class="sat"><td class="tm">10:00</td><td class="nm">Satellite to Main Event (Day 1B) — 3 seats GTD</td><td class="n">6 000</td><td class="n">12 000</td><td>12/10 мин</td><td class="n">8</td><td></td></tr>
+        <tr class="main"><td class="tm">12:00</td><td class="nm"><b>RPT MAIN EVENT</b> (Day 1B) <i>— 8 000 000 GTD</i></td><td class="n">44 000</td><td class="n">50 000</td><td>30 мин</td><td class="n">14</td><td>ITM 15%</td></tr>
+        <tr><td class="tm">17:00</td><td class="nm">Turbo Deepstack Knockout Cup <i>— 700 000 GTD</i></td><td class="n">15 000+5 000</td><td class="n">30 000</td><td>20/15 мин</td><td class="n">12</td><td></td></tr>
+        <tr class="main"><td class="tm">19:00</td><td class="nm"><b>RPT MAIN EVENT</b> (Day 1C) <i>— 8 000 000 GTD</i></td><td class="n">44 000</td><td class="n">50 000</td><td>20 мин</td><td class="n">14</td><td>ITM 15%</td></tr>
+        <tr><td class="tm">22:00</td><td class="nm">Night Fighters Classic Knockout Event <i>— 500 000 GTD</i></td><td class="n">12 000+5 000</td><td class="n">25 000</td><td>20/15 мин</td><td class="n">10</td><td></td></tr>
+
+        <tr class="day"><td colspan="7">10 августа · понедельник <span>4 турнира</span></td></tr>
+        <tr class="sat"><td class="tm">11:00</td><td class="nm">Satellite to Mini Main Event — 4 seats GTD</td><td class="n">4 000</td><td class="n">12 000</td><td>10 мин</td><td class="n">8</td><td></td></tr>
+        <tr class="closed"><td class="tm">12:00</td><td class="nm">RPT Main Event (Day 2)</td><td>closed</td><td></td><td>40 мин</td><td></td><td>final table</td></tr>
+        <tr class="champ"><td class="tm">14:00</td><td class="nm"><b>Mini Main Event</b> PKO <i>— 1 500 000 GTD</i></td><td class="n">20 000+8 000</td><td class="n">30 000</td><td>25/20 мин</td><td class="n">12</td><td></td></tr>
+        <tr><td class="tm">20:00</td><td class="nm">Lucky Staff Turbo Knockout Event <i>— 500 000 GTD</i> (20 tips = 5k stack)</td><td class="n">11 000+4 000</td><td class="n">15 000</td><td>15 мин</td><td class="n">10</td><td></td></tr>
+
+        <tr class="day"><td colspan="7">11 августа · вторник <span>5 турниров</span></td></tr>
+        <tr class="sat"><td class="tm">11:00</td><td class="nm">Satellite to Monster Event — 3 seats GTD</td><td class="n">3 000</td><td class="n">12 000</td><td>10 мин</td><td class="n">8</td><td></td></tr>
+        <tr class="closed"><td class="tm">12:00</td><td class="nm">RPT Main Event (Final Day)<span class="tag">TV</span></td><td>closed</td><td></td><td>45 мин</td><td></td><td></td></tr>
+        <tr class="champ"><td class="tm">13:00</td><td class="nm"><b>Monster Classic Knockout Event</b> (8-max) <i>— 600 000 GTD</i></td><td class="n">15 000+5 000</td><td class="n">50 000</td><td>25/20 мин</td><td class="n">13</td><td></td></tr>
+        <tr class="sat"><td class="tm">17:00</td><td class="nm">Satellite to Closer Knockout Event — 4 seats GTD</td><td class="n">2 000</td><td class="n">12 000</td><td>12/10 мин</td><td class="n">8</td><td></td></tr>
+        <tr><td class="tm">19:00</td><td class="nm">Closer Knockout Event <i>— 350 000 GTD</i></td><td class="n">10 000+2 500</td><td class="n">20 000</td><td>20/15 мин</td><td class="n">10</td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ФУТЕР -->
+  <div class="f">
+    <span class="f__lg">Day<i>2</i></span>
+    <span>Расписание может измениться — актуальная версия, полные структуры блайндов и напоминания о старте: сканируйте QR</span>
+    <span class="f__r">day2.ru · сформировано 30.07.2026</span>
+  </div>
+</div>
+
+</body>
+</html>

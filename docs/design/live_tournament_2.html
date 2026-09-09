@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day2 — Текущий турнир · остальные экраны</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root,[data-theme="dark"]{
+  --bg:#0B0A09;--surface:#141311;--surface-2:#1C1A16;--surface-3:#26231D;
+  --line:rgba(255,255,255,.07);--line-strong:rgba(255,255,255,.13);--line-gold:rgba(217,179,106,.35);
+  --text:#F5F2EA;--text-2:#A9A395;--text-3:#6E6A5F;--text-on-gold:#1C1503;
+  --gold:#D9B36A;--gold-soft:rgba(217,179,106,.13);
+  --gold-grad:linear-gradient(180deg,#F1D68E 0%,#D3A94F 100%);
+  --live:#43D9A3;--live-soft:rgba(67,217,163,.13);
+  --warn:#F58F3C;--warn-soft:rgba(245,143,60,.13);
+  --danger:#FF6B6B;--danger-soft:rgba(255,107,107,.13);
+  --info:#6CA8FF;--info-soft:rgba(108,168,255,.13);
+  --r-sm:10px;--r-md:12px;--r-lg:18px;--r-full:999px;--font:'Manrope',system-ui,sans-serif;
+  --shadow-2:0 8px 24px rgba(0,0,0,.5);
+}
+[data-theme="light"]{
+  --bg:#F4EEE2;--surface:#FCF8EF;--surface-2:#F0E8D7;--surface-3:#E7DCC5;
+  --line:rgba(60,45,20,.10);--line-strong:rgba(60,45,20,.18);--line-gold:rgba(138,106,43,.38);
+  --text:#2A2209;--text-2:#6E6449;--text-3:#9C9173;--text-on-gold:#241A04;
+  --gold:#8A6A2B;--gold-soft:rgba(138,106,43,.12);
+  --gold-grad:linear-gradient(180deg,#E9C877 0%,#C89A3F 100%);
+  --live:#1F9E6E;--live-soft:rgba(31,158,110,.12);--warn:#C46A15;--warn-soft:rgba(196,106,21,.12);
+  --danger:#C33B3B;--danger-soft:rgba(195,59,59,.12);--info:#2E6FC4;--info-soft:rgba(46,111,196,.12);
+  --shadow-2:0 8px 24px rgba(80,60,20,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#060505;font-family:var(--font);color:var(--text);font-size:15px;line-height:1.5;display:flex;justify-content:center;gap:20px;padding:20px;flex-wrap:wrap;align-items:flex-start}
+[data-theme="light"] body{background:#E5DAC4}
+.num{font-variant-numeric:tabular-nums}
+.ic{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.col{display:flex;flex-direction:column}
+.cap{font-size:12px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;text-align:center}
+.cap b{color:var(--gold)}
+.phone{width:366px;background:var(--bg);border:1px solid var(--line-strong);border-radius:24px;overflow:hidden;height:720px;display:flex;flex-direction:column;position:relative}
+
+.hd{display:flex;align-items:center;gap:10px;padding:13px 14px 11px;border-bottom:1px solid var(--line)}
+.iconbtn{width:34px;height:34px;border-radius:10px;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;background:var(--surface-2);color:var(--text-2)}
+.hd__t{flex:1;min-width:0}
+.hd__n{font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd__s{font-size:11.5px;color:var(--text-3);margin-top:1px}
+.logo{display:inline-flex;align-items:center;gap:6px;font-weight:800;font-size:18px}
+.logo i{display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;background:var(--gold-grad);color:var(--text-on-gold);border-radius:8px;font-size:14px;font-weight:800;font-style:normal;transform:rotate(-4deg)}
+.live{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:var(--r-full);background:var(--live-soft);color:var(--live);font-size:11px;font-weight:800;flex-shrink:0}
+.dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.dot--p{animation:p 1.6s ease-out infinite}
+@keyframes p{0%{box-shadow:0 0 0 0 rgba(67,217,163,.5)}70%{box-shadow:0 0 0 6px rgba(67,217,163,0)}100%{box-shadow:0 0 0 0 rgba(67,217,163,0)}}
+.body{flex:1;overflow-y:auto;padding-bottom:14px}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;font-family:var(--font);font-weight:800;border-radius:var(--r-md);height:52px;font-size:15.5px}
+.btn:active{transform:translateY(1px)}
+.btn--gold{background:var(--gold-grad);color:var(--text-on-gold);box-shadow:inset 0 1px 0 rgba(255,255,255,.4);width:100%}
+.btn--ghost{background:transparent;color:var(--text-2);border:1px solid var(--line-strong);height:46px;font-size:14.5px}
+.btn--danger{background:transparent;color:var(--danger);border:1px solid rgba(255,107,107,.4);height:46px;font-size:14.5px}
+
+/* шит */
+.ovl{position:absolute;inset:0;background:rgba(0,0,0,.62);z-index:20}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line-strong);border-radius:20px 20px 0 0;z-index:21;padding:10px 18px calc(16px + env(safe-area-inset-bottom));max-height:92%;display:flex;flex-direction:column}
+.grip{width:36px;height:4px;border-radius:2px;background:var(--line-strong);margin:0 auto 12px}
+.sh__t{font-size:18px;font-weight:800;margin-bottom:3px}
+.sh__s{font-size:12.5px;color:var(--text-2);margin-bottom:14px}
+.f{display:flex;flex-direction:column;gap:6px;margin-bottom:13px}
+.f__l{font-size:12.5px;font-weight:600;color:var(--text-2)}
+.inp{height:48px;padding:0 13px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:var(--r-md);color:var(--text);font-family:var(--font);font-size:16px;width:100%;font-variant-numeric:tabular-nums}
+.inp:focus{outline:none;border-color:var(--gold)}
+textarea.inp{height:120px;padding:12px 13px;resize:none;line-height:1.45;font-variant-numeric:normal}
+.frow{display:flex;gap:10px}
+.frow .f{flex:1}
+.cnt{font-size:11.5px;color:var(--text-3);text-align:right;margin-top:-8px;margin-bottom:12px}
+.shfoot{display:flex;gap:10px;margin-top:2px}
+.shfoot .btn{flex:1}
+
+/* баннер активной сессии */
+.ban{margin:12px 14px;padding:13px 14px;background:linear-gradient(120deg,rgba(217,179,106,.16),rgba(217,179,106,.06));border:1px solid var(--line-gold);border-radius:var(--r-lg);display:flex;align-items:center;gap:12px;cursor:pointer}
+.ban__i{width:42px;height:42px;border-radius:13px;background:var(--gold-grad);color:var(--text-on-gold);display:flex;align-items:center;justify-content:center;flex-shrink:0;transform:rotate(-4deg);font-weight:800}
+.ban__b{flex:1;min-width:0}
+.ban__l{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+.ban__t{font-size:14.5px;font-weight:800;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ban__s{font-size:12px;color:var(--text-2);margin-top:1px}
+.ban__go{color:var(--gold)}
+
+/* заглушка контента */
+.sect{padding:14px 14px 6px;font-size:16px;font-weight:800}
+.card{margin:0 14px 10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:12px;display:flex;gap:11px;align-items:flex-start}
+.card__lg{width:52px;height:52px;border-radius:13px;background:linear-gradient(140deg,var(--surface-3),var(--surface-2));border:1px solid var(--line-strong);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--gold);flex-shrink:0}
+.card__t{font-size:14.5px;font-weight:800}
+.card__m{font-size:12px;color:var(--text-2);margin-top:1px}
+
+/* карточка турнира — кнопка */
+.tcard{margin:14px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg)}
+.tcard__t{font-size:17px;font-weight:800}
+.tcard__m{font-size:12.5px;color:var(--text-2);margin-top:3px}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.fact{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:9px 11px}
+.fact b{display:block;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.fact span{font-size:10.5px;color:var(--text-3)}
+
+/* нижняя навигация */
+.nav{position:absolute;bottom:12px;left:12px;right:12px;display:flex;background:rgba(20,19,17,.94);backdrop-filter:blur(12px);border:1px solid var(--line-strong);border-radius:var(--r-lg);padding:5px;box-shadow:var(--shadow-2)}
+[data-theme="light"] .nav{background:rgba(252,248,239,.94)}
+.nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0;border:none;background:none;color:var(--text-3);font-family:var(--font);font-size:9.5px;font-weight:700;border-radius:var(--r-md);cursor:pointer;position:relative}
+.nav button.on{color:var(--gold);background:var(--gold-soft)}
+.nav .pulse{position:absolute;top:5px;right:calc(50% - 15px);width:7px;height:7px;border-radius:50%;background:var(--live);animation:p 1.6s ease-out infinite}
+
+.theme-tg{position:fixed;bottom:14px;right:14px;z-index:99;display:flex;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-full);padding:3px;gap:2px}
+.theme-tg button{border:none;background:none;color:var(--text-2);font-family:var(--font);font-size:11px;font-weight:700;padding:5px 11px;border-radius:var(--r-full);cursor:pointer}
+.theme-tg button.on{background:var(--gold-grad);color:var(--text-on-gold)}
+</style>
+</head>
+<body>
+
+<!-- ===== 4. ЗАМЕТКА ===== -->
+<div class="col">
+  <div class="cap"><b>4</b> · добавление заметки</div>
+  <div class="phone">
+    <div class="hd">
+      <button class="iconbtn"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="hd__t"><div class="hd__n">#5 Main Event · Day 1A</div><div class="hd__s">RPT Kaliningrad</div></div>
+      <span class="live"><span class="dot dot--p"></span>В ИГРЕ</span>
+    </div>
+    <div class="body" style="filter:blur(1.5px);opacity:.35">
+      <div style="margin:14px;padding:16px;background:var(--surface);border:1px solid var(--line-gold);border-radius:18px;text-align:center">
+        <div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)">Вложено в турнир</div>
+        <div class="num" style="font-size:36px;font-weight:800;margin-top:4px">132 000 ₽</div>
+      </div>
+    </div>
+
+    <div class="ovl"></div>
+    <div class="sheet">
+      <div class="grip"></div>
+      <div class="sh__t">Заметка</div>
+      <div class="sh__s num">Сохранится с отметкой 23:52</div>
+
+      <div class="f">
+        <textarea class="inp" placeholder="Что произошло за столом?">Слева сидит рег из Минска, играет очень агрессивно с баттона. Не заходить широко против него.</textarea>
+      </div>
+      <div class="cnt num">126 / 500</div>
+
+      <div class="f">
+        <label class="f__l">Время события</label>
+        <input class="inp" value="23:52">
+      </div>
+
+      <div class="shfoot">
+        <button class="btn btn--ghost">Отмена</button>
+        <button class="btn btn--gold" style="height:46px;font-size:14.5px">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 5. ПРАВКА СОБЫТИЯ ===== -->
+<div class="col">
+  <div class="cap"><b>5</b> · правка задним числом</div>
+  <div class="phone">
+    <div class="hd">
+      <button class="iconbtn"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="hd__t"><div class="hd__n">#5 Main Event · Day 1A</div><div class="hd__s">RPT Kaliningrad</div></div>
+      <span class="live"><span class="dot dot--p"></span>В ИГРЕ</span>
+    </div>
+    <div class="body" style="filter:blur(1.5px);opacity:.35">
+      <div style="margin:14px;padding:16px;background:var(--surface);border:1px solid var(--line-gold);border-radius:18px;text-align:center">
+        <div class="num" style="font-size:36px;font-weight:800">132 000 ₽</div>
+      </div>
+    </div>
+
+    <div class="ovl"></div>
+    <div class="sheet">
+      <div class="grip"></div>
+      <div class="sh__t">Ре-энтри · 2-й вход</div>
+      <div class="sh__s">Можно поправить, если отметили не сразу</div>
+
+      <div class="frow">
+        <div class="f"><label class="f__l">Сумма входа</label><input class="inp" value="44 000" inputmode="numeric"></div>
+        <div class="f" style="max-width:112px"><label class="f__l">Время</label><input class="inp" value="22:05"></div>
+      </div>
+
+      <div class="f"><label class="f__l">Дата</label><input class="inp" value="08.08.2026"></div>
+
+      <div style="padding:11px 13px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;font-size:12.5px;color:var(--text-2);margin-bottom:14px">
+        После правки вложено в турнир: <b style="color:var(--text)" class="num">132 000 ₽</b> · 3 входа
+      </div>
+
+      <div class="shfoot">
+        <button class="btn btn--danger">Удалить</button>
+        <button class="btn btn--gold" style="height:46px;font-size:14.5px">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 6. РУЧНОЙ ТУРНИР ===== -->
+<div class="col">
+  <div class="cap"><b>6</b> · турнир вручную</div>
+  <div class="phone">
+    <div class="hd">
+      <button class="iconbtn"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="hd__t"><div class="hd__n">Текущий турнир</div></div>
+    </div>
+    <div class="body" style="filter:blur(1.5px);opacity:.35">
+      <div style="padding:24px 20px;text-align:center">
+        <div style="font-size:19px;font-weight:800">Отметьте вход в турнир</div>
+      </div>
+    </div>
+
+    <div class="ovl"></div>
+    <div class="sheet">
+      <div class="grip"></div>
+      <div class="sh__t">Турнир вручную</div>
+      <div class="sh__s">Если турнира нет в нашем расписании</div>
+
+      <div class="f"><label class="f__l">Название</label><input class="inp" placeholder="Например, Sunday Special" style="font-variant-numeric:normal"></div>
+
+      <div class="frow">
+        <div class="f"><label class="f__l">Бай-ин</label><input class="inp" placeholder="0" inputmode="numeric"></div>
+        <div class="f" style="max-width:112px"><label class="f__l">Валюта</label><select class="inp"><option>₽ RUB</option><option>$ USD</option><option>€ EUR</option><option>BYN</option></select></div>
+      </div>
+
+      <div class="f"><label class="f__l">Площадка <span style="color:var(--text-3);font-weight:400">· необязательно</span></label><input class="inp" placeholder="Клуб, казино, город" style="font-variant-numeric:normal"></div>
+
+      <div class="frow">
+        <div class="f"><label class="f__l">Дата</label><input class="inp" value="08.08.2026"></div>
+        <div class="f" style="max-width:112px"><label class="f__l">Старт</label><input class="inp" value="19:00"></div>
+      </div>
+
+      <div class="shfoot">
+        <button class="btn btn--ghost">Отмена</button>
+        <button class="btn btn--gold" style="height:46px;font-size:14.5px">Начать турнир</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 7. ТОЧКИ ВХОДА ===== -->
+<div class="col">
+  <div class="cap"><b>7</b> · точки входа в сессию</div>
+  <div class="phone">
+    <div class="hd" style="justify-content:space-between">
+      <span class="logo">Day<i>2</i></span>
+      <div style="display:flex;gap:8px">
+        <button class="iconbtn"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
+        <button class="iconbtn"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-6 6v4l-1.5 3h15L18 13V9a6 6 0 0 0-6-6z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></button>
+      </div>
+    </div>
+
+    <div class="body">
+      <!-- баннер активной сессии -->
+      <div class="ban">
+        <div class="ban__i"><svg class="ic" style="width:20px;height:20px" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <div class="ban__b">
+          <div class="ban__l">Турнир идёт · 4 ч 20 мин</div>
+          <div class="ban__t">#5 Main Event · Day 1A</div>
+          <div class="ban__s num">3 входа · 132 000 ₽</div>
+        </div>
+        <svg class="ic ban__go" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+      </div>
+
+      <div class="sect">Идут сейчас</div>
+      <div class="card">
+        <div class="card__lg">RPT</div>
+        <div><div class="card__t">RPT Kaliningrad</div><div class="card__m">1–11 авг · Sobranie · 🇷🇺 Калининград</div></div>
+      </div>
+      <div class="card">
+        <div class="card__lg">EAPT</div>
+        <div><div class="card__t">EAPT Grand Final Minsk</div><div class="card__m">30 июл – 10 авг · 🇧🇾 Минск</div></div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <button><svg class="ic" style="width:20px;height:20px" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Серии</button>
+      <button><svg class="ic" style="width:20px;height:20px" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18"/></svg>Календарь</button>
+      <button><svg class="ic" style="width:20px;height:20px" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg>Закладки</button>
+      <button class="on"><span class="pulse"></span><svg class="ic" style="width:20px;height:20px" viewBox="0 0 24 24"><path d="M4 19h16M6 16l4-5 3 3 5-7"/></svg>Трекер</button>
+      <button><svg class="ic" style="width:20px;height:20px" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-5.5 8-5.5s6.5 1.5 8 5.5"/></svg>Профиль</button>
+    </nav>
+  </div>
+</div>
+
+<!-- ===== 8. КНОПКА В КАРТОЧКЕ ТУРНИРА ===== -->
+<div class="col">
+  <div class="cap"><b>8</b> · вход из карточки турнира</div>
+  <div class="phone">
+    <div class="hd">
+      <button class="iconbtn"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="hd__t"><div class="hd__n">RPT Kaliningrad</div><div class="hd__s">Турнир #5</div></div>
+      <button class="iconbtn"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12M12 3l-4 4M12 3l4 4"/><path d="M5 13v6h14v-6"/></svg></button>
+    </div>
+
+    <div class="body">
+      <div class="tcard">
+        <div class="tcard__t">#5 Main Event</div>
+        <div class="tcard__m num">Day 1A · сегодня 20:00 (19:00 у вас)</div>
+        <div class="facts num">
+          <div class="fact" style="border-color:var(--line-gold)"><b style="color:var(--gold)">44 000 ₽</b><span>Бай-ин</span></div>
+          <div class="fact" style="border-color:var(--line-gold)"><b style="color:var(--gold)">20 000 000 ₽</b><span>Гарантия</span></div>
+          <div class="fact"><b>50 000</b><span>Стек</span></div>
+          <div class="fact"><b>До ур. 10</b><span>Поздняя рег.</span></div>
+        </div>
+      </div>
+
+      <div style="margin:0 14px">
+        <button class="btn btn--gold">
+          <svg class="ic" style="width:19px;height:19px" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          Я в игре · вести турнир
+        </button>
+        <div style="font-size:12px;color:var(--text-3);text-align:center;margin-top:8px">Входы и ре-энтри → результат сам уйдёт в трекер</div>
+      </div>
+
+      <div style="margin:20px 14px 0;padding-top:16px;border-top:1px solid var(--line)">
+        <div style="font-size:13px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Флайты</div>
+        <div style="display:flex;gap:10px;align-items:center;padding:11px 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px">
+          <span style="display:inline-flex;align-items:center;justify-content:center;height:28px;padding:0 11px;background:var(--gold-grad);color:var(--text-on-gold);border-radius:9px;font-size:11.5px;font-weight:800;transform:rotate(-2deg)">Day 1A</span>
+          <div style="flex:1"><div style="font-size:13.5px;font-weight:700">Сегодня, 8 августа</div><div class="num" style="font-size:11.5px;color:var(--text-3)">20:00 · 19:00 у вас</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="theme-tg"><button class="on" onclick="th('dark')">Тёмная</button><button onclick="th('light')">Светлая</button></div>
+<script>
+function th(t){document.documentElement.setAttribute('data-theme',t);document.querySelectorAll('.theme-tg button').forEach((b,i)=>b.classList.toggle('on',(i===0)===(t==='dark')))}
+</script>
+</body>
+</html>

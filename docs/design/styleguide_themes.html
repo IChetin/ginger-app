@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day2 — Styleguide (2 темы)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============ DAY2 · ТЁМНАЯ ТЕМА (по умолчанию) ============ */
+:root, [data-theme="dark"]{
+  --bg:#0B0A09; --surface:#141311; --surface-2:#1C1A16; --surface-3:#26231D;
+  --line:rgba(255,255,255,.07); --line-strong:rgba(255,255,255,.13); --line-gold:rgba(217,179,106,.35);
+  --text:#F5F2EA; --text-2:#A9A395; --text-3:#6E6A5F; --text-on-gold:#1C1503;
+  --gold:#D9B36A;                 /* золотой текст/иконки/обводки */
+  --gold-soft:rgba(217,179,106,.13);
+  --gold-grad:linear-gradient(180deg,#F1D68E 0%,#D3A94F 100%);
+  --gold-grad-hover:linear-gradient(180deg,#F7E0A0 0%,#DDB55C 100%);
+  --gold-grad-press:linear-gradient(180deg,#E3C271 0%,#BD9440 100%);
+  --live:#43D9A3; --live-soft:rgba(67,217,163,.13);
+  --warn:#F58F3C; --warn-soft:rgba(245,143,60,.13);
+  --danger:#FF6B6B; --danger-soft:rgba(255,107,107,.13);
+  --info:#6CA8FF; --info-soft:rgba(108,168,255,.13);
+  --shadow-2:0 8px 24px rgba(0,0,0,.5);
+  --glow-gold:0 4px 18px rgba(211,169,79,.22);
+  --nav-bg:rgba(20,19,17,.92);
+  --stage:#060505;               /* поле за контейнером приложения */
+}
+
+/* ============ DAY2 · СВЕТЛАЯ ТЕМА (кремовый люкс) ============ */
+[data-theme="light"]{
+  --bg:#F4EEE2;                  /* тёплый кремовый фон */
+  --surface:#FCF8EF;            /* карточки — чуть светлее фона */
+  --surface-2:#F0E8D7;          /* приподнятые/hover */
+  --surface-3:#E7DCC5;          /* pressed/выделение */
+  --line:rgba(60,45,20,.10); --line-strong:rgba(60,45,20,.18); --line-gold:rgba(138,106,43,.38);
+  --text:#2A2209;               /* тёмно-коричневый вместо чёрного — теплее */
+  --text-2:#6E6449; --text-3:#9C9173;
+  --text-on-gold:#241A04;
+  --gold:#8A6A2B;                /* ТЁМНАЯ бронза — золотой текст/иконки на светлом (контраст!) */
+  --gold-soft:rgba(138,106,43,.12);
+  --gold-grad:linear-gradient(180deg,#E9C877 0%,#C89A3F 100%);        /* заливка — тот же тёплый металл */
+  --gold-grad-hover:linear-gradient(180deg,#EFD285 0%,#D2A64A 100%);
+  --gold-grad-press:linear-gradient(180deg,#DBB863 0%,#B88E36 100%);
+  --live:#1F9E6E; --live-soft:rgba(31,158,110,.12);                   /* затемнённая семантика */
+  --warn:#C46A15; --warn-soft:rgba(196,106,21,.12);
+  --danger:#C33B3B; --danger-soft:rgba(195,59,59,.12);
+  --info:#2E6FC4; --info-soft:rgba(46,111,196,.12);
+  --shadow-2:0 8px 24px rgba(80,60,20,.14);
+  --glow-gold:0 4px 18px rgba(200,154,63,.28);
+  --nav-bg:rgba(252,248,239,.9);
+  --stage:#E5DAC4;
+}
+
+/* ---- геометрия и шрифт (общие) ---- */
+:root{
+  --r-sm:10px; --r-md:12px; --r-lg:18px; --r-full:999px;
+  --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:20px;--sp-6:24px;--sp-8:32px;--sp-10:40px;
+  --font:'Manrope',system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--stage);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.55;padding-bottom:60px;transition:background .2s,color .2s}
+.num{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.wrap{max-width:960px;margin:0 auto;padding:0 var(--sp-5);background:var(--bg);transition:background .2s}
+.sg-header{padding:var(--sp-10) 0 var(--sp-6);border-bottom:1px solid var(--line)}
+.sg-section{padding:var(--sp-8) 0;border-bottom:1px solid var(--line)}
+.sg-eyebrow{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:var(--sp-2)}
+.sg-title{font-size:24px;font-weight:800;letter-spacing:-.01em;margin-bottom:var(--sp-2)}
+.sg-note{color:var(--text-2);max-width:640px;margin-bottom:var(--sp-6)}
+.sg-row{display:flex;flex-wrap:wrap;gap:var(--sp-3);align-items:center;margin-bottom:var(--sp-4)}
+.sg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:var(--sp-4)}
+.sg-label{font-size:12px;color:var(--text-3);font-weight:600;margin:var(--sp-5) 0 var(--sp-3)}
+pre{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:var(--sp-4);overflow-x:auto;color:var(--text-2);font-family:ui-monospace,Menlo,monospace;font-size:13px}
+code{font-family:ui-monospace,Menlo,monospace;font-size:13px;color:var(--gold)}
+
+/* ---- переключатель темы ---- */
+.theme-toggle{position:fixed;top:16px;right:16px;z-index:100;display:flex;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-full);padding:4px;gap:2px;box-shadow:var(--shadow-2)}
+.theme-toggle button{border:none;background:none;color:var(--text-2);font-family:var(--font);font-size:12px;font-weight:700;padding:6px 14px;border-radius:var(--r-full);cursor:pointer}
+.theme-toggle button.on{background:var(--gold-grad);color:var(--text-on-gold)}
+
+/* ============ ЛОГОТИП ============ */
+.logo{display:inline-flex;align-items:center;gap:6px;font-weight:800;font-size:22px;letter-spacing:-.02em}
+.logo .chip2{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;background:var(--gold-grad);color:var(--text-on-gold);border-radius:9px;font-size:18px;font-weight:800;transform:rotate(-4deg);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+
+/* ============ ПАЛИТРА ============ */
+.swatch{border-radius:var(--r-md);border:1px solid var(--line);overflow:hidden}
+.swatch__color{height:60px}
+.swatch__meta{padding:var(--sp-3);background:var(--surface)}
+.swatch__name{font-weight:700;font-size:13px}
+.swatch__hex{font-size:12px;color:var(--text-3);font-family:ui-monospace,monospace}
+
+/* ============ ТИПОГРАФИКА ============ */
+.t-h1{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.t-h2{font-size:20px;font-weight:800}
+.t-h3{font-size:16px;font-weight:700}
+.t-body-2{font-size:14px;color:var(--text-2)}
+.t-caption{font-size:12px;color:var(--text-3)}
+.t-num{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* ============ КНОПКИ ============ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;font-family:var(--font);font-weight:700;letter-spacing:.01em;border-radius:var(--r-md);transition:background .15s,border-color .15s,transform .06s;text-decoration:none}
+.btn:active{transform:translateY(1px)}
+.btn--lg{height:52px;padding:0 var(--sp-6);font-size:16px}
+.btn--md{height:44px;padding:0 var(--sp-5);font-size:15px}
+.btn--sm{height:36px;padding:0 var(--sp-4);font-size:13px;border-radius:var(--r-sm)}
+.btn--primary{background:var(--gold-grad);color:var(--text-on-gold);font-weight:800;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),var(--glow-gold)}
+.btn--primary:hover{background:var(--gold-grad-hover)}
+.btn--primary:active{background:var(--gold-grad-press)}
+.btn--secondary{background:transparent;color:var(--text);border:1px solid var(--line-gold)}
+.btn--secondary:hover{background:var(--gold-soft);border-color:var(--gold)}
+.btn--ghost{background:transparent;color:var(--gold)}
+.btn--ghost:hover{background:var(--gold-soft)}
+.btn--danger{background:transparent;color:var(--danger);border:1px solid var(--danger-soft)}
+.btn:disabled{background:var(--surface-2);color:var(--text-3);border:none;box-shadow:none;cursor:not-allowed;transform:none}
+
+/* ============ ФОРМЫ ============ */
+.field{display:flex;flex-direction:column;gap:6px;max-width:340px}
+.field__label{font-size:13px;font-weight:600;color:var(--text-2)}
+.input{height:48px;padding:0 var(--sp-4);background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-md);color:var(--text);font-family:var(--font);font-size:16px;width:100%;transition:border-color .15s}
+.input::placeholder{color:var(--text-3)}
+.input:focus{outline:none;border-color:var(--gold)}
+.switch{position:relative;width:48px;height:28px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.switch__track{position:absolute;inset:0;background:var(--surface-3);border-radius:var(--r-full);cursor:pointer;transition:background .15s}
+.switch__track::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;background:#fff;border-radius:50%;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.switch input:checked + .switch__track{background:var(--gold-grad)}
+.switch input:checked + .switch__track::after{transform:translateX(20px)}
+
+/* ============ ЧИПСЫ / БЕЙДЖИ / ФЛАЙТЫ ============ */
+.chip{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-full);color:var(--text-2);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)}
+.chip--active{background:var(--gold-soft);border-color:var(--line-gold);color:var(--gold)}
+.badge{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:var(--r-full);font-size:12px;font-weight:700}
+.badge--live{background:var(--live-soft);color:var(--live)}
+.badge--announced{background:var(--info-soft);color:var(--info)}
+.badge--warn{background:var(--warn-soft);color:var(--warn)}
+.badge--muted{background:var(--surface-2);color:var(--text-3)}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.dot--pulse{animation:pulse 1.6s ease-out infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(67,217,163,.5)}70%{box-shadow:0 0 0 7px rgba(67,217,163,0)}100%{box-shadow:0 0 0 0 rgba(67,217,163,0)}}
+.flight{display:inline-flex;align-items:center;justify-content:center;height:30px;padding:0 12px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:9px;font-size:12px;font-weight:800;color:var(--text-2);cursor:pointer}
+.flight--active{background:var(--gold-grad);border-color:transparent;color:var(--text-on-gold);transform:rotate(-2deg);box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+
+/* ============ КАРТОЧКИ ============ */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;max-width:400px}
+.poster{height:132px;background:linear-gradient(135deg,var(--surface-3) 0%,var(--surface) 60%,var(--bg) 100%);display:flex;align-items:center;justify-content:center;position:relative}
+.poster__word{font-size:26px;font-weight:800;letter-spacing:.08em;color:var(--gold-soft);opacity:.9;color:rgba(138,106,43,.28)}
+[data-theme="dark"] .poster__word{color:rgba(217,179,106,.22)}
+.poster__status{position:absolute;top:12px;left:12px}
+.bm{width:38px;height:38px;border-radius:12px;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;background:var(--surface-2);color:var(--text-2);position:absolute;top:10px;right:10px}
+.bm--on{color:var(--gold)}
+.card__body{padding:14px 16px 16px}
+.card__title{font-size:17px;font-weight:800;letter-spacing:-.01em}
+.card__meta{font-size:13px;color:var(--text-2);margin-top:3px}
+.card__foot{display:flex;align-items:center;justify-content:space-between;margin-top:12px}
+.card__stats{font-size:12px;color:var(--text-3)}
+.ic{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* ============ СТАТЫ ТРЕКЕРА ============ */
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:var(--sp-4);min-width:150px}
+.stat__label{font-size:12px;color:var(--text-3);font-weight:600}
+.stat__value{font-size:20px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums}
+.stat__value--pos{color:var(--live)}
+
+/* ============ НИЖНЯЯ НАВИГАЦИЯ ============ */
+.bottom-nav{display:flex;background:var(--nav-bg);backdrop-filter:blur(12px);border:1px solid var(--line-strong);border-radius:var(--r-lg);padding:6px;max-width:400px;box-shadow:var(--shadow-2)}
+.bottom-nav__item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0;border:none;background:none;color:var(--text-3);font-family:var(--font);font-size:10px;font-weight:700;border-radius:var(--r-md);cursor:pointer}
+.bottom-nav__item--active{color:var(--gold);background:var(--gold-soft)}
+.nav-ic{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+</style>
+</head>
+<body>
+
+<div class="theme-toggle">
+  <button id="btn-dark" class="on" onclick="setTheme('dark')">Тёмная</button>
+  <button id="btn-light" onclick="setTheme('light')">Светлая</button>
+</div>
+
+<div class="wrap">
+  <header class="sg-header">
+    <div class="logo" style="margin-bottom:16px">Day<span class="chip2">2</span></div>
+    <h1 class="t-h1">Дизайн-система Day2 · две темы</h1>
+    <p class="sg-note" style="margin-top:8px">Переключите тему кнопкой вверху справа — все компоненты ниже перерисуются. Тёмная (чёрно-золотая) — по умолчанию. Светлая — тёплый кремовый люкс. <b>Ключевое правило:</b> золотой градиент-заливка (кнопки, «фишки») работает в обеих темах, а золотой <i>текст</i> в светлой теме заменяется тёмной бронзой (#8A6A2B) ради контраста. Один бренд-цвет, разная светлота по фону.</p>
+  </header>
+
+  <!-- 01 ПАЛИТРА -->
+  <section class="sg-section">
+    <div class="sg-eyebrow">01 · Токены</div>
+    <h2 class="sg-title">Палитра (реагирует на тему)</h2>
+    <div class="sg-grid">
+      <div class="swatch"><div class="swatch__color" style="background:var(--bg)"></div><div class="swatch__meta"><div class="swatch__name">Фон · --bg</div><div class="swatch__hex">dark #0B0A09 · light #F4EEE2</div></div></div>
+      <div class="swatch"><div class="swatch__color" style="background:var(--surface)"></div><div class="swatch__meta"><div class="swatch__name">Поверхность · --surface</div><div class="swatch__hex">dark #141311 · light #FCF8EF</div></div></div>
+      <div class="swatch"><div class="swatch__color" style="background:var(--gold-grad)"></div><div class="swatch__meta"><div class="swatch__name">Золото-заливка</div><div class="swatch__hex">действия, «фишки» — обе темы</div></div></div>
+      <div class="swatch"><div class="swatch__color" style="background:var(--gold)"></div><div class="swatch__meta"><div class="swatch__name">Золото-текст · --gold</div><div class="swatch__hex">dark #D9B36A · light #8A6A2B</div></div></div>
+      <div class="swatch"><div class="swatch__color" style="background:var(--text)"></div><div class="swatch__meta"><div class="swatch__name">Текст · --text</div><div class="swatch__hex">dark #F5F2EA · light #2A2209</div></div></div>
+      <div class="swatch"><div class="swatch__color" style="background:linear-gradient(90deg,var(--live) 33%,var(--warn) 33% 66%,var(--danger) 66%)"></div><div class="swatch__meta"><div class="swatch__name">Семантика (затемнена в свете)</div><div class="swatch__hex">live · warn · danger</div></div></div>
+    </div>
+  </section>
+
+  <!-- 02 ТИПОГРАФИКА -->
+  <section class="sg-section">
+    <div class="sg-eyebrow">02 · Токены</div>
+    <h2 class="sg-title">Типографика</h2>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <span class="t-h1">Заголовок экрана · 26 / 800</span>
+      <span class="t-h2">Секция · 20 / 800</span>
+      <span class="t-h3">Карточка · 16 / 700</span>
+      <span class="t-body-2">Вторичный текст · 14 / 400</span>
+      <span class="t-caption">Подпись · 12 / 400</span>
+      <span class="num t-num">Числа: 44 000 ₽ · 19:00 · ROI 23,4 %</span>
+    </div>
+  </section>
+
+  <!-- 03 КНОПКИ -->
+  <section class="sg-section">
+    <div class="sg-eyebrow">03 · Компоненты</div>
+    <h2 class="sg-title">Кнопки</h2>
+    <div class="sg-row">
+      <button class="btn btn--primary btn--md">Напомнить</button>
+      <button class="btn btn--secondary btn--md">В закладки</button>
+      <button class="btn btn--ghost btn--md">Показать все</button>
+      <button class="btn btn--danger btn--md">Удалить</button>
+      <button class="btn btn--primary btn--md" disabled>Недоступно</button>
+    </div>
+    <div class="sg-row"><button class="btn btn--primary btn--lg">Войти по email</button></div>
+  </section>
+
+  <!-- 04 ФОРМЫ -->
+  <section class="sg-section">
+    <div class="sg-eyebrow">04 · Компоненты</div>
+    <h2 class="sg-title">Формы</h2>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div class="field"><label class="field__label">Email</label><input class="input" placeholder="you@mail.ru"></div>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);max-width:340px">
+        <div><div class="t-h3">Push-уведомления</div><div class="t-caption">На этом устройстве</div></div>
+        <span class="switch"><input type="checkbox" checked><span class="switch__track"></span></span>
+      </label>
+    </div>
+  </section>
+
+  <!-- 05 ЧИПСЫ/БЕЙДЖИ/ФЛАЙТЫ -->
+  <section class="sg-section">
+    <div class="sg-eyebrow">05 · Компоненты</div>
+    <h2 class="sg-title">Фильтры, статусы, флайты</h2>
+    <div class="sg-row">
+      <button class="chip chip--active">Все страны</button>
+      <button class="chip">🇷🇺 Россия</button>
+      <button class="chip">🇨🇾 Кипр</button>
+    </div>
+    <div class="sg-row">
+      <span class="badge badge--live"><span class="dot dot--pulse"></span>Идёт</span>
+      <span class="badge badge--announced"><span class="dot"></span>Анонс</span>
+      <span class="badge badge--warn"><span class="dot"></span>Перенесён</span>
+      <span class="badge badge--muted">Завершена</span>
+    </div>
+    <div class="sg-row">
+      <button class="flight">Day 1A</button>
+      <button class="flight flight--active">Day 1B</button>
+      <button class="flight">Day 1C</button>
+    </div>
+  </section>
+
+  <!-- 06 КАРТОЧКА -->
+  <section class="sg-section">
+    <div class="sg-eyebrow">06 · Компоненты</div>
+    <h2 class="sg-title">Карточка серии</h2>
+    <div class="card">
+      <div class="poster">
+        <span class="poster__word">RPT</span>
+        <span class="poster__status badge badge--live"><span class="dot dot--pulse"></span>Идёт</span>
+        <button class="bm bm--on"><svg class="ic" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z" fill="currentColor"/></svg></button>
+      </div>
+      <div class="card__body">
+        <h3 class="card__title">RPT Kaliningrad</h3>
+        <div class="card__meta">1–11 августа · Sobranie Casino · 🇷🇺 Калининград</div>
+        <div class="card__foot">
+          <span class="card__stats num">28 турниров · от 5 000 ₽</span>
+          <button class="btn btn--ghost btn--sm">К расписанию</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 ТРЕКЕР -->
+  <section class="sg-section">
+    <div class="sg-eyebrow">07 · Компоненты</div>
+    <h2 class="sg-title">Статы трекера</h2>
+    <div class="sg-row">
+      <div class="stat"><div class="stat__label">Профит</div><div class="stat__value stat__value--pos num">+284 500 ₽</div></div>
+      <div class="stat"><div class="stat__label">ROI</div><div class="stat__value stat__value--pos num">+23,4 %</div></div>
+      <div class="stat"><div class="stat__label">ABI</div><div class="stat__value num">18 300 ₽</div></div>
+    </div>
+  </section>
+
+  <!-- 08 НАВИГАЦИЯ -->
+  <section class="sg-section">
+    <div class="sg-eyebrow">08 · Компоненты</div>
+    <h2 class="sg-title">Нижняя навигация</h2>
+    <nav class="bottom-nav">
+      <button class="bottom-nav__item bottom-nav__item--active"><svg class="nav-ic" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Серии</button>
+      <button class="bottom-nav__item"><svg class="nav-ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18"/></svg>Календарь</button>
+      <button class="bottom-nav__item"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg>Закладки</button>
+      <button class="bottom-nav__item"><svg class="nav-ic" viewBox="0 0 24 24"><path d="M4 19h16M6 16l4-5 3 3 5-7"/></svg>Трекер</button>
+      <button class="bottom-nav__item"><svg class="nav-ic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-5.5 8-5.5s6.5 1.5 8 5.5"/></svg>Профиль</button>
+    </nav>
+  </section>
+
+  <!-- TAILWIND -->
+  <section class="sg-section" style="border-bottom:none">
+    <div class="sg-eyebrow">Приложение</div>
+    <h2 class="sg-title">Реализация тем</h2>
+    <p class="sg-note">Обе темы — на CSS-переменных. Дефолт по системе через <code>prefers-color-scheme</code>, ручное переопределение — атрибутом <code>data-theme</code> на &lt;html&gt;, выбор сохраняется. Tailwind настроить на чтение переменных (<code>bg: 'var(--bg)'</code> и т.д.), чтобы классы работали в обеих темах без дублирования.</p>
+<pre>/* globals.css */
+:root { /* dark-токены */ }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) { /* light-токены */ }
+}
+[data-theme="light"] { /* light-токены */ }
+[data-theme="dark"]  { /* dark-токены */ }
+
+// tailwind.config.js → colors ссылаются на переменные:
+colors: { bg:'var(--bg)', surface:'var(--surface)', gold:'var(--gold)', ... }</pre>
+  </section>
+</div>
+
+<script>
+function setTheme(t){
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('btn-dark').classList.toggle('on', t==='dark');
+  document.getElementById('btn-light').classList.toggle('on', t==='light');
+}
+</script>
+</body>
+</html>

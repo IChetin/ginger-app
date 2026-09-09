@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day2 — Трекер</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ==== токены Day2 (из styleguide v2) ==== */
+:root{
+  --bg:#0B0A09;--surface:#141311;--surface-2:#1C1A16;--surface-3:#26231D;
+  --line:rgba(255,255,255,.07);--line-strong:rgba(255,255,255,.13);--line-gold:rgba(217,179,106,.35);
+  --text:#F5F2EA;--text-2:#A9A395;--text-3:#6E6A5F;--text-on-gold:#1C1503;
+  --gold:#D9B36A;--gold-soft:rgba(217,179,106,.13);
+  --gold-grad:linear-gradient(180deg,#F1D68E 0%,#D3A94F 100%);
+  --live:#43D9A3;--live-soft:rgba(67,217,163,.13);
+  --danger:#FF6B6B;--danger-soft:rgba(255,107,107,.13);
+  --r-sm:10px;--r-md:12px;--r-lg:18px;--r-full:999px;
+  --shadow-2:0 8px 24px rgba(0,0,0,.5);
+  --font:'Manrope',system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#060505;font-family:var(--font);color:var(--text);font-size:15px;line-height:1.5;display:flex;justify-content:center}
+.num{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.screen{width:100%;max-width:420px;min-height:100vh;background:var(--bg);position:relative;padding-bottom:110px}
+
+/* Шапка + фильтры */
+.top{position:sticky;top:0;z-index:20;background:rgba(11,10,9,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.appbar{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 10px}
+.appbar__title{font-size:23px;font-weight:800;letter-spacing:-.02em}
+.icon-btn{width:38px;height:38px;border-radius:12px;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;background:var(--surface-2);color:var(--text-2)}
+.ic{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.filters{display:flex;gap:8px;overflow-x:auto;padding:2px 16px 12px;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;display:inline-flex;align-items:center;height:32px;padding:0 13px;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-full);color:var(--text-2);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);white-space:nowrap}
+.chip--active{background:var(--gold-soft);border-color:var(--line-gold);color:var(--gold)}
+
+/* Статы */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px 16px 0}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px}
+.stat__l{font-size:11px;color:var(--text-3);font-weight:600}
+.stat__v{font-size:19px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums}
+.stat__v--pos{color:var(--live)}
+
+/* График */
+.chart{margin:12px 16px 0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px}
+.chart__head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.chart__title{font-size:15px;font-weight:700}
+.chart__sub{font-size:12px;color:var(--text-3)}
+
+/* Список результатов */
+.section{padding:20px 16px 0}
+.section__title{font-size:13px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.res{display:flex;gap:12px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);align-items:center;margin-bottom:8px;cursor:pointer}
+.res__date{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:44px;height:46px;background:var(--surface-3);border:1px solid var(--line-strong);border-radius:12px;flex-shrink:0;line-height:1.15}
+.res__dnum{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.res__dmon{font-size:9px;color:var(--text-3);text-transform:uppercase;font-weight:700}
+.res__body{flex:1;min-width:0}
+.res__name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.res__meta{font-size:12px;color:var(--text-2);margin-top:1px}
+.res__profit{font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;flex-shrink:0}
+.res__profit--pos{color:var(--live)}
+.res__profit--neg{color:var(--danger)}
+.res__itm{display:inline-block;font-size:10px;font-weight:700;color:var(--gold);margin-left:6px}
+
+/* FAB */
+.fab{position:fixed;right:calc(50% - 194px);bottom:96px;width:56px;height:56px;border-radius:18px;border:none;cursor:pointer;background:var(--gold-grad);color:var(--text-on-gold);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 6px 20px rgba(211,169,79,.35);z-index:31;transition:transform .06s}
+.fab:active{transform:translateY(1px)}
+@media (max-width:440px){.fab{right:16px}}
+
+/* Нижняя навигация */
+.bottom-nav{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:388px;display:flex;background:rgba(20,19,17,.92);backdrop-filter:blur(12px);border:1px solid var(--line-strong);border-radius:var(--r-lg);padding:6px;box-shadow:var(--shadow-2);z-index:30}
+.bottom-nav__item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0;border:none;background:none;color:var(--text-3);font-family:var(--font);font-size:10px;font-weight:700;border-radius:var(--r-md);cursor:pointer}
+.bottom-nav__item--active{color:var(--gold);background:var(--gold-soft)}
+
+/* ==== Шит добавления результата ==== */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}
+.overlay--open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;bottom:0;left:50%;transform:translate(-50%,105%);width:100%;max-width:420px;background:var(--surface);border:1px solid var(--line-strong);border-bottom:none;border-radius:18px 18px 0 0;z-index:41;padding:10px 20px calc(20px + env(safe-area-inset-bottom));transition:transform .25s;max-height:88vh;overflow-y:auto}
+.sheet--open{transform:translate(-50%,0)}
+.sheet__grip{width:36px;height:4px;border-radius:2px;background:var(--line-strong);margin:0 auto 14px}
+.sheet__title{font-size:19px;font-weight:800;margin-bottom:14px}
+.seg{display:flex;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:3px;gap:2px;margin-bottom:16px}
+.seg__item{flex:1;height:36px;border:none;background:transparent;color:var(--text-2);font-family:var(--font);font-size:13px;font-weight:700;border-radius:var(--r-sm);cursor:pointer}
+.seg__item--active{background:var(--surface-3);color:var(--text)}
+.f{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.f__label{font-size:13px;font-weight:600;color:var(--text-2)}
+.input{height:48px;padding:0 14px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:var(--r-md);color:var(--text);font-family:var(--font);font-size:15px;width:100%}
+.input:focus{outline:none;border-color:var(--gold)}
+.frow{display:flex;gap:10px}
+.frow .f{flex:1}
+.stepper{display:flex;align-items:center;gap:0;height:48px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:var(--r-md);overflow:hidden}
+.stepper button{width:48px;height:100%;border:none;background:none;color:var(--gold);font-size:20px;font-weight:800;cursor:pointer;font-family:var(--font)}
+.stepper span{flex:1;text-align:center;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+.linked{display:flex;align-items:center;gap:10px;padding:12px;background:var(--gold-soft);border:1px solid var(--line-gold);border-radius:var(--r-md);margin-bottom:14px;font-size:13px}
+.linked b{font-weight:700}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;font-family:var(--font);font-weight:800;border-radius:var(--r-md);height:52px;width:100%;font-size:16px;background:var(--gold-grad);color:var(--text-on-gold);box-shadow:inset 0 1px 0 rgba(255,255,255,.4);margin-top:4px;transition:transform .06s}
+.btn:active{transform:translateY(1px)}
+</style>
+</head>
+<body>
+<div class="screen">
+
+  <div class="top">
+    <div class="appbar">
+      <h1 class="appbar__title">Трекер</h1>
+      <button class="icon-btn" aria-label="Поделиться статистикой"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12M12 3l-4 4M12 3l4 4"/><path d="M5 13v6h14v-6"/></svg></button>
+    </div>
+    <div class="filters">
+      <button class="chip chip--active">Год</button>
+      <button class="chip">Всё время</button>
+      <button class="chip">Месяц</button>
+      <button class="chip">Серия ▾</button>
+      <button class="chip">Бай-ин ▾</button>
+    </div>
+  </div>
+
+  <!-- Статы -->
+  <div class="stats num">
+    <div class="stat"><div class="stat__l">Профит</div><div class="stat__v stat__v--pos">+284 500 ₽</div></div>
+    <div class="stat"><div class="stat__l">ROI</div><div class="stat__v stat__v--pos">+23,4 %</div></div>
+    <div class="stat"><div class="stat__l">ABI · турниров</div><div class="stat__v">18 300 ₽ · 64</div></div>
+    <div class="stat"><div class="stat__l">ITM</div><div class="stat__v">31 %</div></div>
+  </div>
+
+  <!-- График -->
+  <div class="chart">
+    <div class="chart__head"><span class="chart__title">Накопительный профит</span><span class="chart__sub num">2026 год</span></div>
+    <svg viewBox="0 0 372 130" width="100%" role="img" aria-label="График профита">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#D9B36A" stop-opacity=".35"/><stop offset="100%" stop-color="#D9B36A" stop-opacity="0"/>
+      </linearGradient></defs>
+      <line x1="0" y1="95" x2="372" y2="95" stroke="rgba(255,255,255,.08)"/>
+      <path d="M0 100 L37 106 L74 92 L111 108 L148 84 L185 90 L222 55 L259 63 L296 36 L372 24 L372 130 L0 130 Z" fill="url(#g)"/>
+      <path d="M0 100 L37 106 L74 92 L111 108 L148 84 L185 90 L222 55 L259 63 L296 36 L372 24" fill="none" stroke="#D9B36A" stroke-width="2.5" stroke-linejoin="round"/>
+      <circle cx="372" cy="24" r="4" fill="#F1D68E"/>
+    </svg>
+  </div>
+
+  <!-- Результаты -->
+  <div class="section">
+    <div class="section__title">Август 2026</div>
+    <article class="res" onclick="openSheet()">
+      <span class="res__date"><span class="res__dnum">2</span><span class="res__dmon">авг</span></span>
+      <div class="res__body">
+        <div class="res__name">#4 Kaliningrad Knockout</div>
+        <div class="res__meta num">RPT Kaliningrad · 2 300 ₽ × 2 входа</div>
+      </div>
+      <span class="res__profit res__profit--pos num">+51 400 ₽<span class="res__itm">12 место</span></span>
+    </article>
+    <article class="res">
+      <span class="res__date"><span class="res__dnum">1</span><span class="res__dmon">авг</span></span>
+      <div class="res__body">
+        <div class="res__name">#1 Opening Event</div>
+        <div class="res__meta num">RPT Kaliningrad · 15 000 ₽ × 1 вход</div>
+      </div>
+      <span class="res__profit res__profit--neg num">−15 000 ₽</span>
+    </article>
+  </div>
+
+  <div class="section" style="padding-top:8px">
+    <div class="section__title">Июль 2026</div>
+    <article class="res">
+      <span class="res__date"><span class="res__dnum">26</span><span class="res__dmon">июл</span></span>
+      <div class="res__body">
+        <div class="res__name">Big Bounty</div>
+        <div class="res__meta num">BPT 40 · Минск · 550 BYN × 1 вход</div>
+      </div>
+      <span class="res__profit res__profit--pos num">+92 300 ₽<span class="res__itm">3 место</span></span>
+    </article>
+    <article class="res">
+      <span class="res__date"><span class="res__dnum">20</span><span class="res__dmon">июл</span></span>
+      <div class="res__body">
+        <div class="res__name">Main Event</div>
+        <div class="res__meta num">BPT 40 · Минск · 1 100 BYN × 2 входа</div>
+      </div>
+      <span class="res__profit res__profit--neg num">−64 200 ₽</span>
+    </article>
+  </div>
+
+  <!-- FAB -->
+  <button class="fab" aria-label="Добавить результат" onclick="openSheet()"><svg class="ic" style="width:24px;height:24px" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+
+  <!-- Нижняя навигация -->
+  <nav class="bottom-nav">
+    <button class="bottom-nav__item"><svg class="ic" style="width:22px;height:22px" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Серии</button>
+    <button class="bottom-nav__item"><svg class="ic" style="width:22px;height:22px" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 13h3M8 17h6"/></svg>Календарь</button>
+    <button class="bottom-nav__item"><svg class="ic" style="width:22px;height:22px" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg>Закладки</button>
+    <button class="bottom-nav__item bottom-nav__item--active"><svg class="ic" style="width:22px;height:22px" viewBox="0 0 24 24"><path d="M4 19h16M6 16l4-5 3 3 5-7"/></svg>Трекер</button>
+    <button class="bottom-nav__item"><svg class="ic" style="width:22px;height:22px" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-5.5 8-5.5s6.5 1.5 8 5.5"/></svg>Профиль</button>
+  </nav>
+
+  <!-- Шит добавления -->
+  <div class="overlay" id="ovl" onclick="closeSheet()"></div>
+  <div class="sheet" id="sheet">
+    <div class="sheet__grip"></div>
+    <div class="sheet__title">Добавить результат</div>
+
+    <div class="seg">
+      <button class="seg__item seg__item--active">Из расписания</button>
+      <button class="seg__item">Вручную</button>
+    </div>
+
+    <div class="linked num">
+      <svg class="ic" style="width:18px;height:18px;color:var(--gold);flex-shrink:0" viewBox="0 0 24 24"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7L12.5 19"/></svg>
+      <span><b>#4 Kaliningrad Knockout</b> · RPT Kaliningrad · 2 авг · бай-ин и дата заполнены</span>
+    </div>
+
+    <div class="frow">
+      <div class="f"><label class="f__label">Бай-ин</label><input class="input num" value="2 300"></div>
+      <div class="f" style="max-width:96px"><label class="f__label">Валюта</label><input class="input" value="₽ RUB" readonly></div>
+    </div>
+
+    <div class="f"><label class="f__label">Входы (с ре-энтри)</label>
+      <div class="stepper"><button>−</button><span>2</span><button>+</button></div>
+    </div>
+
+    <div class="f"><label class="f__label">Выплата</label><input class="input num" value="56 000" placeholder="0, если не в призах"></div>
+
+    <div class="frow">
+      <div class="f"><label class="f__label">Место <span style="color:var(--text-3);font-weight:400">· необязательно</span></label><input class="input num" value="12"></div>
+      <div class="f"><label class="f__label">Поле <span style="color:var(--text-3);font-weight:400">· игроков</span></label><input class="input num" placeholder="—"></div>
+    </div>
+
+    <div class="f"><label class="f__label">Заметка</label><input class="input" placeholder="Как сыграли?"></div>
+
+    <button class="btn" onclick="closeSheet()">Сохранить · профит +51 400 ₽</button>
+  </div>
+
+</div>
+<script>
+function openSheet(){document.getElementById('ovl').classList.add('overlay--open');document.getElementById('sheet').classList.add('sheet--open')}
+function closeSheet(){document.getElementById('ovl').classList.remove('overlay--open');document.getElementById('sheet').classList.remove('sheet--open')}
+</script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Day2 — Шеринг-карточка трекера</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#3A362F;font-family:'Manrope',system-ui,sans-serif;padding:26px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.cap{font-size:12px;font-weight:700;color:#E7DCC5;text-transform:uppercase;letter-spacing:.08em;text-align:center}
+.cap small{display:block;text-transform:none;letter-spacing:0;font-weight:500;color:#BFB49C;margin-top:4px;font-size:11.5px;max-width:640px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ===== КАРТОЧКА 1080×1080 (уменьшена до 620 для просмотра) ===== */
+.card{width:620px;height:620px;background:
+    radial-gradient(120% 90% at 88% -10%, rgba(217,179,106,.16) 0%, rgba(217,179,106,0) 55%),
+    linear-gradient(168deg, #14120F 0%, #0B0A09 58%, #0E0C09 100%);
+  border-radius:26px;box-shadow:0 16px 50px rgba(0,0,0,.55);position:relative;overflow:hidden;
+  padding:36px 34px 30px;display:flex;flex-direction:column;color:#F5F2EA}
+/* тонкая золотая рамка */
+.card::before{content:'';position:absolute;inset:0;border-radius:26px;padding:1px;
+  background:linear-gradient(150deg, rgba(241,214,142,.5), rgba(217,179,106,.08) 40%, rgba(217,179,106,.04) 70%, rgba(241,214,142,.26));
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+
+/* шапка */
+.hd{display:flex;align-items:flex-start;gap:14px}
+.lg{display:inline-flex;align-items:center;gap:7px;font-weight:800;font-size:26px;letter-spacing:-.02em}
+.lg i{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;
+  background:linear-gradient(180deg,#F1D68E,#D3A94F);color:#1C1503;border-radius:10px;font-size:20px;font-weight:800;font-style:normal;
+  transform:rotate(-4deg);box-shadow:inset 0 1px 0 rgba(255,255,255,.45)}
+.hd__r{margin-left:auto;text-align:right}
+.hd__p{font-size:12.5px;font-weight:700;color:#A9A395}
+.hd__c{font-size:11px;font-weight:700;color:#6E6A5F;margin-top:2px;letter-spacing:.06em}
+
+/* главная цифра */
+.hero{margin-top:26px}
+.hero__l{font-size:11.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#8A6A2B}
+.hero__v{font-size:60px;font-weight:800;letter-spacing:-.035em;line-height:1;margin-top:7px;
+  background:linear-gradient(180deg,#F7E7BC,#D3A94F);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero__v.neg{background:linear-gradient(180deg,#FF9C9C,#D64F4F);-webkit-background-clip:text;background-clip:text}
+.hero__s{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:13px;color:#A9A395}
+.hero__s b{color:#43D9A3;font-weight:800}
+.hero__s .sep{width:3px;height:3px;border-radius:50%;background:#4A463C}
+
+/* статы */
+.st{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:22px}
+.st__i{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:13px 14px}
+.st__l{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#6E6A5F}
+.st__v{font-size:21px;font-weight:800;margin-top:4px;letter-spacing:-.02em}
+.st__v.pos{color:#43D9A3}
+.st__x{font-size:10.5px;color:#6E6A5F;margin-top:1px}
+
+/* график */
+.ch{flex:1;margin-top:20px;position:relative;min-height:0}
+.ch svg{width:100%;height:100%;display:block}
+.ch__zero{font-size:9.5px;color:#4A463C;position:absolute;left:0;font-weight:700}
+
+/* футер */
+.ft{display:flex;align-items:center;gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.07)}
+.ft__t{font-size:12px;color:#6E6A5F}
+.ft__t b{color:#A9A395;font-weight:700}
+.ft__qr{margin-left:auto;width:52px;height:52px;background:#F5F2EA;border-radius:9px;padding:4px}
+</style>
+</head>
+<body>
+
+<div class="cap">Шеринг-карточка трекера · 1080×1080
+  <small>Профит — главный герой карточки золотым градиентом. Форматированные числа с валютой, наш чёрно-золотой фон, QR на приложение. Показана в масштабе 620px</small>
+</div>
+
+<div class="card">
+  <div class="hd">
+    <span class="lg">Day<i>2</i></span>
+    <div class="hd__r">
+      <div class="hd__p num">Январь — июль 2026</div>
+      <div class="hd__c">ЛИЧНАЯ СТАТИСТИКА</div>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="hero__l">Профит за период</div>
+    <div class="hero__v num">+214 000 ₽</div>
+    <div class="hero__s num">
+      <span>24 турнира</span><span class="sep"></span>
+      <span>вложено 111 000 ₽</span><span class="sep"></span>
+      <span>лучший финиш <b>2 место</b></span>
+    </div>
+  </div>
+
+  <div class="st num">
+    <div class="st__i"><div class="st__l">ROI</div><div class="st__v pos">+192,8 %</div></div>
+    <div class="st__i"><div class="st__l">ABI</div><div class="st__v">13 875 ₽</div><div class="st__x">24 входа</div></div>
+    <div class="st__i"><div class="st__l">ITM</div><div class="st__v">33,3 %</div><div class="st__x">8 из 24</div></div>
+  </div>
+
+  <div class="ch">
+    <svg viewBox="0 0 552 180" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#D9B36A" stop-opacity=".28"/>
+          <stop offset="100%" stop-color="#D9B36A" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#C79E48"/>
+          <stop offset="100%" stop-color="#F1D68E"/>
+        </linearGradient>
+      </defs>
+      <!-- нулевая линия -->
+      <line x1="0" y1="150" x2="552" y2="150" stroke="rgba(255,255,255,.09)" stroke-dasharray="3 4"/>
+      <!-- заливка -->
+      <path d="M0 152 L70 158 L140 138 L210 146 L275 96 L340 70 L410 52 L480 44 L552 30 L552 180 L0 180 Z" fill="url(#fill)"/>
+      <!-- линия -->
+      <path d="M0 152 L70 158 L140 138 L210 146 L275 96 L340 70 L410 52 L480 44 L552 30"
+            fill="none" stroke="url(#line)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+      <!-- точка конца -->
+      <circle cx="552" cy="30" r="5.5" fill="#F1D68E"/>
+      <circle cx="552" cy="30" r="11" fill="#F1D68E" opacity=".18"/>
+    </svg>
+    <span class="ch__zero" style="bottom:14%">0</span>
+  </div>
+
+  <div class="ft">
+    <div class="ft__t">Расписание живых серий, напоминания и трекер<br><b>day2.ru</b></div>
+    <svg class="ft__qr" viewBox="0 0 44 44"><rect width="44" height="44" fill="#F5F2EA"/><g fill="#0B0A09"><rect x="1" y="1" width="11" height="11"/><rect x="4" y="4" width="5" height="5" fill="#F5F2EA"/><rect x="32" y="1" width="11" height="11"/><rect x="35" y="4" width="5" height="5" fill="#F5F2EA"/><rect x="1" y="32" width="11" height="11"/><rect x="4" y="35" width="5" height="5" fill="#F5F2EA"/><rect x="15" y="3" width="2.6" height="2.6"/><rect x="21" y="3" width="2.6" height="2.6"/><rect x="26" y="7" width="2.6" height="2.6"/><rect x="15" y="9" width="2.6" height="2.6"/><rect x="23" y="12" width="2.6" height="2.6"/><rect x="18" y="15" width="2.6" height="2.6"/><rect x="3" y="15" width="2.6" height="2.6"/><rect x="8" y="19" width="2.6" height="2.6"/><rect x="14" y="18" width="2.6" height="2.6"/><rect x="20" y="21" width="2.6" height="2.6"/><rect x="26" y="18" width="2.6" height="2.6"/><rect x="31" y="21" width="2.6" height="2.6"/><rect x="37" y="15" width="2.6" height="2.6"/><rect x="40" y="22" width="2.6" height="2.6"/><rect x="32" y="26" width="2.6" height="2.6"/><rect x="16" y="26" width="2.6" height="2.6"/><rect x="22" y="29" width="2.6" height="2.6"/><rect x="9" y="27" width="2.6" height="2.6"/><rect x="3" y="24" width="2.6" height="2.6"/><rect x="38" y="32" width="2.6" height="2.6"/><rect x="27" y="35" width="2.6" height="2.6"/><rect x="17" y="37" width="2.6" height="2.6"/><rect x="23" y="40" width="2.6" height="2.6"/><rect x="33" y="39" width="2.6" height="2.6"/><rect x="40" y="36" width="2.6" height="2.6"/><rect x="15" y="32" width="2.6" height="2.6"/></g></svg>
+  </div>
+</div>
+
+<div class="cap" style="margin-top:8px">Вариант с отрицательным профитом
+  <small>Красный градиент вместо золотого, честная подача — карточка должна работать и в минусе</small>
+</div>
+
+<div class="card" style="height:620px">
+  <div class="hd">
+    <span class="lg">Day<i>2</i></span>
+    <div class="hd__r">
+      <div class="hd__p num">Июль 2026</div>
+      <div class="hd__c">ЛИЧНАЯ СТАТИСТИКА</div>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="hero__l">Профит за период</div>
+    <div class="hero__v neg num">−48 300 ₽</div>
+    <div class="hero__s num">
+      <span>11 турниров</span><span class="sep"></span>
+      <span>вложено 92 000 ₽</span><span class="sep"></span>
+      <span>лучший финиш <b style="color:#A9A395">14 место</b></span>
+    </div>
+  </div>
+
+  <div class="st num">
+    <div class="st__i"><div class="st__l">ROI</div><div class="st__v" style="color:#FF6B6B">−52,5 %</div></div>
+    <div class="st__i"><div class="st__l">ABI</div><div class="st__v">8 364 ₽</div><div class="st__x">11 входов</div></div>
+    <div class="st__i"><div class="st__l">ITM</div><div class="st__v">18,2 %</div><div class="st__x">2 из 11</div></div>
+  </div>
+
+  <div class="ch">
+    <svg viewBox="0 0 552 180" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="fill2" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0%" stop-color="#FF6B6B" stop-opacity=".22"/>
+          <stop offset="100%" stop-color="#FF6B6B" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="line2" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#D64F4F"/>
+          <stop offset="100%" stop-color="#FF9C9C"/>
+        </linearGradient>
+      </defs>
+      <line x1="0" y1="46" x2="552" y2="46" stroke="rgba(255,255,255,.09)" stroke-dasharray="3 4"/>
+      <path d="M0 46 L70 62 L140 54 L210 88 L275 76 L340 108 L410 96 L480 128 L552 140 L552 46 Z" fill="url(#fill2)"/>
+      <path d="M0 46 L70 62 L140 54 L210 88 L275 76 L340 108 L410 96 L480 128 L552 140"
+            fill="none" stroke="url(#line2)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="552" cy="140" r="5.5" fill="#FF9C9C"/>
+      <circle cx="552" cy="140" r="11" fill="#FF9C9C" opacity=".18"/>
+    </svg>
+    <span class="ch__zero" style="top:20%">0</span>
+  </div>
+
+  <div class="ft">
+    <div class="ft__t">Расписание живых серий, напоминания и трекер<br><b>day2.ru</b></div>
+    <svg class="ft__qr" viewBox="0 0 44 44"><rect width="44" height="44" fill="#F5F2EA"/><g fill="#0B0A09"><rect x="1" y="1" width="11" height="11"/><rect x="4" y="4" width="5" height="5" fill="#F5F2EA"/><rect x="32" y="1" width="11" height="11"/><rect x="35" y="4" width="5" height="5" fill="#F5F2EA"/><rect x="1" y="32" width="11" height="11"/><rect x="4" y="35" width="5" height="5" fill="#F5F2EA"/><rect x="15" y="3" width="2.6" height="2.6"/><rect x="21" y="3" width="2.6" height="2.6"/><rect x="26" y="7" width="2.6" height="2.6"/><rect x="15" y="9" width="2.6" height="2.6"/><rect x="23" y="12" width="2.6" height="2.6"/><rect x="18" y="15" width="2.6" height="2.6"/><rect x="3" y="15" width="2.6" height="2.6"/><rect x="8" y="19" width="2.6" height="2.6"/><rect x="14" y="18" width="2.6" height="2.6"/><rect x="20" y="21" width="2.6" height="2.6"/><rect x="26" y="18" width="2.6" height="2.6"/><rect x="31" y="21" width="2.6" height="2.6"/><rect x="37" y="15" width="2.6" height="2.6"/><rect x="40" y="22" width="2.6" height="2.6"/><rect x="32" y="26" width="2.6" height="2.6"/><rect x="16" y="26" width="2.6" height="2.6"/><rect x="22" y="29" width="2.6" height="2.6"/><rect x="9" y="27" width="2.6" height="2.6"/><rect x="3" y="24" width="2.6" height="2.6"/><rect x="38" y="32" width="2.6" height="2.6"/><rect x="27" y="35" width="2.6" height="2.6"/><rect x="17" y="37" width="2.6" height="2.6"/><rect x="23" y="40" width="2.6" height="2.6"/><rect x="33" y="39" width="2.6" height="2.6"/><rect x="40" y="36" width="2.6" height="2.6"/><rect x="15" y="32" width="2.6" height="2.6"/></g></svg>
+  </div>
+</div>
+
+</body>
+</html>

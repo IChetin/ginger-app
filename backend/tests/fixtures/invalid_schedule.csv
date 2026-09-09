@@ -1,0 +1,4 @@
+number,name,buyin,currency,date,time
+1,Outside,1000,RUB,2020-01-01,12:00
+2,Negative,-100,RUB,2026-08-02,12:00
+3,UnknownFX,1000,XYZ,2026-08-02,12:00

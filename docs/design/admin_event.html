@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day2 Admin — Турнир</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root,[data-theme="dark"]{
+  --bg:#0B0A09;--surface:#141311;--surface-2:#1C1A16;--surface-3:#26231D;
+  --line:rgba(255,255,255,.07);--line-strong:rgba(255,255,255,.13);--line-gold:rgba(217,179,106,.35);
+  --text:#F5F2EA;--text-2:#A9A395;--text-3:#6E6A5F;--text-on-gold:#1C1503;
+  --gold:#D9B36A;--gold-soft:rgba(217,179,106,.13);
+  --gold-grad:linear-gradient(180deg,#F1D68E 0%,#D3A94F 100%);
+  --live:#43D9A3;--live-soft:rgba(67,217,163,.13);
+  --warn:#F58F3C;--warn-soft:rgba(245,143,60,.13);
+  --danger:#FF6B6B;--danger-soft:rgba(255,107,107,.13);
+  --info:#6CA8FF;--info-soft:rgba(108,168,255,.13);
+  --r-sm:8px;--r-md:10px;--r-lg:14px;--r-full:999px;--font:'Manrope',system-ui,sans-serif;
+}
+[data-theme="light"]{
+  --bg:#F4EEE2;--surface:#FCF8EF;--surface-2:#F0E8D7;--surface-3:#E7DCC5;
+  --line:rgba(60,45,20,.10);--line-strong:rgba(60,45,20,.18);--line-gold:rgba(138,106,43,.38);
+  --text:#2A2209;--text-2:#6E6449;--text-3:#9C9173;--text-on-gold:#241A04;
+  --gold:#8A6A2B;--gold-soft:rgba(138,106,43,.12);
+  --gold-grad:linear-gradient(180deg,#E9C877 0%,#C89A3F 100%);
+  --live:#1F9E6E;--live-soft:rgba(31,158,110,.12);--warn:#C46A15;--warn-soft:rgba(196,106,21,.12);
+  --danger:#C33B3B;--danger-soft:rgba(195,59,59,.12);--info:#2E6FC4;--info-soft:rgba(46,111,196,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5;display:flex;min-height:100vh}
+.num{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.ic{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+.side{width:236px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:16px 12px;position:sticky;top:0;height:100vh}
+.side__logo{display:flex;align-items:center;gap:7px;font-weight:800;font-size:17px;padding:6px 8px 18px;cursor:pointer}
+.side__logo .chip2{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:var(--gold-grad);color:var(--text-on-gold);border-radius:7px;font-size:14px;font-weight:800;transform:rotate(-4deg)}
+.side__logo small{font-size:11px;font-weight:700;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase;margin-left:2px}
+.side__group{font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.1em;text-transform:uppercase;padding:12px 8px 6px}
+.nav{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--r-md);color:var(--text-2);font-weight:600;font-size:14px;cursor:pointer;border:none;background:none;font-family:var(--font);width:100%;text-align:left}
+.nav:hover{background:var(--surface-2);color:var(--text)}
+.nav--on{background:var(--gold-soft);color:var(--gold)}
+.nav__count{margin-left:auto;font-size:11px;font-weight:700;color:var(--text-3)}
+.side__foot{margin-top:auto;border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:4px}
+.side__me{display:flex;align-items:center;gap:10px;padding:6px 8px}
+.ava{width:32px;height:32px;border-radius:10px;background:var(--gold-grad);color:var(--text-on-gold);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0}
+.side__mail{font-size:13px;font-weight:700;line-height:1.2}
+.side__role{font-size:11px;color:var(--text-3)}
+
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.head{padding:16px 24px 0;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:10}
+.crumb{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-3);margin-bottom:5px}
+.crumb b{color:var(--gold);font-weight:700;cursor:pointer}
+.headrow{display:flex;align-items:center;gap:12px;padding-bottom:12px}
+.h1{font-size:20px;font-weight:800;letter-spacing:-.01em}
+.spacer{flex:1}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;cursor:pointer;font-family:var(--font);font-weight:700;border-radius:var(--r-md);height:36px;padding:0 15px;font-size:14px}
+.btn:active{transform:translateY(1px)}
+.btn--primary{background:var(--gold-grad);color:var(--text-on-gold);font-weight:800}
+.btn--sec{background:transparent;color:var(--text);border:1px solid var(--line-gold)}
+.btn--sec:hover{background:var(--gold-soft)}
+.btn--ghost{background:transparent;color:var(--text-2);border:1px solid var(--line-strong)}
+.btn--ghost:hover{background:var(--surface-2);color:var(--text)}
+.btn--danger{background:transparent;color:var(--danger);border:1px solid var(--danger-soft)}
+.btn--danger:hover{background:var(--danger-soft)}
+.btn--sm{height:31px;padding:0 11px;font-size:13px;border-radius:var(--r-sm)}
+.btn--icon{width:31px;padding:0}
+.tabs{display:flex;gap:2px}
+.tab{height:38px;padding:0 14px;border:none;background:none;color:var(--text-2);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent}
+.tab--on{color:var(--gold);border-bottom-color:var(--gold)}
+.tab__n{font-size:11px;color:var(--text-3);margin-left:5px;font-variant-numeric:tabular-nums}
+
+.body{padding:20px 24px 90px;flex:1;max-width:1180px}
+.cols{display:grid;grid-template-columns:1fr 316px;gap:18px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px;margin-bottom:14px}
+.card__t{font-size:14px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card__t .ic{color:var(--gold)}
+.f{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.f__l{font-size:12px;font-weight:600;color:var(--text-2)}
+.f__h{font-size:11px;color:var(--text-3)}
+.inp{height:38px;padding:0 11px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:var(--r-md);color:var(--text);font-family:var(--font);font-size:14px;width:100%}
+.inp:focus{outline:none;border-color:var(--gold)}
+textarea.inp{height:70px;padding:9px 11px;resize:vertical}
+.frow{display:flex;gap:10px}
+.frow .f{flex:1}
+.tagbox{display:flex;flex-wrap:wrap;gap:7px;padding:8px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:var(--r-md);min-height:44px;align-items:center}
+.tag{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;background:var(--gold-soft);border:1px solid var(--line-gold);border-radius:var(--r-full);font-size:12px;font-weight:700;color:var(--gold)}
+.tag button{border:none;background:none;color:inherit;cursor:pointer;display:flex;padding:0}
+.tagadd{border:1px dashed var(--line-strong);background:none;color:var(--text-3);height:26px;padding:0 10px;border-radius:var(--r-full);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font)}
+
+/* флайты */
+.fl{display:flex;gap:9px;align-items:center;margin-bottom:8px}
+.fl__chip{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:var(--surface-3);border:1px solid var(--line-strong);font-size:11px;font-weight:800;color:var(--text-3);flex-shrink:0}
+.fl__subs{font-size:11px;color:var(--gold);font-weight:700;white-space:nowrap;min-width:34px;text-align:right}
+
+/* структура */
+.btbl{width:100%;border-collapse:collapse}
+.btbl th{font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+.btbl td{padding:4px 10px;border-bottom:1px solid var(--line)}
+.btbl tr:last-child td{border-bottom:none}
+.cell{height:32px;padding:0 8px;background:transparent;border:1px solid transparent;border-radius:var(--r-sm);color:var(--text);font-family:var(--font);font-size:13px;width:100%;font-variant-numeric:tabular-nums}
+.cell:hover{border-color:var(--line-strong);background:var(--surface-2)}
+.cell:focus{outline:none;border-color:var(--gold);background:var(--surface-2)}
+.brk td{background:var(--surface-2)}
+.brk .lbl{font-size:12px;font-weight:700;color:var(--text-3);text-align:center}
+.lreg{border-bottom:2px solid var(--line-gold) !important}
+.lregmark{font-size:10px;font-weight:800;color:var(--gold);white-space:nowrap}
+.lvl{color:var(--text-3);font-weight:800;font-size:13px;width:38px;text-align:center;font-variant-numeric:tabular-nums}
+.strtools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+/* правая колонка */
+.stat{display:flex;gap:16px}
+.stat div b{display:block;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.stat div span{font-size:11px;color:var(--text-3)}
+.badge{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:var(--r-full);font-size:11px;font-weight:700}
+.badge--live{background:var(--live-soft);color:var(--live)}
+.badge--warn{background:var(--warn-soft);color:var(--warn)}
+.badge--pub{background:var(--gold-soft);color:var(--gold)}
+.dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.hist{display:flex;flex-direction:column;gap:9px;font-size:12px;color:var(--text-2)}
+.hist b{color:var(--text);font-weight:700;display:block}
+.hist .o{color:var(--text-3);text-decoration:line-through}
+.hist .a{color:var(--gold)}
+
+/* нижняя панель сохранения */
+.savebar{position:fixed;bottom:0;left:236px;right:0;display:flex;align-items:center;gap:12px;padding:12px 24px;background:var(--surface);border-top:1px solid var(--line-strong);z-index:20}
+.notice{display:flex;gap:9px;align-items:center;font-size:12.5px;color:var(--text-2);padding:8px 12px;background:var(--warn-soft);border:1px solid rgba(245,143,60,.3);border-radius:var(--r-md)}
+.notice b{color:var(--text)}
+.chkbx{display:flex;align-items:center;gap:7px;font-size:12.5px;cursor:pointer;color:var(--text-2)}
+.chkbx input{accent-color:var(--gold)}
+.hide{display:none}
+.theme-tg{position:fixed;bottom:70px;right:16px;z-index:60;display:flex;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-full);padding:3px;gap:2px}
+.theme-tg button{border:none;background:none;color:var(--text-2);font-family:var(--font);font-size:11px;font-weight:700;padding:5px 11px;border-radius:var(--r-full);cursor:pointer}
+.theme-tg button.on{background:var(--gold-grad);color:var(--text-on-gold)}
+@media(max-width:1000px){.cols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<aside class="side">
+  <div class="side__logo">Day<span class="chip2">2</span><small>админка</small></div>
+  <div class="side__group">Контент</div>
+  <button class="nav"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="8" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="3" y="15" width="7" height="6" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/></svg>Панель</button>
+  <button class="nav nav--on"><svg class="ic" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Серии<span class="nav__count">12</span></button>
+  <button class="nav"><svg class="ic" viewBox="0 0 24 24"><path d="M12 15V3M12 3 8 7M12 3l4 4"/><path d="M5 15v4h14v-4"/></svg>Импорт<span class="nav__count">2</span></button>
+  <button class="nav"><svg class="ic" viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Площадки<span class="nav__count">9</span></button>
+  <button class="nav"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 10h6M9 14h6"/></svg>Организаторы<span class="nav__count">6</span></button>
+  <div class="side__group">Управление</div>
+  <button class="nav"><svg class="ic" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c1.2-3.5 4-5 7-5s5.8 1.5 7 5"/><path d="M17 11h5M19.5 8.5v5"/></svg>Пользователи<span class="nav__count">1 284</span></button>
+  <button class="nav"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Журнал изменений</button>
+  <div class="side__foot">
+    <button class="nav"><svg class="ic" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5H5V6h5"/></svg>Открыть приложение</button>
+    <div class="side__me"><div class="ava">РЕ</div><div><div class="side__mail">editor@day2.ru</div><div class="side__role">Редактор</div></div></div>
+  </div>
+</aside>
+
+<main class="main">
+
+  <div class="head">
+    <div class="crumb"><b>Серии</b> / <b>RPT Kaliningrad</b> / Турнир #5</div>
+    <div class="headrow">
+      <div class="h1">#5 Main Event</div>
+      <span class="badge badge--warn"><span class="dot"></span>Изменён</span>
+      <div class="spacer"></div>
+      <button class="btn btn--ghost btn--sm"><svg class="ic" style="width:15px;height:15px" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5H5V6h5"/></svg>В приложении</button>
+      <button class="btn btn--ghost btn--sm"><svg class="ic" style="width:15px;height:15px" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5h10"/></svg>Дублировать</button>
+      <button class="btn btn--danger btn--sm">Отменить турнир</button>
+    </div>
+    <div class="tabs">
+      <button class="tab tab--on" onclick="tab(1)">Параметры</button>
+      <button class="tab" onclick="tab(2)">Структура<span class="tab__n">24 уровня</span></button>
+      <button class="tab" onclick="tab(3)">История<span class="tab__n">6</span></button>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="cols">
+
+      <!-- ЛЕВАЯ КОЛОНКА -->
+      <div>
+        <!-- ВКЛАДКА 1 -->
+        <div id="t1">
+          <div class="card">
+            <div class="card__t"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Основное</div>
+            <div class="frow">
+              <div class="f" style="flex:3"><label class="f__l">Название</label><input class="inp" value="Main Event"></div>
+              <div class="f" style="max-width:90px"><label class="f__l">№ в сетке</label><input class="inp num" value="5"></div>
+            </div>
+            <div class="frow">
+              <div class="f"><label class="f__l">Бай-ин</label><input class="inp num" value="44 000"></div>
+              <div class="f" style="max-width:120px"><label class="f__l">Валюта</label><select class="inp"><option>RUB ₽</option><option>BYN</option><option>USD $</option><option>EUR €</option></select></div>
+              <div class="f"><label class="f__l">Гарантия</label><input class="inp num" value="20 000 000" placeholder="нет"></div>
+            </div>
+            <div class="frow">
+              <div class="f"><label class="f__l">Дисциплина</label><select class="inp"><option>NLH</option><option>PLO</option><option>PLO5</option><option>Mixed</option></select></div>
+              <div class="f"><label class="f__l">Стартовый стек</label><input class="inp num" value="50 000" placeholder="—"></div>
+              <div class="f"><label class="f__l">Поздняя рег. до уровня</label><input class="inp num" value="10" placeholder="—"></div>
+            </div>
+            <div class="frow">
+              <div class="f"><label class="f__l">Ре-энтри</label><select class="inp"><option>×1</option><option>×2</option><option>Без лимита</option><option>Фризаут</option></select></div>
+              <div class="f"><label class="f__l">Статус</label><select class="inp"><option>Опубликован</option><option>Изменён</option><option>Отменён</option></select></div>
+            </div>
+            <div class="f">
+              <label class="f__l">Теги</label>
+              <div class="tagbox">
+                <span class="tag">Дипстек<button><svg class="ic" style="width:11px;height:11px" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>
+                <span class="tag">Флагман<button><svg class="ic" style="width:11px;height:11px" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>
+                <button class="tagadd">+ тег</button>
+              </div>
+              <span class="f__h">Турбо, баунти, сателлит, дипстек — влияют на фильтры в приложении</span>
+            </div>
+            <div class="f"><label class="f__l">Примечание</label><textarea class="inp" placeholder="Видно игрокам в карточке турнира">Победитель получает билет на международную серию.</textarea></div>
+          </div>
+
+          <div class="card">
+            <div class="card__t"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 3v4M16 3v4"/></svg>Флайты<span style="margin-left:auto;font-size:11px;font-weight:600;color:var(--text-3)">напоминания ставятся на каждый отдельно</span></div>
+
+            <div class="fl">
+              <span class="fl__chip">1</span>
+              <input class="inp" value="Day 1A" style="max-width:104px" placeholder="без метки">
+              <input class="inp num" value="02.08.2026">
+              <input class="inp num" value="20:00" style="max-width:88px">
+              <span class="fl__subs">47 <svg class="ic" style="width:11px;height:11px;display:inline" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg></span>
+              <button class="btn btn--ghost btn--sm btn--icon"><svg class="ic" style="width:14px;height:14px" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+            </div>
+            <div class="fl">
+              <span class="fl__chip">2</span>
+              <input class="inp" value="Day 1B" style="max-width:104px">
+              <input class="inp num" value="03.08.2026">
+              <input class="inp num" value="20:00" style="max-width:88px">
+              <span class="fl__subs">31 <svg class="ic" style="width:11px;height:11px;display:inline" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg></span>
+              <button class="btn btn--ghost btn--sm btn--icon"><svg class="ic" style="width:14px;height:14px" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+            </div>
+            <div class="fl">
+              <span class="fl__chip">3</span>
+              <input class="inp" value="Day 1C" style="max-width:104px">
+              <input class="inp num" value="04.08.2026">
+              <input class="inp num" value="20:00" style="max-width:88px">
+              <span class="fl__subs">12 <svg class="ic" style="width:11px;height:11px;display:inline" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg></span>
+              <button class="btn btn--ghost btn--sm btn--icon"><svg class="ic" style="width:14px;height:14px" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+            </div>
+            <div class="fl">
+              <span class="fl__chip">4</span>
+              <input class="inp" value="Day 2" style="max-width:104px">
+              <input class="inp num" value="05.08.2026">
+              <input class="inp num" value="14:00" style="max-width:88px">
+              <span class="fl__subs">—</span>
+              <button class="btn btn--ghost btn--sm btn--icon"><svg class="ic" style="width:14px;height:14px" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+            </div>
+
+            <button class="btn btn--ghost btn--sm" style="margin-top:4px">+ Добавить флайт</button>
+            <div class="f__h" style="margin-top:9px">Время указывается в поясе площадки — <b style="color:var(--text-2)">Europe/Kaliningrad (UTC+2)</b>. Игрокам показывается местное время площадки и их собственное.</div>
+          </div>
+        </div>
+
+        <!-- ВКЛАДКА 2: СТРУКТУРА -->
+        <div id="t2" class="hide">
+          <div class="card">
+            <div class="card__t"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20h4V10H4zM10 20h4V4h-4zM16 20h4v-6h-4z"/></svg>Структура блайндов</div>
+            <table class="btbl">
+              <thead><tr><th style="width:38px">Ур.</th><th>Small blind</th><th>Big blind</th><th>Анте</th><th style="width:86px">Минут</th><th style="width:120px"></th></tr></thead>
+              <tbody class="num">
+                <tr><td class="lvl">1</td><td><input class="cell" value="100"></td><td><input class="cell" value="200"></td><td><input class="cell" value="200"></td><td><input class="cell" value="40"></td><td></td></tr>
+                <tr><td class="lvl">2</td><td><input class="cell" value="200"></td><td><input class="cell" value="300"></td><td><input class="cell" value="300"></td><td><input class="cell" value="40"></td><td></td></tr>
+                <tr><td class="lvl">3</td><td><input class="cell" value="200"></td><td><input class="cell" value="400"></td><td><input class="cell" value="400"></td><td><input class="cell" value="40"></td><td></td></tr>
+                <tr><td class="lvl">4</td><td><input class="cell" value="300"></td><td><input class="cell" value="500"></td><td><input class="cell" value="500"></td><td><input class="cell" value="40"></td><td></td></tr>
+                <tr class="brk"><td class="lvl">—</td><td colspan="3" class="lbl">Перерыв</td><td><input class="cell" value="15"></td><td></td></tr>
+                <tr><td class="lvl">5</td><td><input class="cell" value="300"></td><td><input class="cell" value="600"></td><td><input class="cell" value="600"></td><td><input class="cell" value="40"></td><td></td></tr>
+                <tr><td class="lvl">6</td><td><input class="cell" value="400"></td><td><input class="cell" value="800"></td><td><input class="cell" value="800"></td><td><input class="cell" value="40"></td><td></td></tr>
+                <tr><td class="lvl">7</td><td><input class="cell" value="500"></td><td><input class="cell" value="1 000"></td><td><input class="cell" value="1 000"></td><td><input class="cell" value="40"></td><td></td></tr>
+                <tr><td class="lvl">8</td><td><input class="cell" value="600"></td><td><input class="cell" value="1 200"></td><td><input class="cell" value="1 200"></td><td><input class="cell" value="40"></td><td></td></tr>
+                <tr class="brk"><td class="lvl">—</td><td colspan="3" class="lbl">Перерыв</td><td><input class="cell" value="15"></td><td></td></tr>
+                <tr><td class="lvl">9</td><td><input class="cell" value="800"></td><td><input class="cell" value="1 200"></td><td><input class="cell" value="1 200"></td><td><input class="cell" value="40"></td><td></td></tr>
+                <tr class="lreg"><td class="lvl">10</td><td><input class="cell" value="1 000"></td><td><input class="cell" value="1 500"></td><td><input class="cell" value="1 500"></td><td><input class="cell" value="40"></td><td><span class="lregmark">← конец поздней рег.</span></td></tr>
+                <tr><td class="lvl">11</td><td><input class="cell" value="1 000"></td><td><input class="cell" value="2 000"></td><td><input class="cell" value="2 000"></td><td><input class="cell" value="40"></td><td></td></tr>
+                <tr><td class="lvl">12</td><td><input class="cell" value="1 500"></td><td><input class="cell" value="2 500"></td><td><input class="cell" value="2 500"></td><td><input class="cell" value="40"></td><td></td></tr>
+              </tbody>
+            </table>
+            <div class="strtools">
+              <button class="btn btn--ghost btn--sm">+ Уровень</button>
+              <button class="btn btn--ghost btn--sm">+ Перерыв</button>
+              <button class="btn btn--sec btn--sm">Заполнить длительность всем</button>
+              <button class="btn btn--ghost btn--sm">Импорт из файла</button>
+              <button class="btn btn--ghost btn--sm">Скопировать из другого турнира</button>
+              <div class="spacer"></div>
+              <button class="btn btn--danger btn--sm">Очистить структуру</button>
+            </div>
+            <div class="f__h" style="margin-top:10px">Структура необязательна. Если её нет — секция просто не показывается игрокам.</div>
+          </div>
+        </div>
+
+        <!-- ВКЛАДКА 3: ИСТОРИЯ -->
+        <div id="t3" class="hide">
+          <div class="card">
+            <div class="card__t"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>История изменений турнира</div>
+            <div class="hist">
+              <div><b>Перенесено время Day 1A</b><span class="o">18:00</span> <span class="a">→</span> 20:00 · сегодня 14:20 · admin@day2.ru · отправлено 47 уведомлений</div>
+              <div><b>Изменена гарантия</b><span class="o">15 000 000 ₽</span> <span class="a">→</span> 20 000 000 ₽ · 26 июл · editor@day2.ru · отправлено 39 уведомлений</div>
+              <div><b>Добавлен флайт Day 1C</b>4 авг, 20:00 · 25 июл · editor@day2.ru · без рассылки</div>
+              <div><b>Загружена структура блайндов</b>24 уровня · 25 июл · editor@day2.ru</div>
+              <div><b>Турнир создан импортом</b>rpt_kaliningrad.xlsx · парсер rpt_xlsx · 24 июл · admin@day2.ru</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ПРАВАЯ КОЛОНКА -->
+      <div>
+        <div class="card">
+          <div class="card__t"><svg class="ic" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg>Подписчики</div>
+          <div class="stat">
+            <div><b class="num">90</b><span>всего на турнир</span></div>
+            <div><b class="num">47</b><span>на ближайший флайт</span></div>
+          </div>
+          <div class="f__h" style="margin-top:9px">Любое изменение времени, гарантии или статуса уйдёт им push-уведомлением.</div>
+        </div>
+
+        <div class="card">
+          <div class="card__t"><svg class="ic" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Серия</div>
+          <div style="font-size:14px;font-weight:700">RPT Kaliningrad</div>
+          <div style="font-size:12px;color:var(--text-3);margin-top:2px">1–11 августа · Sobranie Casino</div>
+          <div style="font-size:12px;color:var(--text-3)">🇷🇺 Калининград · UTC+2</div>
+          <span class="badge badge--live" style="margin-top:9px"><span class="dot"></span>Серия идёт</span>
+          <button class="btn btn--ghost btn--sm" style="width:100%;margin-top:10px">Все турниры серии</button>
+        </div>
+
+        <div class="card">
+          <div class="card__t"><svg class="ic" viewBox="0 0 24 24"><path d="M12 8v5M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>Проверка</div>
+          <div style="font-size:12.5px;color:var(--text-2);display:flex;flex-direction:column;gap:7px">
+            <div>✓ Даты флайтов внутри дат серии</div>
+            <div>✓ Номер турнира уникален в серии</div>
+            <div style="color:var(--warn)">! Структура: уровень 9 без анте</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ПАНЕЛЬ СОХРАНЕНИЯ -->
+  <div class="savebar">
+    <div class="notice">
+      <svg class="ic" style="color:var(--warn)" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-6 6v4l-1.5 3h15L18 13V9a6 6 0 0 0-6-6z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg>
+      <span>Изменено время Day 1A · <b>47 подписчиков</b> получат «Main Event перенесён: 20:00 → 21:00»</span>
+    </div>
+    <label class="chkbx"><input type="checkbox" checked>Отправить уведомление</label>
+    <div class="spacer"></div>
+    <button class="btn btn--ghost">Отменить правки</button>
+    <button class="btn btn--primary">Сохранить и уведомить</button>
+  </div>
+
+</main>
+
+<div class="theme-tg"><button class="on" onclick="th('dark')">Тёмная</button><button onclick="th('light')">Светлая</button></div>
+<script>
+function tab(n){
+  [1,2,3].forEach(i=>document.getElementById('t'+i).classList.toggle('hide', i!==n));
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('tab--on', i===n-1));
+}
+function th(t){document.documentElement.setAttribute('data-theme',t);document.querySelectorAll('.theme-tg button').forEach((b,i)=>b.classList.toggle('on',(i===0)===(t==='dark')))}
+</script>
+</body>
+</html>

@@ -1,0 +1,474 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@utility tracker-input {
+  height: 3rem;
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-2);
+  padding-inline: 0.875rem;
+  color: var(--text);
+  font-size: 0.9375rem;
+  outline: none;
+
+  &:focus {
+    border-color: var(--gold);
+  }
+}
+
+/* ============ DAY2 · ТЁМНАЯ ТЕМА (по умолчанию) ============
+   Источник значений: docs/design/styleguide_themes.html.
+   Обе темы используют одинаковые имена переменных — компоненты о теме не знают. */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b0a09;
+  --surface: #141311;
+  --surface-2: #1c1a16;
+  --surface-3: #26231d;
+  --line: rgb(255 255 255 / 7%);
+  --line-strong: rgb(255 255 255 / 13%);
+  --line-gold: rgb(217 179 106 / 35%);
+  --text: #f5f2ea;
+  --text-2: #a9a395;
+  --text-3: #6e6a5f;
+  --text-on-gold: #1c1503;
+  --gold: #d9b36a;
+  --sticky-h: calc(3.25rem + env(safe-area-inset-top, 0px));
+  --gold-hi: #f1d68e;
+  --gold-lo: #c79e48;
+  --gold-soft: rgb(217 179 106 / 13%);
+  --gold-grad: linear-gradient(180deg, #f1d68e 0%, #d3a94f 100%);
+  --gold-grad-hover: linear-gradient(180deg, #f7e0a0 0%, #ddb55c 100%);
+  --gold-grad-press: linear-gradient(180deg, #e3c271 0%, #bd9440 100%);
+  --live: #43d9a3;
+  --live-soft: rgb(67 217 163 / 13%);
+  --warn: #f58f3c;
+  --warn-soft: rgb(245 143 60 / 13%);
+  --danger: #ff6b6b;
+  --danger-soft: rgb(255 107 107 / 13%);
+  --info: #6ca8ff;
+  --info-soft: rgb(108 168 255 / 13%);
+  /* Текст колла/рейза на --live-soft/--warn-soft, AA 4.5:1. В тёмной совпадает с --live/--warn. */
+  --action-live-fg: var(--live);
+  --action-warn-fg: var(--warn);
+  --shadow-2: 0 8px 24px rgb(0 0 0 / 50%);
+  --glow-gold: 0 4px 18px rgb(211 169 79 / 22%);
+  --glow-gold-lg: 0 6px 20px rgb(211 169 79 / 35%);
+  --nav-bg: rgb(20 19 17 / 92%);
+  --stage: #060505;
+
+  /* Токены приложения, которых нет в стайлгайде */
+  --scrim: rgb(0 0 0 / 60%); /* подложка шитов */
+  --glass: rgb(11 10 9 / 65%); /* кнопки поверх постера */
+  --knob: #ffffff; /* шарик тумблера */
+  --poster-eapt: linear-gradient(135deg, #1d2026 0%, #131518 55%, #0a0b0c 100%);
+}
+
+/* ============ DAY2 · СВЕТЛАЯ ТЕМА (кремовый люкс) ============ */
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f4eee2;
+  --surface: #fcf8ef;
+  --surface-2: #f0e8d7;
+  --surface-3: #e7dcc5;
+  --line: rgb(60 45 20 / 10%);
+  --line-strong: rgb(60 45 20 / 18%);
+  --line-gold: rgb(138 106 43 / 38%);
+  --text: #2a2209;
+  --text-2: #6e6449;
+  --text-3: #9c9173;
+  --text-on-gold: #241a04;
+  --gold: #8a6a2b;
+  --gold-hi: #e9c877;
+  --gold-lo: #b88e36;
+  --gold-soft: rgb(138 106 43 / 12%);
+  --gold-grad: linear-gradient(180deg, #e9c877 0%, #c89a3f 100%);
+  --gold-grad-hover: linear-gradient(180deg, #efd285 0%, #d2a64a 100%);
+  --gold-grad-press: linear-gradient(180deg, #dbb863 0%, #b88e36 100%);
+  --live: #1f9e6e;
+  --live-soft: rgb(31 158 110 / 12%);
+  --warn: #c46a15;
+  --warn-soft: rgb(196 106 21 / 12%);
+  --danger: #c33b3b;
+  --danger-soft: rgb(195 59 59 / 12%);
+  --info: #2e6fc4;
+  --info-soft: rgb(46 111 196 / 12%);
+  --action-live-fg: color-mix(in srgb, var(--live) 65%, #000);
+  --action-warn-fg: color-mix(in srgb, var(--warn) 70%, #000);
+  --shadow-2: 0 8px 24px rgb(80 60 20 / 14%);
+  --glow-gold: 0 4px 18px rgb(200 154 63 / 28%);
+  --glow-gold-lg: 0 6px 20px rgb(200 154 63 / 40%);
+  --nav-bg: rgb(252 248 239 / 90%);
+  --stage: #e5dac4;
+
+  --scrim: rgb(60 45 20 / 45%);
+  --glass: rgb(252 248 239 / 72%);
+  --knob: #ffffff;
+  --poster-eapt: linear-gradient(135deg, #dce1e8 0%, #eef1f5 55%, #f4eee2 100%);
+}
+
+/* Нет ручного выбора → тема по системе. Есть data-theme → он побеждает. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    color-scheme: light;
+    --bg: #f4eee2;
+    --surface: #fcf8ef;
+    --surface-2: #f0e8d7;
+    --surface-3: #e7dcc5;
+    --line: rgb(60 45 20 / 10%);
+    --line-strong: rgb(60 45 20 / 18%);
+    --line-gold: rgb(138 106 43 / 38%);
+    --text: #2a2209;
+    --text-2: #6e6449;
+    --text-3: #9c9173;
+    --text-on-gold: #241a04;
+    --gold: #8a6a2b;
+    --gold-hi: #e9c877;
+    --gold-lo: #b88e36;
+    --gold-soft: rgb(138 106 43 / 12%);
+    --gold-grad: linear-gradient(180deg, #e9c877 0%, #c89a3f 100%);
+    --gold-grad-hover: linear-gradient(180deg, #efd285 0%, #d2a64a 100%);
+    --gold-grad-press: linear-gradient(180deg, #dbb863 0%, #b88e36 100%);
+    --live: #1f9e6e;
+    --live-soft: rgb(31 158 110 / 12%);
+    --warn: #c46a15;
+    --warn-soft: rgb(196 106 21 / 12%);
+    --danger: #c33b3b;
+    --danger-soft: rgb(195 59 59 / 12%);
+    --info: #2e6fc4;
+    --info-soft: rgb(46 111 196 / 12%);
+    --action-live-fg: color-mix(in srgb, var(--live) 65%, #000);
+    --action-warn-fg: color-mix(in srgb, var(--warn) 70%, #000);
+    --shadow-2: 0 8px 24px rgb(80 60 20 / 14%);
+    --glow-gold: 0 4px 18px rgb(200 154 63 / 28%);
+    --glow-gold-lg: 0 6px 20px rgb(200 154 63 / 40%);
+    --nav-bg: rgb(252 248 239 / 90%);
+    --stage: #e5dac4;
+
+    --scrim: rgb(60 45 20 / 45%);
+    --glass: rgb(252 248 239 / 72%);
+    --knob: #ffffff;
+    --poster-eapt: linear-gradient(135deg, #dce1e8 0%, #eef1f5 55%, #f4eee2 100%);
+  }
+}
+
+/* Общее для обеих тем */
+:root {
+  /* Постеры серий: формула стайлгайда, значения берутся из токенов темы */
+  --poster-default: linear-gradient(
+    135deg,
+    var(--surface-3) 0%,
+    var(--surface) 60%,
+    var(--bg) 100%
+  );
+  --poster-rpt: var(--poster-default);
+
+  /* Блик на золотой заливке: металл выглядит одинаково в обеих темах */
+  --sheen: inset 0 1px 0 rgb(255 255 255 / 40%);
+  --sheen-soft: inset 0 1px 0 rgb(255 255 255 / 35%);
+  --sheen-glow: var(--sheen), var(--glow-gold);
+  --sheen-glow-lg: var(--sheen), var(--glow-gold-lg);
+  --knob-shadow: 0 1px 2px rgb(0 0 0 / 30%);
+}
+
+/* Day2 design tokens (styleguide v2) → Tailwind v4 @theme.
+   `inline` обязателен: утилиты должны подставлять var(--token), а не копию значения. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-stage: var(--stage);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-line-gold: var(--line-gold);
+  --color-ink: var(--text);
+  --color-ink-2: var(--text-2);
+  --color-ink-3: var(--text-3);
+  --color-ink-ongold: var(--text-on-gold);
+  --color-gold: var(--gold);
+  --color-gold-hi: var(--gold-hi);
+  --color-gold-lo: var(--gold-lo);
+  --color-gold-soft: var(--gold-soft);
+  --color-live: var(--live);
+  --color-live-soft: var(--live-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-action-live: var(--action-live-fg);
+  --color-action-warn: var(--action-warn-fg);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-nav: var(--nav-bg);
+  --color-scrim: var(--scrim);
+  --color-glass: var(--glass);
+  --color-knob: var(--knob);
+
+  --shadow-gold: var(--glow-gold);
+  --shadow-elevated: var(--shadow-2);
+  --shadow-sheen: var(--sheen);
+  --shadow-sheen-soft: var(--sheen-soft);
+  --shadow-sheen-glow: var(--sheen-glow);
+  --shadow-sheen-glow-lg: var(--sheen-glow-lg);
+  --shadow-knob: var(--knob-shadow);
+
+  --background-image-gold-grad: var(--gold-grad);
+  --background-image-gold-grad-hover: var(--gold-grad-hover);
+  --background-image-gold-grad-press: var(--gold-grad-press);
+  --background-image-poster-rpt: var(--poster-rpt);
+  --background-image-poster-eapt: var(--poster-eapt);
+  --background-image-poster-default: var(--poster-default);
+}
+
+@theme {
+  --font-sans: "Manrope", system-ui, -apple-system, sans-serif;
+
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-full: 999px;
+}
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* shadcn-переменные — производные от токенов Day2, поэтому тоже переключаются */
+:root {
+  --background: var(--bg);
+  --foreground: var(--text);
+  --card: var(--surface);
+  --card-foreground: var(--text);
+  --popover: var(--surface);
+  --popover-foreground: var(--text);
+  --primary: var(--gold);
+  --primary-foreground: var(--text-on-gold);
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--text);
+  --muted: var(--surface-2);
+  --muted-foreground: var(--text-2);
+  --accent: var(--surface-3);
+  --accent-foreground: var(--text);
+  --destructive: var(--danger);
+  --border: var(--line-strong);
+  --input: var(--line-strong);
+  --ring: var(--gold);
+  --radius: 0.75rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply font-sans;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+    background-color: var(--stage);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    transition:
+      background-color 0.2s,
+      color 0.2s;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  #root {
+    width: 100%;
+    max-width: 100%;
+    min-height: 100%;
+  }
+}
+
+@layer utilities {
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Админка: плотнее, чем приложение (макет admin_users.html) */
+.admin-shell {
+  font-size: 14px;
+  line-height: 1.5;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+}
+
+/* Phone with broken layout viewport (desktop site mode, etc.): use full layout width. */
+html.day2-layout-wide [data-mobile-shell-outer] {
+  background-color: var(--bg) !important;
+}
+
+html.day2-layout-wide [data-mobile-shell] {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+html.day2-layout-wide [data-mobile-nav] {
+  max-width: none !important;
+}
+
+html.day2-viewport-lock,
+html.day2-viewport-lock body {
+  height: 100%;
+  overflow: hidden;
+}
+
+html.day2-viewport-lock [data-mobile-shell-outer],
+html.day2-viewport-lock [data-mobile-shell] {
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@keyframes day2-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--live) 50%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@keyframes seatpulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgba(217, 179, 106, 0.25), 0 0 14px rgba(217, 179, 106, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(217, 179, 106, 0.4), 0 0 18px rgba(217, 179, 106, 0.45);
+  }
+}
+
+@keyframes chip-fly {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, calc(-50% - 28px)) scale(0.7);
+    opacity: 0.35;
+  }
+}
+
+@keyframes board-card-in {
+  0% {
+    opacity: 0;
+    transform: rotateY(70deg) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: rotateY(0) scale(1);
+  }
+}
+
+@utility animate-day2-pulse {
+  animation: day2-pulse 1.6s ease-out infinite;
+}
+
+@utility animate-seatpulse {
+  animation: seatpulse 1.4s ease-in-out infinite;
+}
+
+@utility animate-chip-fly {
+  animation: chip-fly 400ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes pot-away {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.45);
+  }
+}
+
+@keyframes pot-to-winner {
+  0% {
+    left: 50%;
+    top: 38%;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.85);
+  }
+  100% {
+    left: var(--pot-to-left);
+    top: var(--pot-to-top);
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@utility animate-pot-away {
+  animation: pot-away 520ms ease-in both;
+}
+
+@utility animate-pot-to-winner {
+  animation: pot-to-winner 620ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@utility animate-board-card {
+  animation: board-card-in 280ms ease-out both;
+}

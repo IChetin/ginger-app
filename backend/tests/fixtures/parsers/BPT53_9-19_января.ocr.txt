@@ -1,0 +1,50 @@
+Название турнира Buy-in Стек Уровни
+09.01 пятница
+12:00 Welcome event (KO $50) $175 30000 25/20 10 | 16:40 100/100
+17:00 Omaha classic (KO $50) $200 25000 20 9 | 20:20 100/100
+20:00 TurboDeepStack (KO $50) $150 30000 10 9 | 21:40 100/200
+10.01 суббота
+12:00 Grand event (day 1A)(KO $50) $250 50000 30 12 | 18:45 100/200 16 уров.
+18:00 Omaha 5-card PL (progressive KO $80) $220 25000 20 9 | 21:25 100/100
+21:00 DeepStack big (KO $100) $200 40000 15 9 | 23:30 100/200
+11.01 воскресенье
+12:00 Grand event (day 1B)(KO $50) $250 50000 30 12 | 18:45 100/200 16 уров.
+19:00 Medium event (progressive KO $80) $200 30000 20 9 | 22:20 100/200
+21:00 Grand event (day 1C turbo)(KO $50) $250 50000 15 12 | 00:20 100/200 16 уров.
+12.01 понедельник
+12:00 Grand event (final day)(KO $50) 30 closed 5000/10000
+13:00 Classic event (KO $100) $225 30000 25/20 10 | 17:40 100/100
+19:00 DeepStack event (KO $50) $150 50000 15 8 | 21:15 100/200
+21:30 Satellite to HighRoller event $125 15000 15 8 | 23:40 25/50
+13.01 вторник
+12:00 Belarus open event (triple mystery*)(KO $75) $225 30000 30 9 | 17:15 100/200
+17:00 Omaha HL 5-card PL (KO $50) $225 25000 20 9 | 20:20 100/100
+19:00 SuperBounty event (KO $100) $175 30000 15 9 | 21:25 100/200
+14.01 среда
+12:00 Belarus open event (triple mystery*)(final day) 30/40 closed 4000/8000
+12:00 Satellite to HighRoller event $100 15000 10 8 | 13:10 25/50
+14:00 HighRoller event $550 100000 40 10 | 21:25 200/500 10 уров.
+20:00 Satellite to HighRoller event day 2 $150 15000 15 8 | 22:10 25/50
+22:00 All-in or fold (KO $100) $200 15000 15 7 | 00:00 100/300
+15.01 четверг
+12:00 HighRoller event (day 2) $550 100000 40 3 | 14:15 1500/3000 до FT
+13:00 Big event (progressive KO $100) $250 30000 25/20 9 | 17:15 100/200
+19:00 UltraDeepStack (KO $50) $150 75000 15 10 | 21:50 100/300
+22:00 Satellite to Main event $125 15000 15 8 | 00:10 25/50
+16.01 пятница
+12:00 HighRoller event (final table) 60 closed
+12:00 Main event (day 1A) $400 100000 40 14 | 22:20 200/400 14 уров.
+20:00 BombPot Omaha 2-boards (KO $50) $250 30000 20 7 | 22:30 200
+17.01 суббота
+12:00 Main event (day 1B) $400 100000 40 14 | 22:20 200/400 14 уров.
+20:00 Middle event (progressive KO $80) $225 30000 20 9 | 22:20 100/200
+18.01 воскресенье
+12:00 Main event (day 2) $400 100000 40 2 | 13:35 3000/6000 12 уров.
+16:00 Sunday bounty event (KO $50) $200 30000 20 9 | 19:20 100/200
+20:00 Omaha Main event (day 1)(KO $100) $330 30000 30 8 | 00:10 100/100 8 уров.
+19.01 понедельник
+12:00 Main event (final day)(final table) 40/60 closed
+12:00 Omaha Main event (final day)(KO $100) $330 30000 30 2 | 13:10 600/1200
+12:00 Low bounty event (KO $25) $150 25000 25/20 9 | 16:10 100/100
+15:00 Chinese poker classic pineapple (KO $50) $300 30000 20 7 | 17:40 100
+* КО трёх размеров. Определяются в конце первого дня. КО выдаются в финальном дне.

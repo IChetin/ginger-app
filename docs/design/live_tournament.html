@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day2 — Текущий турнир</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root,[data-theme="dark"]{
+  --bg:#0B0A09;--surface:#141311;--surface-2:#1C1A16;--surface-3:#26231D;
+  --line:rgba(255,255,255,.07);--line-strong:rgba(255,255,255,.13);--line-gold:rgba(217,179,106,.35);
+  --text:#F5F2EA;--text-2:#A9A395;--text-3:#6E6A5F;--text-on-gold:#1C1503;
+  --gold:#D9B36A;--gold-soft:rgba(217,179,106,.13);
+  --gold-grad:linear-gradient(180deg,#F1D68E 0%,#D3A94F 100%);
+  --live:#43D9A3;--live-soft:rgba(67,217,163,.13);
+  --warn:#F58F3C;--warn-soft:rgba(245,143,60,.13);
+  --danger:#FF6B6B;--danger-soft:rgba(255,107,107,.13);
+  --info:#6CA8FF;--info-soft:rgba(108,168,255,.13);
+  --r-sm:10px;--r-md:12px;--r-lg:18px;--r-full:999px;--font:'Manrope',system-ui,sans-serif;
+  --shadow-2:0 8px 24px rgba(0,0,0,.5);
+}
+[data-theme="light"]{
+  --bg:#F4EEE2;--surface:#FCF8EF;--surface-2:#F0E8D7;--surface-3:#E7DCC5;
+  --line:rgba(60,45,20,.10);--line-strong:rgba(60,45,20,.18);--line-gold:rgba(138,106,43,.38);
+  --text:#2A2209;--text-2:#6E6449;--text-3:#9C9173;--text-on-gold:#241A04;
+  --gold:#8A6A2B;--gold-soft:rgba(138,106,43,.12);
+  --gold-grad:linear-gradient(180deg,#E9C877 0%,#C89A3F 100%);
+  --live:#1F9E6E;--live-soft:rgba(31,158,110,.12);--warn:#C46A15;--warn-soft:rgba(196,106,21,.12);
+  --danger:#C33B3B;--danger-soft:rgba(195,59,59,.12);--info:#2E6FC4;--info-soft:rgba(46,111,196,.12);
+  --shadow-2:0 8px 24px rgba(80,60,20,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#060505;font-family:var(--font);color:var(--text);font-size:15px;line-height:1.5;display:flex;justify-content:center;gap:22px;padding:20px;flex-wrap:wrap;align-items:flex-start}
+[data-theme="light"] body{background:#E5DAC4}
+.num{font-variant-numeric:tabular-nums}
+.ic{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.col{display:flex;flex-direction:column}
+.cap{font-size:12px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;text-align:center}
+.cap b{color:var(--gold)}
+.phone{width:378px;background:var(--bg);border:1px solid var(--line-strong);border-radius:24px;overflow:hidden;height:790px;display:flex;flex-direction:column;position:relative}
+
+/* шапка */
+.hd{display:flex;align-items:center;gap:10px;padding:13px 14px 11px;border-bottom:1px solid var(--line)}
+.iconbtn{width:34px;height:34px;border-radius:10px;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;background:var(--surface-2);color:var(--text-2)}
+.hd__t{flex:1;min-width:0}
+.hd__n{font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd__s{font-size:11.5px;color:var(--text-3);margin-top:1px}
+.live{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:var(--r-full);background:var(--live-soft);color:var(--live);font-size:11px;font-weight:800;flex-shrink:0}
+.dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.dot--p{animation:p 1.6s ease-out infinite}
+@keyframes p{0%{box-shadow:0 0 0 0 rgba(67,217,163,.5)}70%{box-shadow:0 0 0 6px rgba(67,217,163,0)}100%{box-shadow:0 0 0 0 rgba(67,217,163,0)}}
+
+.body{flex:1;overflow-y:auto;padding-bottom:14px}
+
+/* сводка вложений */
+.sum{margin:14px 14px 0;padding:16px 16px 14px;background:var(--surface);border:1px solid var(--line-gold);border-radius:var(--r-lg);text-align:center}
+.sum__l{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.sum__v{font-size:38px;font-weight:800;letter-spacing:-.03em;margin-top:4px;line-height:1}
+.sum__d{font-size:12.5px;color:var(--text-2);margin-top:6px}
+.sum__d b{color:var(--text);font-weight:700}
+
+/* кнопки действий */
+.acts{display:flex;gap:10px;margin:12px 14px 0}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;font-family:var(--font);font-weight:800;border-radius:var(--r-md);height:56px;font-size:15.5px;transition:transform .06s}
+.btn:active{transform:translateY(1px)}
+.btn--gold{flex:1;background:var(--gold-grad);color:var(--text-on-gold);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+.btn--sec{flex:1;background:transparent;color:var(--text);border:1px solid var(--line-gold)}
+.btn--danger{background:transparent;color:var(--danger);border:1px solid rgba(255,107,107,.4);height:48px;font-size:14.5px;width:100%}
+.btn--wide{width:100%;height:58px;font-size:16px}
+
+/* лента событий */
+.tl{margin:20px 14px 0}
+.tl__h{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+.tl__h h3{font-size:13px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em}
+.tl__h button{border:none;background:none;color:var(--gold);font-family:var(--font);font-size:12.5px;font-weight:700;cursor:pointer}
+.ev{display:flex;gap:11px;padding:10px 0;border-bottom:1px solid var(--line);align-items:flex-start}
+.ev:last-child{border-bottom:none}
+.ev__t{font-size:12px;font-weight:800;color:var(--text-3);min-width:38px;padding-top:2px;font-variant-numeric:tabular-nums}
+.ev__i{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ev__i--in{background:var(--gold-soft);color:var(--gold)}
+.ev__i--re{background:var(--warn-soft);color:var(--warn)}
+.ev__i--nt{background:var(--surface-3);color:var(--text-2)}
+.ev__b{flex:1;min-width:0}
+.ev__n{font-size:14px;font-weight:700}
+.ev__x{font-size:12.5px;color:var(--text-2);margin-top:1px;white-space:pre-wrap}
+.ev__m{font-size:11.5px;color:var(--text-3);margin-top:2px;font-variant-numeric:tabular-nums}
+.ev__e{border:none;background:none;color:var(--text-3);cursor:pointer;padding:3px;flex-shrink:0}
+
+/* офлайн-индикатор */
+.off{display:flex;align-items:center;gap:8px;margin:12px 14px 0;padding:9px 12px;background:var(--info-soft);border-radius:var(--r-md);font-size:12px;color:var(--info)}
+
+/* нижняя панель */
+.foot{padding:10px 14px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--surface)}
+
+/* пустое состояние / старт */
+.start{padding:26px 20px 0;text-align:center}
+.start__i{width:60px;height:60px;border-radius:18px;background:var(--gold-soft);color:var(--gold);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;transform:rotate(-4deg)}
+.start__t{font-size:19px;font-weight:800}
+.start__s{font-size:13.5px;color:var(--text-2);margin-top:6px}
+.card{margin:18px 14px 0;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);text-align:left}
+.card__l{font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.pick{display:flex;gap:11px;align-items:center;padding:11px 12px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:var(--r-md);cursor:pointer;margin-bottom:8px}
+.pick--on{border-color:var(--line-gold);background:var(--gold-soft)}
+.pick__t{font-size:14px;font-weight:700}
+.pick__s{font-size:12px;color:var(--text-3);margin-top:1px}
+.pick__r{margin-left:auto;font-size:13px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
+
+/* шит финиша */
+.ovl{position:absolute;inset:0;background:rgba(0,0,0,.62);z-index:20}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line-strong);border-radius:20px 20px 0 0;z-index:21;padding:10px 18px calc(18px + env(safe-area-inset-bottom));max-height:88%;display:flex;flex-direction:column}
+.grip{width:36px;height:4px;border-radius:2px;background:var(--line-strong);margin:0 auto 12px}
+.sh__t{font-size:19px;font-weight:800;margin-bottom:3px}
+.sh__s{font-size:13px;color:var(--text-2);margin-bottom:16px}
+.f{display:flex;flex-direction:column;gap:6px;margin-bottom:13px}
+.f__l{font-size:12.5px;font-weight:600;color:var(--text-2)}
+.inp{height:50px;padding:0 14px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:var(--r-md);color:var(--text);font-family:var(--font);font-size:16px;width:100%;font-variant-numeric:tabular-nums}
+.inp:focus{outline:none;border-color:var(--gold)}
+.frow{display:flex;gap:10px}
+.frow .f{flex:1}
+.itm{display:flex;gap:8px;margin-bottom:14px}
+.itm button{flex:1;height:44px;border-radius:var(--r-md);border:1px solid var(--line-strong);background:var(--surface-2);color:var(--text-2);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer}
+.itm button.on{background:var(--gold-soft);border-color:var(--line-gold);color:var(--gold)}
+.res{padding:12px 14px;background:var(--surface-2);border:1px solid var(--line-gold);border-radius:var(--r-md);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.res__l{font-size:12.5px;color:var(--text-2)}
+.res__v{margin-left:auto;font-size:19px;font-weight:800;color:var(--live);font-variant-numeric:tabular-nums}
+
+.theme-tg{position:fixed;bottom:14px;right:14px;z-index:99;display:flex;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-full);padding:3px;gap:2px}
+.theme-tg button{border:none;background:none;color:var(--text-2);font-family:var(--font);font-size:11px;font-weight:700;padding:5px 11px;border-radius:var(--r-full);cursor:pointer}
+.theme-tg button.on{background:var(--gold-grad);color:var(--text-on-gold)}
+</style>
+</head>
+<body>
+
+<!-- ===== 1. СТАРТ ===== -->
+<div class="col">
+  <div class="cap"><b>1</b> · начало · выбор турнира</div>
+  <div class="phone">
+    <div class="hd">
+      <button class="iconbtn"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="hd__t"><div class="hd__n">Текущий турнир</div></div>
+    </div>
+    <div class="body">
+      <div class="start">
+        <div class="start__i"><svg class="ic" style="width:26px;height:26px" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <div class="start__t">Отметьте вход в турнир</div>
+        <div class="start__s">Входы, ре-энтри и заметки сохранятся,<br>а результат сам уйдёт в трекер</div>
+      </div>
+
+      <div class="card">
+        <div class="card__l">Сегодня на вашей серии</div>
+        <div class="pick pick--on">
+          <div><div class="pick__t">#5 Main Event · Day 1A</div><div class="pick__s">RPT Kaliningrad · 20:00</div></div>
+          <span class="pick__r num">44 000 ₽</span>
+        </div>
+        <div class="pick">
+          <div><div class="pick__t">#4 Kaliningrad Knockout</div><div class="pick__s">RPT Kaliningrad · 19:00</div></div>
+          <span class="pick__r num">2 300 ₽</span>
+        </div>
+        <div class="pick">
+          <div><div class="pick__t">#6 Night Turbo</div><div class="pick__s">RPT Kaliningrad · 23:00</div></div>
+          <span class="pick__r num">3 000 ₽</span>
+        </div>
+        <div class="pick" style="justify-content:center;color:var(--gold);font-weight:700;font-size:13.5px">
+          <svg class="ic" style="width:16px;height:16px" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Другой турнир (вручную)
+        </div>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="btn btn--gold btn--wide">Я в игре · вход 44 000 ₽</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 2. ИДЁТ ===== -->
+<div class="col">
+  <div class="cap"><b>2</b> · турнир идёт</div>
+  <div class="phone">
+    <div class="hd">
+      <button class="iconbtn"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="hd__t">
+        <div class="hd__n">#5 Main Event · Day 1A</div>
+        <div class="hd__s">RPT Kaliningrad · старт 20:00</div>
+      </div>
+      <span class="live"><span class="dot dot--p"></span>В ИГРЕ</span>
+    </div>
+
+    <div class="body">
+      <div class="sum">
+        <div class="sum__l">Вложено в турнир</div>
+        <div class="sum__v num">132 000 ₽</div>
+        <div class="sum__d num">Бай-ин 44 000 ₽ · <b>3 входа</b> · в игре 4 ч 20 мин</div>
+      </div>
+
+      <div class="acts">
+        <button class="btn btn--gold">
+          <svg class="ic" style="width:19px;height:19px" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Ре-энтри
+        </button>
+        <button class="btn btn--sec">
+          <svg class="ic" style="width:19px;height:19px" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>Заметка
+        </button>
+      </div>
+
+      <div class="off">
+        <svg class="ic" style="width:15px;height:15px" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9m0 18a9 9 0 0 1-9-9"/><path d="M16 8l5 4-5 4"/></svg>
+        Нет сети · сохранено на устройстве, 2 события ждут отправки
+      </div>
+
+      <div class="tl">
+        <div class="tl__h"><h3>События</h3></div>
+
+        <div class="ev">
+          <span class="ev__t num">00:15</span>
+          <span class="ev__i ev__i--nt"><svg class="ic" style="width:15px;height:15px" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg></span>
+          <div class="ev__b"><div class="ev__x">Слева сидит рег из Минска, играет очень агрессивно с баттона. Не заходить широко.</div></div>
+          <button class="ev__e"><svg class="ic" style="width:15px;height:15px" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg></button>
+        </div>
+
+        <div class="ev">
+          <span class="ev__t num">23:40</span>
+          <span class="ev__i ev__i--re"><svg class="ic" style="width:15px;height:15px" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
+          <div class="ev__b"><div class="ev__n">Ре-энтри · 3-й вход</div><div class="ev__m num">+44 000 ₽ · всего 132 000 ₽</div></div>
+          <button class="ev__e"><svg class="ic" style="width:15px;height:15px" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg></button>
+        </div>
+
+        <div class="ev">
+          <span class="ev__t num">22:10</span>
+          <span class="ev__i ev__i--nt"><svg class="ic" style="width:15px;height:15px" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg></span>
+          <div class="ev__b"><div class="ev__x">Проиграл сет против стрита, весь стек. Разыграл нормально, ран плохой.</div></div>
+          <button class="ev__e"><svg class="ic" style="width:15px;height:15px" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg></button>
+        </div>
+
+        <div class="ev">
+          <span class="ev__t num">22:05</span>
+          <span class="ev__i ev__i--re"><svg class="ic" style="width:15px;height:15px" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
+          <div class="ev__b"><div class="ev__n">Ре-энтри · 2-й вход</div><div class="ev__m num">+44 000 ₽ · всего 88 000 ₽</div></div>
+          <button class="ev__e"><svg class="ic" style="width:15px;height:15px" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg></button>
+        </div>
+
+        <div class="ev">
+          <span class="ev__t num">20:00</span>
+          <span class="ev__i ev__i--in"><svg class="ic" style="width:15px;height:15px" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span>
+          <div class="ev__b"><div class="ev__n">Вход в турнир</div><div class="ev__m num">44 000 ₽</div></div>
+          <button class="ev__e"><svg class="ic" style="width:15px;height:15px" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <button class="btn btn--danger">Завершить турнир</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 3. ФИНИШ ===== -->
+<div class="col">
+  <div class="cap"><b>3</b> · завершение</div>
+  <div class="phone">
+    <div class="hd">
+      <button class="iconbtn"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="hd__t">
+        <div class="hd__n">#5 Main Event · Day 1A</div>
+        <div class="hd__s">RPT Kaliningrad · старт 20:00</div>
+      </div>
+      <span class="live"><span class="dot dot--p"></span>В ИГРЕ</span>
+    </div>
+    <div class="body" style="filter:blur(1.5px);opacity:.4">
+      <div class="sum">
+        <div class="sum__l">Вложено в турнир</div>
+        <div class="sum__v num">132 000 ₽</div>
+        <div class="sum__d num">Бай-ин 44 000 ₽ · <b>3 входа</b> · в игре 4 ч 20 мин</div>
+      </div>
+      <div class="acts">
+        <button class="btn btn--gold">Ре-энтри</button>
+        <button class="btn btn--sec">Заметка</button>
+      </div>
+    </div>
+
+    <div class="ovl"></div>
+    <div class="sheet">
+      <div class="grip"></div>
+      <div class="sh__t">Завершить турнир</div>
+      <div class="sh__s">Результат сохранится в трекер · 3 входа, 132 000 ₽</div>
+
+      <div class="itm">
+        <button class="on">В призах</button>
+        <button>Без призов</button>
+      </div>
+
+      <div class="frow">
+        <div class="f"><label class="f__l">Место</label><input class="inp" value="12" inputmode="numeric"></div>
+        <div class="f"><label class="f__l">Из скольких</label><input class="inp" placeholder="—" inputmode="numeric" value="418"></div>
+      </div>
+
+      <div class="f"><label class="f__l">Выплата</label><input class="inp" value="285 000" inputmode="numeric"></div>
+
+      <div class="res">
+        <span class="res__l">Профит по турниру</span>
+        <span class="res__v num">+153 000 ₽</span>
+      </div>
+
+      <button class="btn btn--gold btn--wide">Завершить и сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div class="theme-tg"><button class="on" onclick="th('dark')">Тёмная</button><button onclick="th('light')">Светлая</button></div>
+<script>
+function th(t){document.documentElement.setAttribute('data-theme',t);document.querySelectorAll('.theme-tg button').forEach((b,i)=>b.classList.toggle('on',(i===0)===(t==='dark')))}
+document.querySelectorAll('.itm button').forEach(b=>b.addEventListener('click',()=>{b.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on')}));
+</script>
+</body>
+</html>

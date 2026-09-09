@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day2 — Карточка турнира</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ==== токены Day2 (из styleguide v2) ==== */
+:root{
+  --bg:#0B0A09;--surface:#141311;--surface-2:#1C1A16;--surface-3:#26231D;
+  --line:rgba(255,255,255,.07);--line-strong:rgba(255,255,255,.13);--line-gold:rgba(217,179,106,.35);
+  --text:#F5F2EA;--text-2:#A9A395;--text-3:#6E6A5F;--text-on-gold:#1C1503;
+  --gold:#D9B36A;--gold-soft:rgba(217,179,106,.13);
+  --gold-grad:linear-gradient(180deg,#F1D68E 0%,#D3A94F 100%);
+  --live:#43D9A3;--live-soft:rgba(67,217,163,.13);
+  --warn:#F58F3C;--warn-soft:rgba(245,143,60,.13);
+  --r-sm:10px;--r-md:12px;--r-lg:18px;--r-full:999px;
+  --shadow-2:0 8px 24px rgba(0,0,0,.5);
+  --font:'Manrope',system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#060505;font-family:var(--font);color:var(--text);font-size:15px;line-height:1.5;display:flex;justify-content:center}
+.num{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.screen{width:100%;max-width:420px;min-height:100vh;background:var(--bg);position:relative;padding-bottom:120px}
+
+/* Шапка */
+.top{position:sticky;top:0;z-index:20;background:rgba(11,10,9,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:12px 16px}
+.icon-btn{width:38px;height:38px;border-radius:12px;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;background:var(--surface-2);color:var(--text-2);flex-shrink:0}
+.ic{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.top__crumb{font-size:13px;font-weight:700;color:var(--gold);cursor:pointer}
+.top__spacer{flex:1}
+
+/* Заголовок турнира */
+.head{padding:20px 16px 0}
+.badge{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:var(--r-full);font-size:12px;font-weight:700}
+.badge--warn{background:var(--warn-soft);color:var(--warn)}
+.badge--muted{background:var(--surface-2);color:var(--text-3)}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.head__title{font-size:23px;font-weight:800;letter-spacing:-.02em;margin-top:8px}
+.head__meta{font-size:14px;color:var(--text-2);margin-top:4px}
+
+/* Сетка фактов */
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px}
+.fact{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px}
+.fact--gold{border-color:var(--line-gold)}
+.fact__v{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
+.fact--gold .fact__v{color:var(--gold)}
+.fact__l{font-size:11px;color:var(--text-3);margin-top:1px}
+
+/* Секции */
+.section{padding:8px 16px 0}
+.section__title{font-size:17px;font-weight:800;margin-bottom:10px}
+.section__hint{font-size:12px;color:var(--text-3);font-weight:400;margin-left:6px}
+
+/* Флайты */
+.flights{display:flex;flex-direction:column;gap:8px}
+.frow{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md)}
+.frow--past{opacity:.5}
+.frow__chip{display:inline-flex;align-items:center;justify-content:center;height:30px;padding:0 12px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:9px;font-size:12px;font-weight:800;color:var(--text-2);flex-shrink:0}
+.frow__chip--active{background:var(--gold-grad);border-color:transparent;color:var(--text-on-gold);transform:rotate(-2deg);box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+.frow__body{flex:1;min-width:0}
+.frow__date{font-size:14px;font-weight:700}
+.frow__time{font-size:12px;color:var(--text-3)}
+.bell{width:38px;height:38px;border-radius:12px;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;background:var(--surface-2);color:var(--text-2);flex-shrink:0}
+.bell--on{background:var(--gold-soft);color:var(--gold)}
+
+/* Интервалы напоминаний */
+.reminder{margin-top:12px;padding:14px;background:var(--surface);border:1px solid var(--line-gold);border-radius:var(--r-md)}
+.reminder__title{font-size:13px;font-weight:700;color:var(--text-2)}
+.reminder__chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chip{display:inline-flex;align-items:center;height:32px;padding:0 13px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:var(--r-full);color:var(--text-2);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)}
+.chip--active{background:var(--gold-soft);border-color:var(--line-gold);color:var(--gold)}
+
+/* Структура блайндов */
+.blinds{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
+.blinds table{width:100%;border-collapse:collapse;font-size:13px}
+.blinds th{font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;padding:10px 14px;text-align:left;border-bottom:1px solid var(--line)}
+.blinds td{padding:9px 14px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.blinds tr:last-child td{border-bottom:none}
+.blinds .lvl{color:var(--text-3);font-weight:700;width:44px}
+.blinds .break td{background:var(--surface-2);color:var(--text-3);font-weight:700;font-size:12px;text-align:center}
+.blinds .latereg td{border-bottom:2px solid var(--line-gold)}
+.blinds .latereg .mark{color:var(--gold);font-size:11px;font-weight:700}
+.blinds__more{width:100%;border:none;background:none;color:var(--gold);font-family:var(--font);font-size:13px;font-weight:700;padding:12px;cursor:pointer}
+
+/* Площадка */
+.venue{display:flex;align-items:center;gap:12px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md)}
+.venue__pin{width:40px;height:40px;border-radius:12px;background:var(--gold-soft);color:var(--gold);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.venue__name{font-size:15px;font-weight:700}
+.venue__addr{font-size:12px;color:var(--text-3)}
+
+/* Липкий CTA */
+.cta{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(180deg,transparent,rgba(6,5,5,.9) 30%);z-index:30}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;font-family:var(--font);font-weight:800;letter-spacing:.01em;border-radius:var(--r-md);height:52px;width:100%;font-size:16px;background:var(--gold-grad);color:var(--text-on-gold);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 4px 18px rgba(211,169,79,.22);transition:transform .06s}
+.btn:active{transform:translateY(1px)}
+</style>
+</head>
+<body>
+<div class="screen">
+
+  <!-- Шапка -->
+  <div class="top">
+    <button class="icon-btn" aria-label="Назад"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <span class="top__crumb">RPT Kaliningrad</span>
+    <span class="top__spacer"></span>
+    <button class="icon-btn" aria-label="Поделиться"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12M12 3l-4 4M12 3l4 4"/><path d="M5 13v6h14v-6"/></svg></button>
+  </div>
+
+  <!-- Заголовок -->
+  <div class="head">
+    <span class="badge badge--warn"><span class="dot"></span>Перенесён с 18:00</span>
+    <h1 class="head__title">#5 Main Event</h1>
+    <div class="head__meta num">Ближайший старт: Day 1A · сб, 2 августа · 20:00 <span style="color:var(--text-3)">(19:00 у вас)</span></div>
+  </div>
+
+  <!-- Факты -->
+  <div class="facts num">
+    <div class="fact fact--gold"><div class="fact__v">44 000 ₽</div><div class="fact__l">Бай-ин</div></div>
+    <div class="fact fact--gold"><div class="fact__v">20 000 000 ₽</div><div class="fact__l">Гарантия</div></div>
+    <div class="fact"><div class="fact__v">50 000</div><div class="fact__l">Стартовый стек</div></div>
+    <div class="fact"><div class="fact__v">NLH</div><div class="fact__l">Дисциплина</div></div>
+    <div class="fact"><div class="fact__v">×1</div><div class="fact__l">Ре-энтри на флайт</div></div>
+    <div class="fact"><div class="fact__v">До ур. 10</div><div class="fact__l">Поздняя регистрация</div></div>
+  </div>
+
+  <!-- Флайты -->
+  <div class="section">
+    <h2 class="section__title">Флайты<span class="section__hint">напоминание — на каждый отдельно</span></h2>
+    <div class="flights">
+      <div class="frow">
+        <span class="frow__chip frow__chip--active">Day 1A</span>
+        <div class="frow__body"><div class="frow__date">Суббота, 2 августа</div><div class="frow__time num">20:00 · 19:00 у вас</div></div>
+        <button class="bell bell--on" aria-label="Напоминание включено"><svg class="ic" style="width:18px;height:18px" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-6 6v4l-1.5 3h15L18 13V9a6 6 0 0 0-6-6z" fill="currentColor"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></button>
+      </div>
+      <div class="frow">
+        <span class="frow__chip">Day 1B</span>
+        <div class="frow__body"><div class="frow__date">Воскресенье, 3 августа</div><div class="frow__time num">20:00 · 19:00 у вас</div></div>
+        <button class="bell" aria-label="Напомнить"><svg class="ic" style="width:18px;height:18px" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-6 6v4l-1.5 3h15L18 13V9a6 6 0 0 0-6-6z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></button>
+      </div>
+      <div class="frow">
+        <span class="frow__chip">Day 1C</span>
+        <div class="frow__body"><div class="frow__date">Понедельник, 4 августа</div><div class="frow__time num">20:00 · 19:00 у вас</div></div>
+        <button class="bell" aria-label="Напомнить"><svg class="ic" style="width:18px;height:18px" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-6 6v4l-1.5 3h15L18 13V9a6 6 0 0 0-6-6z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></button>
+      </div>
+      <div class="frow">
+        <span class="frow__chip">Day 2</span>
+        <div class="frow__body"><div class="frow__date">Вторник, 5 августа</div><div class="frow__time num">14:00 · 13:00 у вас</div></div>
+        <button class="bell" aria-label="Напомнить"><svg class="ic" style="width:18px;height:18px" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-6 6v4l-1.5 3h15L18 13V9a6 6 0 0 0-6-6z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></button>
+      </div>
+    </div>
+
+    <!-- Настройка интервалов (видна, т.к. есть активное напоминание) -->
+    <div class="reminder">
+      <div class="reminder__title">Напомним о Day 1A</div>
+      <div class="reminder__chips">
+        <button class="chip">За 15 мин</button>
+        <button class="chip">За 1 ч</button>
+        <button class="chip chip--active">За 2 ч</button>
+        <button class="chip">За 6 ч</button>
+        <button class="chip chip--active">За 24 ч</button>
+        <button class="chip">За 48 ч</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Структура блайндов -->
+  <div class="section" style="margin-top:20px">
+    <h2 class="section__title">Структура<span class="section__hint">уровни по 40 минут</span></h2>
+    <div class="blinds">
+      <table>
+        <thead><tr><th>Ур.</th><th>Блайнды</th><th>Анте</th><th>Мин</th></tr></thead>
+        <tbody class="num">
+          <tr><td class="lvl">1</td><td>100 / 200</td><td>200</td><td>40</td></tr>
+          <tr><td class="lvl">2</td><td>200 / 300</td><td>300</td><td>40</td></tr>
+          <tr><td class="lvl">3</td><td>200 / 400</td><td>400</td><td>40</td></tr>
+          <tr><td class="lvl">4</td><td>300 / 500</td><td>500</td><td>40</td></tr>
+          <tr class="break"><td colspan="4">Перерыв · 15 минут</td></tr>
+          <tr><td class="lvl">5</td><td>300 / 600</td><td>600</td><td>40</td></tr>
+          <tr><td class="lvl">6</td><td>400 / 800</td><td>800</td><td>40</td></tr>
+          <tr><td class="lvl">7</td><td>500 / 1 000</td><td>1 000</td><td>40</td></tr>
+          <tr><td class="lvl">8</td><td>600 / 1 200</td><td>1 200</td><td>40</td></tr>
+          <tr class="break"><td colspan="4">Перерыв · 15 минут</td></tr>
+          <tr class="latereg"><td class="lvl">10</td><td>1 000 / 1 500</td><td>1 500</td><td>40 <span class="mark">· конец поздней рег.</span></td></tr>
+        </tbody>
+      </table>
+      <button class="blinds__more">Показать все 24 уровня</button>
+    </div>
+  </div>
+
+  <!-- Площадка -->
+  <div class="section" style="margin-top:20px">
+    <h2 class="section__title">Где играем</h2>
+    <div class="venue">
+      <div class="venue__pin"><svg class="ic" viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></div>
+      <div><div class="venue__name">Sobranie Casino</div><div class="venue__addr">Калининградская обл., пос. Куликово · зона «Янтарная»</div></div>
+    </div>
+  </div>
+
+  <!-- Липкий CTA -->
+  <div class="cta">
+    <button class="btn"><svg class="ic" style="width:20px;height:20px" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Добавить результат</button>
+  </div>
+
+</div>
+</body>
+</html>

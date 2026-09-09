@@ -1,0 +1,52 @@
+{
+  "items": [
+    {
+      "id": "00000000-0000-4000-8000-0000000000d1",
+      "slug": "demo-1",
+      "title": "Main Event",
+      "note": "Правильно ли было пушить тёрн с 15 аутами?",
+      "series_id": "00000000-0000-4000-8000-0000000000s1",
+      "series_name": "RPT Сочи",
+      "created_offset_days": -2,
+      "views_count": 86,
+      "preview": {
+        "hero_cards": ["As", "Ks"],
+        "board": ["Js", "Ts", "4d", "7c", "Ah"],
+        "hero_profit": 190000,
+        "pot": 370000
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-0000000000d2",
+      "slug": "demo-2",
+      "title": "#18 Turbo",
+      "note": "Стоило ли изолировать крупнее с карманными тузами?",
+      "series_id": "00000000-0000-4000-8000-0000000000s2",
+      "series_name": "APC Кипр",
+      "created_offset_days": -6,
+      "views_count": 24,
+      "preview": {
+        "hero_cards": ["Ah", "Ad"],
+        "board": [],
+        "hero_profit": 2500,
+        "pot": 3500
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-0000000000d3",
+      "slug": "demo-3",
+      "title": "#7 Mystery Bounty",
+      "note": "Правильно ли сыграл ривер?",
+      "series_id": "00000000-0000-4000-8000-0000000000s3",
+      "series_name": "EAPT Минск",
+      "created_offset_days": -14,
+      "views_count": 41,
+      "preview": {
+        "hero_cards": ["Kc", "Qc"],
+        "board": ["Qd", "9s", "2c", "7c", "3d"],
+        "hero_profit": -50500,
+        "pot": 186000
+      }
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+:80 {
+	encode gzip
+
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+
+	handle /series/* {
+		reverse_proxy backend:8000
+	}
+
+	handle /events/* {
+		reverse_proxy backend:8000
+	}
+
+	handle /hand/* {
+		reverse_proxy backend:8000
+	}
+
+	handle {
+		header Cache-Control "no-store, must-revalidate"
+		header Pragma "no-cache"
+		reverse_proxy frontend:5173
+	}
+}

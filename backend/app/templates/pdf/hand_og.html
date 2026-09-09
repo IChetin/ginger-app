@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Day2 — раздача</title>
+<style>
+@font-face {
+  font-family: 'Manrope';
+  src: url('{{ font_path }}') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Manrope';
+  src: url('{{ font_path }}') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Manrope';
+  src: url('{{ font_path }}') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Manrope';
+  src: url('{{ font_path }}') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Manrope';
+  src: url('{{ font_path }}') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+}
+@page { size: 1200px 630px; margin: 0; }
+html, body { width: 1200px; height: 630px; margin: 0; padding: 0; }
+body {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  color: #F5F2EA;
+  background: #0B0A09;
+}
+.canvas {
+  width: 1200px;
+  height: 630px;
+  border-collapse: collapse;
+  background:
+    radial-gradient(80% 120% at 78% -20%, rgba(217,179,106,.2) 0%, transparent 60%),
+    linear-gradient(160deg, #151310 0%, #0B0A09 60%);
+}
+.pad { padding: 40px; vertical-align: top; }
+.shell {
+  width: 1120px;
+  height: 550px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.shell td { font-family: 'Manrope', sans-serif; font-weight: 800; }
+.hd { height: 72px; }
+.brand {
+  font-size: 42px;
+  font-weight: 800;
+  color: #F5F2EA;
+  padding-right: 10px;
+  white-space: nowrap;
+}
+.badge {
+  width: 52px;
+  height: 52px;
+  text-align: center;
+  vertical-align: middle;
+  background: linear-gradient(180deg, #F1D68E, #D3A94F);
+  color: #1C1503;
+  font-size: 32px;
+  font-weight: 800;
+  font-style: normal;
+  border-radius: 14px;
+}
+.kicker {
+  text-align: right;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #D9B36A;
+  white-space: nowrap;
+}
+.mid {
+  height: 390px;
+  text-align: center;
+  vertical-align: middle;
+}
+.stage {
+  margin: 0 auto;
+  border-collapse: separate;
+  border-spacing: 8px 0;
+}
+.card {
+  width: 72px;
+  height: 100px;
+  background: #FBF8F0;
+  border-radius: 10px;
+  text-align: center;
+  vertical-align: middle;
+  padding: 0;
+}
+.card .rk,
+.card .st {
+  display: block;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  color: #1A1710;
+  line-height: 1;
+}
+.card .rk { font-size: 34px; padding: 18px 0 4px; }
+.card .st { font-size: 24px; padding: 0 0 14px; }
+.card.s .rk, .card.s .st { color: {{ suit_colors.s }}; }
+.card.h .rk, .card.h .st { color: {{ suit_colors.h }}; }
+.card.d .rk, .card.d .st { color: {{ suit_colors.d }}; }
+.card.c .rk, .card.c .st { color: {{ suit_colors.c }}; }
+.sep {
+  padding: 0 24px;
+  color: #D9B36A;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.ft { height: 56px; }
+.meta {
+  font-size: 18px;
+  font-weight: 800;
+  color: #A9A395;
+  text-align: left;
+  vertical-align: middle;
+}
+.pot {
+  font-size: 22px;
+  font-weight: 800;
+  color: #D9B36A;
+  text-align: right;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<table class="canvas" cellpadding="0" cellspacing="0"><tr><td class="pad">
+  <table class="shell" cellpadding="0" cellspacing="0">
+    <tr class="hd">
+      <td>
+        <table cellpadding="0" cellspacing="0"><tr>
+          <td class="brand">Day</td>
+          <td class="badge">2</td>
+        </tr></table>
+      </td>
+      <td class="kicker">Запись раздачи</td>
+    </tr>
+    <tr>
+      <td class="mid" colspan="2">
+        <table class="stage" cellpadding="0" cellspacing="8"><tr>
+          {% for card in hero_cards %}
+          <td class="card {{ card.suit_key }}">
+            <div class="rk">{{ card.rank }}</div>
+            <div class="st">{{ card.suit }}</div>
+          </td>
+          {% endfor %}
+          {% if board %}
+          <td class="sep">НА БОРДЕ</td>
+          {% for card in board %}
+          <td class="card board {{ card.suit_key }}">
+            <div class="rk">{{ card.rank }}</div>
+            <div class="st">{{ card.suit }}</div>
+          </td>
+          {% endfor %}
+          {% endif %}
+        </tr></table>
+      </td>
+    </tr>
+    <tr class="ft">
+      <td class="meta">{{ author_label }}</td>
+      <td class="pot">банк {{ pot_label }}</td>
+    </tr>
+  </table>
+</td></tr></table>
+</body>
+</html>

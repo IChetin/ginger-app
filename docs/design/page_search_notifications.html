@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day2 — Поиск и Уведомления</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root,[data-theme="dark"]{
+  --bg:#0B0A09;--surface:#141311;--surface-2:#1C1A16;--surface-3:#26231D;
+  --line:rgba(255,255,255,.07);--line-strong:rgba(255,255,255,.13);--line-gold:rgba(217,179,106,.35);
+  --text:#F5F2EA;--text-2:#A9A395;--text-3:#6E6A5F;--text-on-gold:#1C1503;
+  --gold:#D9B36A;--gold-soft:rgba(217,179,106,.13);
+  --gold-grad:linear-gradient(180deg,#F1D68E 0%,#D3A94F 100%);
+  --live:#43D9A3;--live-soft:rgba(67,217,163,.13);
+  --warn:#F58F3C;--warn-soft:rgba(245,143,60,.13);
+  --danger:#FF6B6B;--danger-soft:rgba(255,107,107,.13);
+  --info:#6CA8FF;--info-soft:rgba(108,168,255,.13);
+  --r-sm:10px;--r-md:12px;--r-lg:18px;--r-full:999px;--font:'Manrope',system-ui,sans-serif;
+  --shadow-2:0 8px 24px rgba(0,0,0,.5);
+}
+[data-theme="light"]{
+  --bg:#F4EEE2;--surface:#FCF8EF;--surface-2:#F0E8D7;--surface-3:#E7DCC5;
+  --line:rgba(60,45,20,.10);--line-strong:rgba(60,45,20,.18);--line-gold:rgba(138,106,43,.38);
+  --text:#2A2209;--text-2:#6E6449;--text-3:#9C9173;--text-on-gold:#241A04;
+  --gold:#8A6A2B;--gold-soft:rgba(138,106,43,.12);
+  --gold-grad:linear-gradient(180deg,#E9C877 0%,#C89A3F 100%);
+  --live:#1F9E6E;--live-soft:rgba(31,158,110,.12);--warn:#C46A15;--warn-soft:rgba(196,106,21,.12);
+  --danger:#C33B3B;--danger-soft:rgba(195,59,59,.12);--info:#2E6FC4;--info-soft:rgba(46,111,196,.12);
+  --shadow-2:0 8px 24px rgba(80,60,20,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#060505;font-family:var(--font);color:var(--text);font-size:15px;line-height:1.5;display:flex;justify-content:center;gap:24px;padding:20px;flex-wrap:wrap}
+[data-theme="light"] body{background:#E5DAC4}
+.num{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.ic{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.wrap{display:flex;flex-direction:column}
+.cap{font-size:12px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;text-align:center}
+.phone{width:390px;background:var(--bg);border:1px solid var(--line-strong);border-radius:24px;overflow:hidden;height:800px;display:flex;flex-direction:column}
+
+/* ===== ПОИСК ===== */
+.sbar{display:flex;align-items:center;gap:10px;padding:14px 14px 12px;border-bottom:1px solid var(--line)}
+.sfield{flex:1;display:flex;align-items:center;gap:9px;height:44px;padding:0 14px;background:var(--surface);border:1px solid var(--gold);border-radius:var(--r-full);color:var(--text-3)}
+.sfield input{background:none;border:none;color:var(--text);font-family:var(--font);font-size:16px;width:100%;outline:none}
+.sfield .clr{border:none;background:var(--surface-3);color:var(--text-2);width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.cancel{border:none;background:none;color:var(--gold);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0}
+.body{flex:1;overflow-y:auto;padding-bottom:16px}
+.gt{font-size:12px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;padding:16px 16px 8px;display:flex;align-items:center;gap:8px}
+.gt span{color:var(--text-3);font-weight:600;text-transform:none;letter-spacing:0}
+.r{display:flex;align-items:center;gap:12px;padding:11px 16px;cursor:pointer}
+.r:hover{background:var(--surface-2)}
+.r__ic{width:42px;height:42px;border-radius:12px;background:var(--surface-3);border:1px solid var(--line-strong);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:800;color:var(--gold)}
+.r__b{flex:1;min-width:0}
+.r__t{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.r__t mark{background:var(--gold-soft);color:var(--gold);border-radius:3px;padding:0 2px}
+.r__s{font-size:12.5px;color:var(--text-3);margin-top:1px}
+.r__badge{flex-shrink:0}
+.badge{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:var(--r-full);font-size:11px;font-weight:700}
+.badge--live{background:var(--live-soft);color:var(--live)}
+.badge--soon{background:var(--gold-soft);color:var(--gold)}
+.badge--fin{background:var(--surface-3);color:var(--text-3)}
+.dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:4px 16px 8px}
+.chip{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 13px;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-full);color:var(--text-2);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)}
+.chip .x{color:var(--text-3);display:flex}
+.more{width:100%;border:none;background:none;color:var(--gold);font-family:var(--font);font-size:13px;font-weight:700;padding:10px;cursor:pointer;text-align:center}
+.empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:48px 30px}
+.empty__i{width:52px;height:52px;border-radius:16px;background:var(--gold-soft);color:var(--gold);display:flex;align-items:center;justify-content:center;transform:rotate(-4deg)}
+.empty__t{font-size:16px;font-weight:700}
+.empty__s{font-size:13.5px;color:var(--text-2)}
+
+/* ===== УВЕДОМЛЕНИЯ ===== */
+.head{display:flex;align-items:center;gap:12px;padding:16px 16px 12px;border-bottom:1px solid var(--line)}
+.head h1{font-size:21px;font-weight:800;letter-spacing:-.01em}
+.head .sp{flex:1}
+.iconbtn{width:36px;height:36px;border-radius:11px;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;background:var(--surface-2);color:var(--text-2)}
+.mark{border:none;background:none;color:var(--gold);font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.tabs{display:flex;gap:8px;padding:12px 16px 4px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;height:32px;padding:0 13px;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-full);color:var(--text-2);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer}
+.tab.on{background:var(--gold-soft);border-color:var(--line-gold);color:var(--gold)}
+.day{font-size:12px;font-weight:700;color:var(--text-3);padding:16px 16px 6px}
+.n{display:flex;gap:12px;padding:12px 16px;align-items:flex-start;cursor:pointer;position:relative}
+.n:hover{background:var(--surface-2)}
+.n--unread{background:var(--gold-soft)}
+.n--unread::before{content:'';position:absolute;left:6px;top:50%;transform:translateY(-50%);width:5px;height:5px;border-radius:50%;background:var(--gold)}
+.n__i{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800;font-size:14px}
+.n__i--rem{background:var(--gold-grad);color:var(--text-on-gold);transform:rotate(-4deg)}
+.n__i--chg{background:var(--warn-soft);color:var(--warn)}
+.n__i--cnl{background:var(--danger-soft);color:var(--danger)}
+.n__i--pub{background:var(--info-soft);color:var(--info)}
+.n__b{flex:1;min-width:0}
+.n__t{font-size:14.5px;font-weight:700}
+.n__s{font-size:12.5px;color:var(--text-2);margin-top:1px}
+.n__diff{display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:3px 9px;background:var(--surface-3);border-radius:var(--r-sm);font-size:12px;font-variant-numeric:tabular-nums}
+.n__diff .o{color:var(--text-3);text-decoration:line-through}
+.n__diff .a{color:var(--gold)}
+.n__time{font-size:11px;color:var(--text-3);flex-shrink:0;padding-top:2px}
+.sep{height:1px;background:var(--line);margin:0 16px}
+
+.theme-tg{position:fixed;bottom:14px;right:14px;z-index:99;display:flex;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-full);padding:3px;gap:2px}
+.theme-tg button{border:none;background:none;color:var(--text-2);font-family:var(--font);font-size:11px;font-weight:700;padding:5px 11px;border-radius:var(--r-full);cursor:pointer}
+.theme-tg button.on{background:var(--gold-grad);color:var(--text-on-gold)}
+.tg2{display:flex;gap:6px;justify-content:center;margin-top:8px}
+.tg2 button{border:1px solid var(--line-strong);background:var(--surface);color:var(--text-2);font-family:var(--font);font-size:11px;font-weight:700;padding:5px 11px;border-radius:var(--r-full);cursor:pointer}
+.tg2 button.on{background:var(--gold-soft);border-color:var(--line-gold);color:var(--gold)}
+.hide{display:none}
+</style>
+</head>
+<body>
+
+<!-- ========== ПОИСК ========== -->
+<div class="wrap">
+  <div class="cap">Поиск</div>
+  <div class="phone">
+    <div class="sbar">
+      <div class="sfield">
+        <svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input value="кали" id="q">
+        <button class="clr"><svg class="ic" style="width:11px;height:11px" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <button class="cancel">Отмена</button>
+    </div>
+
+    <!-- состояние: есть запрос -->
+    <div class="body" id="s-res">
+      <div class="gt">Серии <span>· 2</span></div>
+      <div class="r">
+        <div class="r__ic">RPT</div>
+        <div class="r__b"><div class="r__t">RPT <mark>Кали</mark>нинград</div><div class="r__s">1–11 августа · Sobranie Casino · 28 турниров</div></div>
+        <span class="r__badge badge badge--live"><span class="dot"></span>Идёт</span>
+      </div>
+      <div class="r">
+        <div class="r__ic">RPT</div>
+        <div class="r__b"><div class="r__t">RPT <mark>Кали</mark>нинград 2025</div><div class="r__s">3–14 августа 2025 · Sobranie Casino</div></div>
+        <span class="r__badge badge badge--fin">Завершена</span>
+      </div>
+
+      <div class="gt">Площадки <span>· 1</span></div>
+      <div class="r">
+        <div class="r__ic"><svg class="ic" viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></div>
+        <div class="r__b"><div class="r__t">Sobranie Casino</div><div class="r__s">🇷🇺 <mark>Кали</mark>нинград · зона «Янтарная» · 3 серии</div></div>
+      </div>
+
+      <div class="gt">Турниры <span>· 12</span></div>
+      <div class="r">
+        <div class="r__ic num">#4</div>
+        <div class="r__b"><div class="r__t"><mark>Кали</mark>ningrad Knockout</div><div class="r__s num">RPT Kaliningrad · 2 авг, 19:00 · 2 300 ₽</div></div>
+        <span class="r__badge badge badge--soon">завтра</span>
+      </div>
+      <div class="r">
+        <div class="r__ic num">#9</div>
+        <div class="r__b"><div class="r__t"><mark>Кали</mark>ningrad Cup</div><div class="r__s num">RPT Kaliningrad · 5 авг, 17:00 · 7 000 ₽</div></div>
+      </div>
+      <div class="r">
+        <div class="r__ic num">#14</div>
+        <div class="r__b"><div class="r__t"><mark>Кали</mark>ningrad Mix</div><div class="r__s num">RPT Kaliningrad · 7 авг, 15:00 · 12 000 ₽</div></div>
+      </div>
+      <button class="more">Показать ещё 9 турниров</button>
+    </div>
+
+    <!-- состояние: пустой ввод (переключить кнопкой ниже) -->
+    <div class="body hide" id="s-idle">
+      <div class="gt">Недавние запросы</div>
+      <div class="chips">
+        <button class="chip">RPT Kaliningrad <span class="x"><svg class="ic" style="width:12px;height:12px" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></span></button>
+        <button class="chip">Минск <span class="x"><svg class="ic" style="width:12px;height:12px" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></span></button>
+        <button class="chip">Main Event <span class="x"><svg class="ic" style="width:12px;height:12px" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></span></button>
+      </div>
+      <div class="gt">Популярное</div>
+      <div class="chips">
+        <button class="chip">Сочи</button>
+        <button class="chip">Минск</button>
+        <button class="chip">Кипр</button>
+        <button class="chip">RPT</button>
+        <button class="chip">EAPT</button>
+        <button class="chip">Main Event</button>
+      </div>
+    </div>
+
+    <!-- состояние: ничего не найдено -->
+    <div class="body hide" id="s-none">
+      <div class="empty">
+        <div class="empty__i"><svg class="ic" style="width:24px;height:24px" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
+        <div class="empty__t">Ничего не нашлось</div>
+        <div class="empty__s">Проверьте написание или попробуйте название серии, город или организатора</div>
+      </div>
+    </div>
+  </div>
+  <div class="tg2">
+    <button class="on" onclick="ss('s-res',this)">результаты</button>
+    <button onclick="ss('s-idle',this)">пустой ввод</button>
+    <button onclick="ss('s-none',this)">не найдено</button>
+  </div>
+</div>
+
+<!-- ========== УВЕДОМЛЕНИЯ ========== -->
+<div class="wrap">
+  <div class="cap">Уведомления</div>
+  <div class="phone">
+    <div class="head">
+      <button class="iconbtn"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <h1>Уведомления</h1>
+      <span class="sp"></span>
+      <button class="mark">Прочитать всё</button>
+      <button class="iconbtn"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z"/></svg></button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab on">Все</button>
+      <button class="tab">Напоминания</button>
+      <button class="tab">Изменения</button>
+      <button class="tab">Непрочитанные</button>
+    </div>
+
+    <div class="body">
+      <div class="day">Сегодня</div>
+
+      <div class="n n--unread">
+        <div class="n__i n__i--rem">2</div>
+        <div class="n__b">
+          <div class="n__t">Main Event через 2 часа</div>
+          <div class="n__s num">Day 1A · сегодня 20:00 · Sobranie Casino</div>
+        </div>
+        <span class="n__time num">18:00</span>
+      </div>
+      <div class="sep"></div>
+
+      <div class="n n--unread">
+        <div class="n__i n__i--chg"><svg class="ic" style="width:17px;height:17px" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <div class="n__b">
+          <div class="n__t">Турнир перенесён</div>
+          <div class="n__s">#5 Main Event · RPT Kaliningrad</div>
+          <div class="n__diff"><span class="o">18:00</span><span class="a">→</span><span>20:00</span></div>
+        </div>
+        <span class="n__time num">14:20</span>
+      </div>
+      <div class="sep"></div>
+
+      <div class="n">
+        <div class="n__i n__i--rem">2</div>
+        <div class="n__b">
+          <div class="n__t">Knockout через 24 часа</div>
+          <div class="n__s num">#4 · завтра 19:00 · Sobranie Casino</div>
+        </div>
+        <span class="n__time num">09:00</span>
+      </div>
+
+      <div class="day">Вчера</div>
+
+      <div class="n">
+        <div class="n__i n__i--cnl"><svg class="ic" style="width:17px;height:17px" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+        <div class="n__b">
+          <div class="n__t">Турнир отменён</div>
+          <div class="n__s">#12 Hyper Turbo · EAPT Grand Final Minsk</div>
+        </div>
+        <span class="n__time num">21:15</span>
+      </div>
+      <div class="sep"></div>
+
+      <div class="n">
+        <div class="n__i n__i--pub"><svg class="ic" style="width:17px;height:17px" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></div>
+        <div class="n__b">
+          <div class="n__t">Опубликовано расписание</div>
+          <div class="n__s">EAPT Grand Final Minsk · 34 турнира</div>
+        </div>
+        <span class="n__time num">12:40</span>
+      </div>
+      <div class="sep"></div>
+
+      <div class="n">
+        <div class="n__i n__i--rem">2</div>
+        <div class="n__b">
+          <div class="n__t">Серия стартует через неделю</div>
+          <div class="n__s">RPT Kaliningrad · 1–11 августа</div>
+        </div>
+        <span class="n__time num">10:00</span>
+      </div>
+
+      <div class="day">28 июля</div>
+      <div class="n">
+        <div class="n__i n__i--chg"><svg class="ic" style="width:17px;height:17px" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></div>
+        <div class="n__b">
+          <div class="n__t">Изменена гарантия</div>
+          <div class="n__s">#6 Night Turbo · RPT Kaliningrad</div>
+          <div class="n__diff"><span class="o">300 000 ₽</span><span class="a">→</span><span>500 000 ₽</span></div>
+        </div>
+        <span class="n__time num">11:05</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="theme-tg"><button class="on" onclick="th('dark')">Тёмная</button><button onclick="th('light')">Светлая</button></div>
+<script>
+function ss(id,btn){
+  ['s-res','s-idle','s-none'].forEach(i=>document.getElementById(i).classList.toggle('hide', i!==id));
+  document.querySelectorAll('.tg2 button').forEach(b=>b.classList.toggle('on', b===btn));
+}
+function th(t){document.documentElement.setAttribute('data-theme',t);document.querySelectorAll('.theme-tg button').forEach((b,i)=>b.classList.toggle('on',(i===0)===(t==='dark')))}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));t.classList.add('on')}));
+</script>
+</body>
+</html>

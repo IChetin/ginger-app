@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day2 — Реплеер v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B0A09;--surface:#141311;--surface-2:#1C1A16;--surface-3:#26231D;
+  --line:rgba(255,255,255,.07);--line-strong:rgba(255,255,255,.13);--line-gold:rgba(217,179,106,.35);
+  --text:#F5F2EA;--text-2:#A9A395;--text-3:#6E6A5F;--text-on-gold:#1C1503;
+  --gold:#D9B36A;--gold-soft:rgba(217,179,106,.13);
+  --gold-grad:linear-gradient(180deg,#F1D68E 0%,#D3A94F 100%);
+  --live:#43D9A3;--live-soft:rgba(67,217,163,.13);
+  --warn:#F58F3C;--danger:#FF6B6B;--info:#6CA8FF;
+  --r-sm:10px;--r-md:12px;--r-lg:18px;--r-full:999px;--font:'Manrope',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#060505;font-family:var(--font);color:var(--text);font-size:15px;line-height:1.5;display:flex;justify-content:center;gap:20px;padding:20px;flex-wrap:wrap;align-items:flex-start}
+.num{font-variant-numeric:tabular-nums}
+.ic{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.col{display:flex;flex-direction:column}
+.cap{font-size:12px;font-weight:700;color:#6E6A5F;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;text-align:center}
+.cap b{color:var(--gold)}
+.cap small{display:block;text-transform:none;letter-spacing:0;font-weight:500;color:#8A8272;margin-top:3px;font-size:11.5px}
+.phone{width:378px;background:var(--bg);border:1px solid var(--line-strong);border-radius:24px;overflow:hidden;height:812px;display:flex;flex-direction:column;position:relative}
+
+/* ==== ФИРМЕННАЯ ШАПКА ==== */
+.hd{display:flex;align-items:center;gap:11px;padding:12px 13px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(217,179,106,.07),transparent)}
+.iconbtn{width:33px;height:33px;border-radius:10px;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;background:var(--surface-2);color:var(--text-2)}
+.logo{display:inline-flex;align-items:center;gap:6px;font-weight:800;font-size:17px;letter-spacing:-.02em;flex-shrink:0}
+.logo i{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:var(--gold-grad);color:var(--text-on-gold);border-radius:7px;font-size:14px;font-weight:800;font-style:normal;transform:rotate(-4deg);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+.hd__d{width:1px;height:22px;background:var(--line-strong);flex-shrink:0}
+.hd__t{flex:1;min-width:0}
+.hd__n{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd__s{font-size:10.5px;color:var(--text-3);font-variant-numeric:tabular-nums}
+
+/* ==== СТОЛ ==== */
+.tw{flex:1;position:relative;padding:10px 11px 0;min-height:0}
+.table{position:relative;width:100%;height:100%;border-radius:44% / 32%;
+  background:
+    radial-gradient(70% 42% at 50% 40%, rgba(217,179,106,.16) 0%, rgba(217,179,106,.03) 45%, transparent 70%),
+    radial-gradient(120% 85% at 50% 45%, #2A2318 0%, #191408 55%, #0E0B06 100%);
+  border:2px solid rgba(217,179,106,.42);
+  box-shadow:
+    inset 0 0 0 5px rgba(11,10,9,.85),
+    inset 0 0 0 6.5px rgba(217,179,106,.22),
+    inset 0 0 60px rgba(0,0,0,.7),
+    0 10px 30px rgba(0,0,0,.55)}
+
+/* лого на сукне */
+.felt-lg{position:absolute;left:50%;top:62%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:7px;font-weight:800;font-size:30px;letter-spacing:-.03em;color:rgba(217,179,106,.13);pointer-events:none;user-select:none}
+.felt-lg i{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border:2.5px solid rgba(217,179,106,.13);border-radius:12px;font-size:24px;font-style:normal;transform:rotate(-4deg)}
+
+/* центр */
+.center{position:absolute;left:50%;top:39%;transform:translate(-50%,-50%);text-align:center;width:90%}
+.pot{display:inline-flex;align-items:center;gap:5px;padding:3px 12px;background:rgba(11,10,9,.62);border:1px solid rgba(217,179,106,.4);border-radius:var(--r-full);font-size:12px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;backdrop-filter:blur(3px)}
+.board{display:flex;gap:5px;justify-content:center;margin-top:10px}
+.card{width:38px;height:53px;border-radius:6px;background:#FBF8F0;color:#1A1710;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;line-height:1;box-shadow:0 3px 8px rgba(0,0,0,.5);font-family:var(--font)}
+.card.r{color:#C7382F}
+.card .rk{font-size:19px;letter-spacing:-.05em}
+.card .st{font-size:14px;margin-top:1px}
+.card.slot{background:rgba(255,255,255,.04);border:1px dashed rgba(217,179,106,.22);box-shadow:none}
+.card.sm{width:26px;height:36px;border-radius:4px}
+.card.sm .rk{font-size:13px}.card.sm .st{font-size:9px}
+.card.back{background:linear-gradient(140deg,#4A3D24,#241E13);border:1px solid rgba(217,179,106,.3);position:relative}
+.card.back::after{content:'2';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(217,179,106,.35);font-weight:800;font-size:11px}
+.street{font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:rgba(217,179,106,.6);margin-top:9px}
+
+/* места */
+.seat{position:absolute;transform:translate(-50%,-50%);width:62px;text-align:center}
+.av{width:38px;height:38px;border-radius:12px;margin:0 auto;background:rgba(28,26,22,.9);border:1.5px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--text-2);position:relative}
+.seat.act .av{border-color:var(--gold);box-shadow:0 0 0 3px rgba(217,179,106,.25),0 0 14px rgba(217,179,106,.3)}
+.seat.hero .av{background:var(--gold-grad);color:var(--text-on-gold);border-color:transparent;box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+.seat.fold{opacity:.3}
+.pos{position:absolute;top:-6px;left:50%;transform:translateX(-50%);background:#1C1A16;border:1px solid rgba(217,179,106,.35);border-radius:5px;font-size:8px;font-weight:800;padding:1px 4px;color:var(--gold);letter-spacing:.04em}
+.seat.hero .pos{background:#241A04;color:#F1D68E;border-color:rgba(241,214,142,.5)}
+.nm{font-size:10px;font-weight:700;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stk{font-size:10px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
+.hole{display:flex;gap:2px;justify-content:center;margin-top:3px}
+.hole .card{width:20px;height:28px;border-radius:3px}
+.hole .card .rk{font-size:10px}.hole .card .st{font-size:7px}
+.hole .card.back::after{font-size:8px}
+.bet{position:absolute;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(11,10,9,.7);border:1px solid rgba(217,179,106,.4);border-radius:var(--r-full);font-size:9.5px;font-weight:800;color:#F1D68E;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bet::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--gold-grad);box-shadow:0 0 0 1.5px rgba(11,10,9,.8)}
+.dealer{position:absolute;width:17px;height:17px;border-radius:50%;background:linear-gradient(180deg,#FBF8F0,#DCD3BE);color:#1A1710;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.5)}
+.actlbl{position:absolute;left:50%;transform:translateX(-50%);top:-19px;font-size:9px;font-weight:800;padding:1.5px 7px;border-radius:4px;white-space:nowrap;letter-spacing:.04em}
+.actlbl.raise{background:var(--warn);color:#221200}
+.actlbl.call{background:var(--live);color:#04231A}
+
+/* эквити */
+.eq{margin:9px 13px 0;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md)}
+.eq__h{display:flex;align-items:center;justify-content:space-between;font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3);margin-bottom:7px}
+.eq__r{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.eq__r:last-child{margin-bottom:0}
+.eq__c{display:flex;gap:2px;flex-shrink:0}
+.eq__bar{flex:1;height:7px;background:var(--surface-3);border-radius:4px;overflow:hidden}
+.eq__f{height:100%;border-radius:4px}
+.eq__f.me{background:var(--gold-grad)}
+.eq__f.op{background:linear-gradient(90deg,#3E5B75,#6CA8FF)}
+.eq__v{font-size:12.5px;font-weight:800;min-width:44px;text-align:right;font-variant-numeric:tabular-nums}
+
+.log{margin:9px 13px 0;padding:9px 12px;background:var(--surface-2);border-left:2px solid var(--gold);border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:12.5px;color:var(--text-2)}
+.log b{color:var(--text);font-weight:700}
+
+/* навигация */
+.nav{padding:10px 13px calc(11px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--surface)}
+.prog{display:flex;gap:3px;margin-bottom:9px}
+.prog i{flex:1;height:3px;border-radius:2px;background:var(--surface-3)}
+.prog i.on{background:rgba(217,179,106,.55)}
+.prog i.cur{background:var(--gold);box-shadow:0 0 0 2px rgba(217,179,106,.28)}
+.ctrls{display:flex;align-items:center;gap:8px}
+.nbtn{width:46px;height:46px;border-radius:14px;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.nbtn--play{flex:1;background:var(--gold-grad);color:var(--text-on-gold);border:none;font-family:var(--font);font-weight:800;font-size:14.5px;gap:8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+.spd{width:46px;height:46px;border-radius:14px;border:1px solid var(--line-strong);background:none;color:var(--text-2);font-family:var(--font);font-size:12px;font-weight:800;cursor:pointer}
+
+/* ==== ПУБЛИЧНЫЙ ВИД ==== */
+.pubtop{display:flex;align-items:center;gap:10px;padding:11px 13px;background:linear-gradient(180deg,rgba(217,179,106,.1),transparent);border-bottom:1px solid var(--line)}
+.pubtop__b{flex:1;min-width:0}
+.pubtop__t{font-size:12.5px;font-weight:800}
+.pubtop__s{font-size:10.5px;color:var(--text-3)}
+.pubcta{margin:10px 13px 0;padding:12px 13px;background:linear-gradient(115deg,rgba(217,179,106,.16),rgba(217,179,106,.05));border:1px solid var(--line-gold);border-radius:var(--r-md);display:flex;align-items:center;gap:11px}
+.pubcta__b{flex:1;min-width:0}
+.pubcta__t{font-size:13.5px;font-weight:800}
+.pubcta__s{font-size:11.5px;color:var(--text-2);margin-top:1px}
+.pubcta__go{height:34px;padding:0 14px;border-radius:10px;background:var(--gold-grad);color:var(--text-on-gold);border:none;font-family:var(--font);font-size:12.5px;font-weight:800;cursor:pointer;flex-shrink:0}
+
+/* OG-превью */
+.og{width:378px;aspect-ratio:1.91;background:
+    radial-gradient(80% 120% at 78% -20%, rgba(217,179,106,.2) 0%, transparent 60%),
+    linear-gradient(160deg,#151310 0%,#0B0A09 60%);
+  border:1px solid var(--line-strong);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.og__hd{display:flex;align-items:center;gap:7px;font-weight:800;font-size:17px}
+.og__hd i{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:var(--gold-grad);color:var(--text-on-gold);border-radius:7px;font-size:14px;font-style:normal;transform:rotate(-4deg)}
+.og__hd span{margin-left:auto;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.og__mid{flex:1;display:flex;align-items:center;gap:16px;margin-top:6px}
+.og__hand{display:flex;gap:4px}
+.og__hand .card{width:42px;height:58px}
+.og__hand .card .rk{font-size:21px}
+.og__vs{font-size:11px;font-weight:800;color:var(--text-3);letter-spacing:.1em}
+.og__board{display:flex;gap:4px}
+.og__board .card{width:34px;height:47px}
+.og__board .card .rk{font-size:17px}.og__board .card .st{font-size:12px}
+.og__ft{display:flex;align-items:baseline;gap:9px;font-size:11.5px;color:var(--text-3)}
+.og__ft b{color:var(--text-2);font-weight:700}
+.og__ft .r{margin-left:auto;color:var(--gold);font-weight:800;font-size:13px;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+
+<!-- ===== 1. РЕПЛЕЕР В ПРИЛОЖЕНИИ ===== -->
+<div class="col">
+  <div class="cap"><b>1</b> · реплеер в приложении
+    <small>Фирменное сукно, лого на столе, брендированная шапка</small>
+  </div>
+  <div class="phone">
+    <div class="hd">
+      <button class="iconbtn"><svg class="ic" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <span class="logo">Day<i>2</i></span>
+      <span class="hd__d"></span>
+      <div class="hd__t">
+        <div class="hd__n">Main Event · RPT Kaliningrad</div>
+        <div class="hd__s num">Ур. 12 · 1 000/2 000 · анте 2 000</div>
+      </div>
+      <button class="iconbtn"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12M12 3l-4 4M12 3l4 4"/><path d="M5 13v6h14v-6"/></svg></button>
+    </div>
+
+    <div class="tw">
+      <div class="table">
+        <div class="felt-lg">Day<i>2</i></div>
+
+        <div class="center">
+          <span class="pot num">Банк 47 500</span>
+          <div class="board">
+            <span class="card"><span class="rk">K</span><span class="st">♠</span></span>
+            <span class="card r"><span class="rk">9</span><span class="st">♥</span></span>
+            <span class="card r"><span class="rk">4</span><span class="st">♦</span></span>
+            <span class="card slot"></span>
+            <span class="card slot"></span>
+          </div>
+          <div class="street">Флоп</div>
+        </div>
+
+        <div class="seat hero act" style="left:50%;top:88%">
+          <div class="av"><span class="pos">BTN</span>Я</div>
+          <div class="nm">Вы</div><div class="stk num">86 000</div>
+          <div class="hole">
+            <span class="card"><span class="rk">A</span><span class="st">♠</span></span>
+            <span class="card"><span class="rk">K</span><span class="st">♣</span></span>
+          </div>
+          <span class="dealer" style="left:-15px;top:13px">D</span>
+        </div>
+
+        <div class="seat" style="left:11%;top:70%">
+          <div class="av"><span class="pos">SB</span>СБ</div>
+          <div class="nm">Игрок 2</div><div class="stk num">42 000</div>
+        </div>
+        <div class="seat fold" style="left:5%;top:47%">
+          <div class="av"><span class="pos">BB</span>ББ</div>
+          <div class="nm">Игрок 3</div><div class="stk num">31 000</div>
+        </div>
+        <div class="seat fold" style="left:12%;top:25%">
+          <div class="av"><span class="pos">UTG</span>—</div>
+          <div class="nm">Игрок 4</div><div class="stk num">55 000</div>
+        </div>
+        <div class="seat fold" style="left:31%;top:9%">
+          <div class="av"><span class="pos">+1</span>—</div>
+          <div class="nm">Игрок 5</div><div class="stk num">28 000</div>
+        </div>
+        <div class="seat fold" style="left:60%;top:8%">
+          <div class="av"><span class="pos">+2</span>—</div>
+          <div class="nm">Игрок 6</div><div class="stk num">19 000</div>
+        </div>
+        <div class="seat" style="left:83%;top:22%">
+          <div class="av"><span class="pos">MP</span>МП</div>
+          <div class="nm">Игрок 7</div><div class="stk num">128 000</div>
+          <div class="hole"><span class="card back"></span><span class="card back"></span></div>
+          <span class="bet num" style="left:-36px;top:52px">18 000</span>
+          <span class="actlbl raise">РЕЙЗ</span>
+        </div>
+        <div class="seat fold" style="left:93%;top:47%">
+          <div class="av"><span class="pos">HJ</span>—</div>
+          <div class="nm">Игрок 8</div><div class="stk num">64 000</div>
+        </div>
+        <div class="seat fold" style="left:87%;top:70%">
+          <div class="av"><span class="pos">CO</span>—</div>
+          <div class="nm">Игрок 9</div><div class="stk num">73 000</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="eq">
+      <div class="eq__h"><span>Эквити на флопе</span><span style="color:var(--gold)">2 руки</span></div>
+      <div class="eq__r">
+        <span class="eq__c">
+          <span class="card sm"><span class="rk">A</span><span class="st">♠</span></span>
+          <span class="card sm"><span class="rk">K</span><span class="st">♣</span></span>
+        </span>
+        <span class="eq__bar"><span class="eq__f me" style="width:71%"></span></span>
+        <span class="eq__v" style="color:var(--gold)">71,2 %</span>
+      </div>
+      <div class="eq__r">
+        <span class="eq__c">
+          <span class="card sm r"><span class="rk">Q</span><span class="st">♥</span></span>
+          <span class="card sm r"><span class="rk">J</span><span class="st">♥</span></span>
+        </span>
+        <span class="eq__bar"><span class="eq__f op" style="width:28.8%"></span></span>
+        <span class="eq__v" style="color:var(--info)">28,8 %</span>
+      </div>
+    </div>
+
+    <div class="log num"><b>Игрок 7</b> рейз до 18 000 · ваш ход</div>
+
+    <div class="nav">
+      <div class="prog"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="cur"></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="ctrls">
+        <button class="nbtn"><svg class="ic" style="width:20px;height:20px" viewBox="0 0 24 24"><path d="M19 5v14M15 12l-9 7V5z"/></svg></button>
+        <button class="nbtn"><svg class="ic" style="width:20px;height:20px" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <button class="nbtn nbtn--play"><svg class="ic" style="width:19px;height:19px" viewBox="0 0 24 24"><path d="M7 4v16l13-8z" fill="currentColor" stroke="none"/></svg>Играть</button>
+        <button class="nbtn"><svg class="ic" style="width:20px;height:20px" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+        <button class="spd num">×1</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 2. ПУБЛИЧНЫЙ ВИД ===== -->
+<div class="col">
+  <div class="cap"><b>2</b> · по ссылке, гость без входа
+    <small>Автор раздачи, приглашение в приложение внизу</small>
+  </div>
+  <div class="phone">
+    <div class="pubtop">
+      <span class="logo">Day<i>2</i></span>
+      <span class="hd__d"></span>
+      <div class="pubtop__b">
+        <div class="pubtop__t">Раздача от ivan_mtt</div>
+        <div class="pubtop__s num">Main Event · RPT Kaliningrad · 8 авг</div>
+      </div>
+      <button class="iconbtn"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3v12M12 3l-4 4M12 3l4 4"/><path d="M5 13v6h14v-6"/></svg></button>
+    </div>
+
+    <div class="tw" style="padding-top:8px">
+      <div class="table">
+        <div class="felt-lg">Day<i>2</i></div>
+        <div class="center" style="top:38%">
+          <span class="pot num">Банк 47 500</span>
+          <div class="board">
+            <span class="card"><span class="rk">K</span><span class="st">♠</span></span>
+            <span class="card r"><span class="rk">9</span><span class="st">♥</span></span>
+            <span class="card r"><span class="rk">4</span><span class="st">♦</span></span>
+            <span class="card r"><span class="rk">7</span><span class="st">♦</span></span>
+            <span class="card slot"></span>
+          </div>
+          <div class="street">Тёрн</div>
+        </div>
+
+        <div class="seat hero" style="left:50%;top:88%">
+          <div class="av"><span class="pos">BTN</span>ИВ</div>
+          <div class="nm">ivan_mtt</div><div class="stk num">68 000</div>
+          <div class="hole">
+            <span class="card"><span class="rk">A</span><span class="st">♠</span></span>
+            <span class="card"><span class="rk">K</span><span class="st">♣</span></span>
+          </div>
+          <span class="dealer" style="left:-15px;top:13px">D</span>
+        </div>
+        <div class="seat act" style="left:83%;top:22%">
+          <div class="av"><span class="pos">MP</span>МП</div>
+          <div class="nm">Игрок 7</div><div class="stk num">110 000</div>
+          <div class="hole"><span class="card back"></span><span class="card back"></span></div>
+          <span class="bet num" style="left:-36px;top:52px">36 000</span>
+          <span class="actlbl raise">БЕТ</span>
+        </div>
+        <div class="seat fold" style="left:11%;top:70%"><div class="av"><span class="pos">SB</span>СБ</div><div class="nm">Игрок 2</div><div class="stk num">42 000</div></div>
+        <div class="seat fold" style="left:5%;top:47%"><div class="av"><span class="pos">BB</span>ББ</div><div class="nm">Игрок 3</div><div class="stk num">31 000</div></div>
+        <div class="seat fold" style="left:12%;top:25%"><div class="av"><span class="pos">UTG</span>—</div><div class="nm">Игрок 4</div><div class="stk num">55 000</div></div>
+        <div class="seat fold" style="left:31%;top:9%"><div class="av"><span class="pos">+1</span>—</div><div class="nm">Игрок 5</div><div class="stk num">28 000</div></div>
+        <div class="seat fold" style="left:60%;top:8%"><div class="av"><span class="pos">+2</span>—</div><div class="nm">Игрок 6</div><div class="stk num">19 000</div></div>
+        <div class="seat fold" style="left:93%;top:47%"><div class="av"><span class="pos">HJ</span>—</div><div class="nm">Игрок 8</div><div class="stk num">64 000</div></div>
+        <div class="seat fold" style="left:87%;top:70%"><div class="av"><span class="pos">CO</span>—</div><div class="nm">Игрок 9</div><div class="stk num">73 000</div></div>
+      </div>
+    </div>
+
+    <div class="log num"><b>Игрок 7</b> бет 36 000 в банк 47 500 · ход ivan_mtt</div>
+
+    <div class="pubcta">
+      <span class="logo" style="font-size:15px"><i style="width:22px;height:22px;font-size:13px">2</i></span>
+      <div class="pubcta__b">
+        <div class="pubcta__t">Разберите свою раздачу</div>
+        <div class="pubcta__s">Реплеер, расписание серий и трекер</div>
+      </div>
+      <button class="pubcta__go">Открыть</button>
+    </div>
+
+    <div class="nav">
+      <div class="prog"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="cur"></i><i></i><i></i><i></i></div>
+      <div class="ctrls">
+        <button class="nbtn"><svg class="ic" style="width:20px;height:20px" viewBox="0 0 24 24"><path d="M19 5v14M15 12l-9 7V5z"/></svg></button>
+        <button class="nbtn"><svg class="ic" style="width:20px;height:20px" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <button class="nbtn nbtn--play"><svg class="ic" style="width:19px;height:19px" viewBox="0 0 24 24"><path d="M7 4v16l13-8z" fill="currentColor" stroke="none"/></svg>Играть</button>
+        <button class="nbtn"><svg class="ic" style="width:20px;height:20px" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+        <button class="spd num">×1</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 3. OG-ПРЕВЬЮ ===== -->
+<div class="col">
+  <div class="cap"><b>3</b> · превью ссылки в телеграме
+    <small>Генерируется серверно · 1200×630</small>
+  </div>
+  <div class="og">
+    <div class="og__hd">Day<i>2</i><span>Запись раздачи</span></div>
+    <div class="og__mid">
+      <div class="og__hand">
+        <span class="card"><span class="rk">A</span><span class="st">♠</span></span>
+        <span class="card"><span class="rk">K</span><span class="st">♣</span></span>
+      </div>
+      <span class="og__vs">НА БОРДЕ</span>
+      <div class="og__board">
+        <span class="card"><span class="rk">K</span><span class="st">♠</span></span>
+        <span class="card r"><span class="rk">9</span><span class="st">♥</span></span>
+        <span class="card r"><span class="rk">4</span><span class="st">♦</span></span>
+        <span class="card r"><span class="rk">7</span><span class="st">♦</span></span>
+        <span class="card slot" style="width:34px;height:47px"></span>
+      </div>
+    </div>
+    <div class="og__ft">
+      <span><b>ivan_mtt</b> · Main Event, RPT Kaliningrad</span>
+      <span class="r num">банк 47 500</span>
+    </div>
+  </div>
+  <div style="width:378px;margin-top:10px;font-size:12.5px;color:#8A8272;background:#141311;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px 14px;line-height:1.5">
+    Такая картинка разворачивается в чате, когда игрок кидает ссылку на реплей. Видно руку, борд, банк и автора — этого достаточно, чтобы захотеть открыть.
+  </div>
+</div>
+
+</body>
+</html>
