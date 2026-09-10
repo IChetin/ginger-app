@@ -7,7 +7,7 @@ from app.core.config import get_settings
 from app.core.nickname import validate_nickname
 from app.core.password_policy import is_common_password
 from app.core.reminders import normalize_reminder_offsets
-from app.models.enums import CardDeck, HandInputMode, ResultsVisibility, StackDisplay, UserRole
+from app.models.enums import UserRole
 from app.utils.timezone import validate_iana_timezone
 
 
@@ -118,10 +118,6 @@ class UpdateMeBody(BaseModel):
     # None clears to auto (browser); omit field to leave unchanged.
     timezone: str | None = None
     default_reminder_offsets: list[int] | None = None
-    stack_display: StackDisplay | None = None
-    hide_holes_until_showdown: bool | None = None
-    hand_input_mode: HandInputMode | None = None
-    card_deck: CardDeck | None = None
 
     @field_validator("nickname")
     @classmethod
@@ -164,11 +160,6 @@ class UserMe(BaseModel):
     nickname: str
     base_currency: str
     timezone: str | None
-    stack_display: StackDisplay
-    hide_holes_until_showdown: bool
-    hand_input_mode: HandInputMode
-    card_deck: CardDeck
-    results_visibility: ResultsVisibility
     role: UserRole
     default_reminder_offsets: list[int]
     email_verified: bool

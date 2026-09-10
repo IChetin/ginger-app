@@ -94,7 +94,6 @@ class Settings(BaseSettings):
     import_ai_provider: str = "mock"
 
     # Playing-card suit colors for new users (classic | four_color).
-    default_card_deck: str = "four_color"
 
     # Seeded editor/admin for local development only.
     seed_admin_email: str = "admin@example.com"

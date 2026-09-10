@@ -3,7 +3,6 @@ import logging
 
 from app.core.config import get_settings
 from app.core.database import async_session_factory, engine
-from app.seeds.demo_hands import seed_demo_hands
 from app.seeds.demo_schedule import seed_demo_schedule
 from app.seeds.dev_users import seed_dev_users
 from app.seeds.runner import seed_reference_data
@@ -18,7 +17,6 @@ async def main() -> None:
     settings = get_settings()
     async with async_session_factory() as session, session.begin():
         await seed_reference_data(session)
-        await seed_demo_hands(session)
         if settings.app_env == "development":
             await seed_dev_users(session)
             if settings.seed_demo_data:

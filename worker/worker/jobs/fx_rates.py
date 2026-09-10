@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime
 from typing import Any
 
-from sqlalchemy import Select, distinct, select
+from sqlalchemy import distinct, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from worker.config import Settings, get_settings
-from worker.db.models import FxRate, Result, User
+from worker.db.models import FxRate, User
 from worker.db.session import session_scope
 from worker.fx.cbr import (
     RUB,
@@ -24,38 +24,11 @@ FetchRatesFn = Callable[..., dict[str, CbrRate]]
 
 logger = logging.getLogger("day2.worker.fx")
 
-FX_LOOKBACK_DAYS = 7
-
 
 def _needed_currencies(session: Session) -> set[str]:
-    result_codes = set(session.scalars(select(distinct(Result.currency_code))))
     user_codes = set(session.scalars(select(distinct(User.base_currency))))
-    codes = (result_codes | user_codes | set(SUPPORTED_CURRENCIES)) - {RUB}
+    codes = (user_codes | set(SUPPORTED_CURRENCIES)) - {RUB}
     return {code.upper() for code in codes if code.upper() in SUPPORTED_CURRENCIES}
-
-
-def _distinct_played_on(session: Session) -> list[date]:
-    rows = session.scalars(select(distinct(Result.played_on)).order_by(Result.played_on.asc()))
-    return list(rows)
-
-
-def _has_rate_in_window(
-    session: Session,
-    *,
-    currency_code: str,
-    on_date: date,
-) -> bool:
-    earliest = on_date - timedelta(days=FX_LOOKBACK_DAYS)
-    exists_stmt: Select[tuple[str]] = (
-        select(FxRate.currency_code)
-        .where(
-            FxRate.currency_code == currency_code,
-            FxRate.rate_date >= earliest,
-            FxRate.rate_date <= on_date,
-        )
-        .limit(1)
-    )
-    return session.scalar(exists_stmt) is not None
 
 
 def select_backfill_dates(
@@ -63,16 +36,13 @@ def select_backfill_dates(
     *,
     today: date | None = None,
 ) -> list[date]:
-    """Return dates that need a CBR fetch (today + missing result dates)."""
-    current = today or datetime.now(UTC).date()
-    currencies = _needed_currencies(session)
-    dates: set[date] = {current}
-    for played_on in _distinct_played_on(session):
-        for currency in currencies:
-            if not _has_rate_in_window(session, currency_code=currency, on_date=played_on):
-                dates.add(played_on)
-                break
-    return sorted(dates)
+    """Даты, за которые нужен курс ЦБ.
+
+    В базе Day2 здесь догружались курсы на даты сыгранных турниров трекера, чтобы
+    пересчитать результаты в базовую валюту. Трекер удалён — нужен только сегодняшний курс.
+    """
+    del session  # Сигнатура сохранена: вызывающий код передаёт сессию.
+    return [today or datetime.now(UTC).date()]
 
 
 def upsert_rates(session: Session, rates: list[CbrRate]) -> int:

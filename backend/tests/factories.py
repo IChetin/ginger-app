@@ -11,7 +11,6 @@ from app.models.imports import ImportJob
 from app.models.notifications import Bookmark
 from app.models.references import Country, Currency, Organizer, Venue
 from app.models.schedule import BlindLevel, Event, Flight, Series
-from app.models.tracker import Result
 
 
 class ModelFactory(factory.Factory):
@@ -144,19 +143,6 @@ class BookmarkFactory(ModelFactory):
     target_type = BookmarkTarget.FLIGHT
     target_id = factory.LazyFunction(uuid.uuid4)
     reminder_offsets = factory.LazyFunction(lambda: [1440, 120])
-
-
-class ResultFactory(ModelFactory):
-    class Meta:
-        model = Result
-
-    id = factory.LazyFunction(uuid.uuid4)
-    user = factory.SubFactory(UserFactory)
-    currency = factory.SubFactory(CurrencyFactory)
-    name = "Test Result"
-    played_on = factory.LazyFunction(date.today)
-    buyin = Decimal("10000.00")
-    payout = Decimal("0.00")
 
 
 class ImportJobFactory(ModelFactory):

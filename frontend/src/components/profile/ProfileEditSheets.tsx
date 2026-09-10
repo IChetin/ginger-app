@@ -171,7 +171,7 @@ export function CurrencySheet({
       open={open}
       onOpenChange={onOpenChange}
       title="Базовая валюта"
-      description="В ней показываются итоги и график трекера."
+      description="В неё пересчитываются бай-ины и суммы."
     >
       <div className="border-line bg-surface-2 overflow-hidden rounded-md border">
         {currencies.map((currency) => (

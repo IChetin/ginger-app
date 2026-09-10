@@ -1,8 +1,8 @@
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_serializer
+from pydantic import BaseModel, ConfigDict, field_serializer
 
 from app.models.enums import SeriesStatus
 from app.schemas.schedule import DateTimeWithTimezone

@@ -10,7 +10,7 @@ from sqlalchemy import ColumnElement, and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.system_accounts import DEMO_HANDS_USER_ID
+from app.core.system_accounts import SYSTEM_USER_IDS
 from app.models.auth import User
 from app.models.enums import (
     BookmarkTarget,
@@ -261,12 +261,12 @@ async def get_dashboard(session: AsyncSession) -> AdminDashboardResponse:
     )
 
     users_total = await session.scalar(
-        select(func.count()).select_from(User).where(User.id != DEMO_HANDS_USER_ID)
+        select(func.count()).select_from(User).where(User.id.not_in(SYSTEM_USER_IDS))
     )
     users_delta = await session.scalar(
         select(func.count())
         .select_from(User)
-        .where(User.id != DEMO_HANDS_USER_ID, User.created_at >= week_ago)
+        .where(User.id.not_in(SYSTEM_USER_IDS), User.created_at >= week_ago)
     )
     bookmarks_total = await session.scalar(select(func.count()).select_from(Bookmark))
     bookmarks_delta = await session.scalar(

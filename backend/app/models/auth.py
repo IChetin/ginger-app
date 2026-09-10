@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
-    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -21,22 +20,15 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 from app.models.enums import (
     AuthTokenPurpose,
-    CardDeck,
-    HandInputMode,
-    ResultsVisibility,
-    StackDisplay,
     UserRole,
     pg_enum,
 )
 
 if TYPE_CHECKING:
-    from app.models.hands import Hand
     from app.models.imports import ImportJob
-    from app.models.live import LiveSession
     from app.models.notifications import Bookmark, NotificationQueue
     from app.models.references import Currency
     from app.models.schedule import ChangeLog
-    from app.models.tracker import Result
 
 
 class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -60,37 +52,6 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     timezone: Mapped[str | None] = mapped_column(
         String(64),
         comment="IANA timezone; NULL = detect from browser",
-    )
-    results_visibility: Mapped[ResultsVisibility] = mapped_column(
-        pg_enum(ResultsVisibility, "results_visibility"),
-        nullable=False,
-        server_default=text("'private'"),
-    )
-    stack_display: Mapped[StackDisplay] = mapped_column(
-        pg_enum(StackDisplay, "stack_display"),
-        nullable=False,
-        server_default=text("'chips'"),
-        comment="Replayer stacks: chips or big blinds",
-    )
-    hide_holes_until_showdown: Mapped[bool] = mapped_column(
-        Boolean,
-        nullable=False,
-        default=True,
-        server_default=text("true"),
-        comment="Replayer: hide opponent holes until showdown",
-    )
-    hand_input_mode: Mapped[HandInputMode] = mapped_column(
-        pg_enum(HandInputMode, "hand_input_mode"),
-        nullable=False,
-        server_default=text("'table'"),
-        comment="Hand input shell: wizard or table",
-    )
-    card_deck: Mapped[CardDeck] = mapped_column(
-        pg_enum(CardDeck, "card_deck"),
-        nullable=False,
-        default=CardDeck.FOUR_COLOR,
-        server_default=text("'four_color'"),
-        comment="Playing-card suit colors: classic two-color or four-color",
     )
     role: Mapped[UserRole] = mapped_column(
         pg_enum(UserRole, "user_role"),
@@ -125,18 +86,6 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         cascade="all, delete-orphan",
     )
     notifications: Mapped[list["NotificationQueue"]] = relationship(
-        back_populates="user",
-        cascade="all, delete-orphan",
-    )
-    results: Mapped[list["Result"]] = relationship(
-        back_populates="user",
-        cascade="all, delete-orphan",
-    )
-    live_sessions: Mapped[list["LiveSession"]] = relationship(
-        back_populates="user",
-        cascade="all, delete-orphan",
-    )
-    hands: Mapped[list["Hand"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
     )

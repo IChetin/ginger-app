@@ -27,10 +27,8 @@ from app.models.enums import ChangeType, EventStatus, GameType, SeriesStatus, pg
 
 if TYPE_CHECKING:
     from app.models.auth import User
-    from app.models.hands import Hand
     from app.models.imports import ImportJob
     from app.models.references import Currency, Organizer, Venue
-    from app.models.tracker import Result
 
 
 class Series(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -147,8 +145,6 @@ class Event(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         back_populates="event",
         cascade="all, delete-orphan",
     )
-    results: Mapped[list["Result"]] = relationship(back_populates="event")
-    hands: Mapped[list["Hand"]] = relationship(back_populates="event")
 
 
 class Flight(UUIDPrimaryKeyMixin, Base):

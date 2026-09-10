@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError
 from app.models.references import FxRate
-from app.models.tracker import Result
 
 FX_LOOKBACK_DAYS = 7
 RUB = "RUB"
@@ -86,26 +85,3 @@ def convert_amount(
     base_rate = resolve_rate_rub(rate_map, base, played_on)
     # amount × source_rate_rub / base_rate_rub
     return (amount * source_rate / base_rate).quantize(Decimal("0.01"))
-
-
-async def ensure_rates_for_results(
-    session: AsyncSession,
-    results: list[Result],
-    base_currency: str,
-) -> dict[tuple[str, date], Decimal]:
-    if not results:
-        return {}
-    codes = {row.currency_code for row in results} | {base_currency}
-    date_from = min(row.played_on for row in results)
-    date_to = max(row.played_on for row in results)
-    rate_map = await load_rate_map(
-        session,
-        currency_codes=codes,
-        date_from=date_from,
-        date_to=date_to,
-    )
-    # Validate every needed rate up-front so stats fail atomically.
-    for row in results:
-        resolve_rate_rub(rate_map, row.currency_code, row.played_on)
-        resolve_rate_rub(rate_map, base_currency, row.played_on)
-    return rate_map

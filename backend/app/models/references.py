@@ -13,7 +13,6 @@ if TYPE_CHECKING:
     from app.models.auth import User
     from app.models.imports import ImportJob, ParserProfile
     from app.models.schedule import Event, Series
-    from app.models.tracker import Result
 
 
 class Country(Base):
@@ -37,7 +36,6 @@ class Currency(Base):
         cascade="all, delete-orphan",
     )
     events: Mapped[list["Event"]] = relationship(back_populates="currency")
-    results: Mapped[list["Result"]] = relationship(back_populates="currency")
 
 
 class Organizer(UUIDPrimaryKeyMixin, TimestampMixin, Base):

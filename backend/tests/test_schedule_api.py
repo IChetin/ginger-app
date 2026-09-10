@@ -11,11 +11,9 @@ from sqlalchemy import event as sa_event
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from app.models.auth import User
-from app.models.enums import GameType, LiveSessionStatus, SeriesStatus
-from app.models.live import LiveSession
+from app.models.enums import GameType, SeriesStatus
 from app.models.references import Currency, Organizer, Venue
-from app.models.schedule import Event, Flight, Series
+from app.models.schedule import Event, Series
 from app.seeds import seed_reference_data
 from app.seeds.demo_schedule import (
     DEMO_SERIES_ID,
@@ -1361,35 +1359,6 @@ async def test_demo_schedule_seed_idempotent(db_session: AsyncSession) -> None:
         )
         assert series_count == 1
         assert event_count == events_count
-
-
-async def test_demo_seed_keeps_events_used_by_live_sessions(db_session: AsyncSession) -> None:
-    """Пересев демо-данных не должен рушиться о live-сессию ручного тестирования."""
-    await seed_reference_data(db_session)
-    await seed_demo_schedule(db_session)
-
-    user = User(email="live-seed@example.com", nickname="live-seed")
-    db_session.add(user)
-    await db_session.flush()
-    event_id = await db_session.scalar(
-        select(Event.id).where(Event.series_id == DEMO_SERIES_ID).limit(1)
-    )
-    flight_id = await db_session.scalar(select(Flight.id).where(Flight.event_id == event_id))
-    session_row = LiveSession(
-        user_id=user.id,
-        event_id=event_id,
-        flight_id=flight_id,
-        started_at=datetime.now(UTC),
-        status=LiveSessionStatus.ACTIVE,
-    )
-    db_session.add(session_row)
-    await db_session.flush()
-
-    await seed_demo_schedule(db_session)
-
-    await db_session.refresh(session_row)
-    assert session_row.event_id == event_id
-    assert session_row.flight_id == flight_id
 
 
 async def test_running_series_card_stats_today_and_highlight(

@@ -1,8 +1,6 @@
 export type UserRole = "user" | "editor" | "admin";
 
-export type ResultsVisibility = "private" | "itm_only" | "full";
 
-export type StackDisplay = "chips" | "bb";
 
 export interface UserMe {
   id: string;
@@ -13,12 +11,9 @@ export interface UserMe {
   /** IANA timezone; null = detect from browser. */
   timezone: string | null;
   /** Replayer stacks: raw chips or big blinds. */
-  stack_display: StackDisplay;
   /** Replayer: hide opponent holes until showdown. */
-  hide_holes_until_showdown: boolean;
   /** Hand input shell: wizard or table. */
   /** Playing-card suit colors: two-color or four-color. */
-  results_visibility: ResultsVisibility;
   role: UserRole;
   default_reminder_offsets: number[];
   email_verified: boolean;
@@ -81,6 +76,4 @@ export interface UpdateMePayload {
   /** IANA string, or null to reset to browser auto-detect. */
   timezone?: string | null;
   default_reminder_offsets?: number[];
-  stack_display?: StackDisplay;
-  hide_holes_until_showdown?: boolean;
 }

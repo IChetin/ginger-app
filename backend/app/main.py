@@ -35,16 +35,6 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         import logging
 
         logging.getLogger(__name__).exception("parser_profiles sync on startup failed")
-    try:
-        from app.seeds.demo_hands import seed_demo_hands
-
-        async with async_session_factory() as session:
-            await seed_demo_hands(session)
-            await session.commit()
-    except Exception:  # noqa: BLE001 — boot must not die if DB not ready yet
-        import logging
-
-        logging.getLogger(__name__).exception("demo hands seed on startup failed")
     yield
     await engine.dispose()
 

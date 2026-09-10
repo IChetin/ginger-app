@@ -23,25 +23,8 @@ class UserRole(str, Enum):
     ADMIN = "admin"
 
 
-class ResultsVisibility(str, Enum):
-    PRIVATE = "private"
-    ITM_ONLY = "itm_only"
-    FULL = "full"
 
 
-class StackDisplay(str, Enum):
-    CHIPS = "chips"
-    BB = "bb"
-
-
-class HandInputMode(str, Enum):
-    WIZARD = "wizard"
-    TABLE = "table"
-
-
-class CardDeck(str, Enum):
-    CLASSIC = "classic"
-    FOUR_COLOR = "four_color"
 
 
 class SeriesStatus(str, Enum):
@@ -126,18 +109,5 @@ class AuthTokenPurpose(str, Enum):
     ACCOUNT_LOOKUP = "account_lookup"  # existence-probe accounting (anti-enumeration captcha)
 
 
-class LiveSessionStatus(str, Enum):
-    ACTIVE = "active"
-    FINISHED = "finished"
-    CANCELLED = "cancelled"
 
 
-class LiveEventType(str, Enum):
-    ENTRY = "entry"
-    REENTRY = "reentry"
-    NOTE = "note"
-
-
-class HandStatus(str, Enum):
-    DRAFT = "draft"
-    PUBLISHED = "published"

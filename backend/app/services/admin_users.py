@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.exceptions import AppError, NotFoundError
-from app.core.system_accounts import DEMO_HANDS_USER_ID, is_system_user_id
+from app.core.system_accounts import SYSTEM_USER_IDS, is_system_user_id
 from app.models.auth import User
 from app.models.enums import UserRole
 from app.schemas.admin_users import AdminUserRead, AdminUserRoleUpdate
@@ -37,7 +37,7 @@ async def list_users(
     search: str | None = None,
     role: UserRole | None = None,
 ) -> PaginatedResponse[AdminUserRead]:
-    hidden = User.id != DEMO_HANDS_USER_ID
+    hidden = User.id.not_in(SYSTEM_USER_IDS)
     stmt = select(User).where(hidden)
     count_stmt = select(func.count()).select_from(User).where(hidden)
 

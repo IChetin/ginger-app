@@ -102,15 +102,6 @@ class FxRate(Base):
     rate_rub: Mapped[Decimal] = mapped_column(Numeric(14, 6), nullable=False)
 
 
-class Result(Base):
-    """Minimal projection for FX backfill selection."""
-
-    __tablename__ = "results"
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
-    played_on: Mapped[date] = mapped_column(Date, nullable=False)
-    currency_code: Mapped[str] = mapped_column(CHAR(3), nullable=False)
 
 
 class User(Base):

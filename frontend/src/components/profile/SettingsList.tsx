@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 type IconName =
-  "bell" | "mail" | "currency" | "telegram" | "shield" | "theme" | "clock" | "table" | "deck";
+  "bell" | "mail" | "currency" | "telegram" | "shield" | "theme" | "clock";
 
 function Icon({ name }: { name: IconName }) {
   const paths: Record<IconName, React.ReactNode> = {
@@ -35,18 +35,6 @@ function Icon({ name }: { name: IconName }) {
       <>
         <circle cx="12" cy="12" r="8" />
         <path d="M12 8v4l3 2" />
-      </>
-    ),
-    table: (
-      <>
-        <ellipse cx="12" cy="12" rx="8" ry="5" />
-        <path d="M4 12h16" />
-      </>
-    ),
-    deck: (
-      <>
-        <rect x="5" y="3" width="10" height="14" rx="1.5" />
-        <path d="M10 7.5 12 10.5 10 13.5 8 10.5Z" />
       </>
     ),
   };
@@ -194,7 +182,7 @@ export function SettingsList({
           <span className="text-ink min-w-0 flex-1 text-[14px] leading-[1.35] font-semibold">
             Базовая валюта
             <span className="text-ink-3 mt-px block text-[12px] font-normal">
-              Для итогов трекера
+              Для пересчёта сумм
             </span>
           </span>
           <span className="text-ink-2 text-[13px] font-semibold">{currencyLabel}</span>

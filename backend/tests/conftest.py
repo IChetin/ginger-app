@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import (
 from app.core.config import Settings, get_settings
 from app.core.database import get_db
 from app.main import app
+from app.models.auth import User
 from app.seeds import seed_reference_data
 from app.seeds.data import ORGANIZERS, VENUES
 from app.seeds.dev_users import seed_dev_users
@@ -133,6 +134,12 @@ async def editor_client(
 async def user_client(
     client: AsyncClient,
     seeded_db: None,
+    db_session: AsyncSession,
 ) -> AsyncGenerator[AsyncClient]:
+    # Вход по коду аккаунт не создаёт, а seed_dev_users заводит только admin и editor.
+    # В исходнике Day2 фикстура логинила несуществующего игрока и падала на
+    # account_not_found — тесты «игрок не пускается в админку» фактически не выполнялись.
+    db_session.add(User(email="player@example.com", nickname="player"))
+    await db_session.flush()
     await login_as(client, "player@example.com")
     yield client

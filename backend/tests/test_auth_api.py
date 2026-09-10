@@ -329,44 +329,10 @@ async def test_patch_profile(
     )
     assert patched.status_code == 200
     assert patched.json()["nickname"] == "editor_nick"
-    assert patched.json()["stack_display"] == "chips"
-    assert patched.json()["hide_holes_until_showdown"] is True
-    assert patched.json()["card_deck"] == "four_color"
-
-    stacked = await client.patch(
-        "/api/v1/auth/me",
-        json={"stack_display": "bb"},
-    )
-    assert stacked.status_code == 200
-    assert stacked.json()["stack_display"] == "bb"
-
-    input_mode = await client.patch(
-        "/api/v1/auth/me",
-        json={"hand_input_mode": "wizard"},
-    )
-    assert input_mode.status_code == 200
-    assert input_mode.json()["hand_input_mode"] == "wizard"
-
-    deck = await client.patch(
-        "/api/v1/auth/me",
-        json={"card_deck": "classic"},
-    )
-    assert deck.status_code == 200
-    assert deck.json()["card_deck"] == "classic"
-
-    holes = await client.patch(
-        "/api/v1/auth/me",
-        json={"hide_holes_until_showdown": False},
-    )
-    assert holes.status_code == 200
-    assert holes.json()["hide_holes_until_showdown"] is False
 
     me = await client.get("/api/v1/auth/me")
     assert me.status_code == 200
-    assert me.json()["stack_display"] == "bb"
-    assert me.json()["hide_holes_until_showdown"] is False
-    assert me.json()["hand_input_mode"] == "wizard"
-    assert me.json()["card_deck"] == "classic"
+    assert me.json()["nickname"] == "editor_nick"
 
 
 async def test_origin_guard_rejects_untrusted_origin(

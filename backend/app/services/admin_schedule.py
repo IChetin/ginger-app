@@ -16,7 +16,6 @@ from app.models.imports import ImportJob
 from app.models.notifications import Bookmark
 from app.models.references import Currency, Organizer, Venue
 from app.models.schedule import BlindLevel, ChangeLog, Event, Flight, Series
-from app.models.tracker import Result
 from app.schemas.admin_schedule import (
     BlindLevelAdminRead,
     BlindLevelUpsert,
@@ -824,19 +823,8 @@ async def delete_series(
         or 0
     )
     bookmarks_total = series_bookmarks + flight_bookmarks
-    results_count = int(
-        await session.scalar(
-            select(func.count()).select_from(Result).where(Result.event_id.in_(event_ids))
-        )
-        or 0
-    )
-    if bookmarks_total or results_count:
-        parts: list[str] = []
-        if bookmarks_total:
-            parts.append(f"{bookmarks_total} закладок")
-        if results_count:
-            parts.append(f"{results_count} результатов")
-        raise ConflictError(f"Нельзя удалить: есть {', '.join(parts)}")
+    if bookmarks_total:
+        raise ConflictError(f"Нельзя удалить: есть {bookmarks_total} закладок")
 
     await session.execute(
         update(ImportJob).where(ImportJob.series_id == series_id).values(series_id=None)

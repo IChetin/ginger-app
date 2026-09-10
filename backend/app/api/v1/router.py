@@ -3,16 +3,13 @@ from fastapi import APIRouter
 from app.api.v1 import (
     auth,
     bookmarks,
-    hands,
+    currencies,
     health,
-    live,
     media,
     notifications,
     push,
-    results,
     schedule,
     search,
-    stats,
 )
 from app.api.v1.admin.router import router as admin_router
 
@@ -24,9 +21,6 @@ api_router.include_router(search.router)
 api_router.include_router(bookmarks.router)
 api_router.include_router(notifications.router)
 api_router.include_router(push.router)
-api_router.include_router(results.router)
-api_router.include_router(stats.router)
-api_router.include_router(live.router)
-api_router.include_router(hands.router)
+api_router.include_router(currencies.router)
 api_router.include_router(media.router)
 api_router.include_router(admin_router)

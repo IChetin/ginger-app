@@ -157,34 +157,11 @@ def test_partial_provider_failure_continues() -> None:
     assert summary["dates_ok"] == 1
 
 
-def test_backfill_selection_missing_window() -> None:
-    class FakeSession:
-        def __init__(self) -> None:
-            self.rates: set[tuple[str, date]] = {("USD", date(2024, 6, 1))}
-
-        def scalars(self, stmt: object) -> list[object]:
-            sql = str(stmt)
-            if "results.currency_code" in sql or "currency_code" in sql and "results" in sql:
-                return ["USD", "EUR"]
-            if "base_currency" in sql:
-                return ["RUB"]
-            if "played_on" in sql:
-                return [date(2024, 6, 10), date(2024, 6, 1)]
-            return []
-
-        def scalar(self, stmt: object) -> str | None:
-            # Approximate: if looking for EUR on 2024-06-10 window → missing
-            # if looking for USD on 2024-06-01 → present
-            text = str(stmt)
-            if "EUR" in text or "currency_code" in text:
-                # MagicMock-like: return None to force backfill for simplicity
-                # when date window doesn't contain a known rate.
-                return None
-            return None
-
-    dates = select_backfill_dates(FakeSession(), today=date(2024, 6, 15))  # type: ignore[arg-type]
-    assert date(2024, 6, 15) in dates
-    assert date(2024, 6, 10) in dates
+def test_backfill_selection_is_today_only() -> None:
+    # Догрузка курсов на даты сыгранных турниров ушла вместе с трекером:
+    # теперь нужен только курс на сегодня, в базу за датами не ходим.
+    dates = select_backfill_dates(None, today=date(2024, 6, 15))  # type: ignore[arg-type]
+    assert dates == [date(2024, 6, 15)]
 
 
 def test_sample_xml_ignores_unsupported() -> None:

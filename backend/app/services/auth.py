@@ -9,7 +9,6 @@ from sqlalchemy import func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.card_deck import parse_card_deck
 from app.core.config import Settings, get_settings
 from app.core.email import normalize_email
 from app.core.exceptions import (
@@ -406,7 +405,6 @@ async def _create_user(
         role=role,
         base_currency="RUB",
         email_verified_at=datetime.now(UTC),
-        card_deck=parse_card_deck(settings.default_card_deck),
     )
     session.add(user)
     await session.flush()
@@ -830,21 +828,6 @@ async def update_profile(
     if "timezone" in body.model_fields_set:
         user.timezone = body.timezone
 
-    if body.stack_display is not None:
-        user.stack_display = body.stack_display
-
-    if (
-        "hide_holes_until_showdown" in body.model_fields_set
-        and body.hide_holes_until_showdown is not None
-    ):
-        user.hide_holes_until_showdown = body.hide_holes_until_showdown
-
-    if body.hand_input_mode is not None:
-        user.hand_input_mode = body.hand_input_mode
-
-    if body.card_deck is not None:
-        user.card_deck = body.card_deck
-
     await session.flush()
     await session.refresh(user)
     return user
@@ -858,11 +841,6 @@ def user_to_me(user: User) -> UserMe:
         nickname=user.nickname,
         base_currency=user.base_currency,
         timezone=user.timezone,
-        stack_display=user.stack_display,
-        hide_holes_until_showdown=user.hide_holes_until_showdown,
-        hand_input_mode=user.hand_input_mode,
-        card_deck=user.card_deck,
-        results_visibility=user.results_visibility,
         role=user.role,
         default_reminder_offsets=list(user.default_reminder_offsets),
         email_verified=user.email_verified_at is not None,

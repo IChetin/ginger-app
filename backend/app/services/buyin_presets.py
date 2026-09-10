@@ -1,4 +1,4 @@
-"""Buy-in filter presets shared by schedule and tracker."""
+"""Buy-in filter presets for the schedule."""
 
 from __future__ import annotations
 

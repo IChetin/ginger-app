@@ -13,10 +13,6 @@
 		reverse_proxy backend:8000
 	}
 
-	handle /hand/* {
-		reverse_proxy backend:8000
-	}
-
 	handle {
 		header Cache-Control "no-store, must-revalidate"
 		header Pragma "no-cache"

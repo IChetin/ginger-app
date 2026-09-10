@@ -12,9 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.enums import EventStatus, SeriesStatus
-from app.models.live import LiveSession
 from app.models.schedule import BlindLevel, Event, Flight, Series
-from app.models.tracker import Result
 from app.schemas.imports import (
     DraftEvent,
     DraftFlight,
@@ -209,11 +207,9 @@ async def _replace_series_schedule(
 ) -> None:
     """Пересобирает сетку демо-серии, сохраняя id турниров и стартов.
 
-    Удалять всё и создавать заново нельзя: на демо-данных живут закладки, результаты
-    и live-сессии ручного тестирования. При удалении турнира `live_sessions.event_id`
-    обнуляется и ломает check «либо привязка, либо ручной ввод», а `results.event_id`
-    вовсе запрещает удаление. Поэтому id турниров и стартов детерминированы, а сид
-    обновляет существующие строки.
+    Удалять всё и создавать заново нельзя: на демо-данных живут закладки ручного
+    тестирования. Поэтому id турниров и стартов детерминированы, а сид обновляет
+    существующие строки.
     """
     from app.services import slugs as slugs_service
 
@@ -296,20 +292,8 @@ async def _drop_stale_events(
     if not stale:
         return
 
-    linked = set(
-        await session.scalars(select(LiveSession.event_id).where(LiveSession.event_id.in_(stale)))
-    ) | set(await session.scalars(select(Result.event_id).where(Result.event_id.in_(stale))))
-
-    removable = [event_id for event_id in stale if event_id not in linked]
-    if removable:
-        await session.execute(delete(Event).where(Event.id.in_(removable)))
-        await session.flush()
-    if linked:
-        logger.warning(
-            "sample schedule: kept %s events linked to sessions or results (series_id=%s)",
-            len(linked),
-            series.id,
-        )
+    await session.execute(delete(Event).where(Event.id.in_(stale)))
+    await session.flush()
 
 
 async def _apply_structures(

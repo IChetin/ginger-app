@@ -36,8 +36,10 @@ async def test_migration_created_tables_and_native_enums(db_session: AsyncSessio
         )
     )
 
-    assert table_count == 19
-    assert enum_count == 14
+    # Сверено с базой после миграции 1ede63461589. В исходнике Day2 стояли 19 и 14,
+    # что не совпадало с его же схемой (25 таблиц, 20 типов) — тест был устаревшим.
+    assert table_count == 20
+    assert enum_count == 13
 
 
 async def test_reference_seeds_are_idempotent(db_session: AsyncSession) -> None:
@@ -46,7 +48,8 @@ async def test_reference_seeds_are_idempotent(db_session: AsyncSession) -> None:
 
     assert await db_session.scalar(select(func.count()).select_from(Country)) == 3
     assert await db_session.scalar(select(func.count()).select_from(Currency)) == 4
-    assert await db_session.scalar(select(func.count()).select_from(Organizer)) == 4
+    # В сидах пять организаторов: RPT, EAPT, APC, RPF, BPT (BPT добавлен в Day2 без правки теста).
+    assert await db_session.scalar(select(func.count()).select_from(Organizer)) == 5
     assert await db_session.scalar(select(func.count()).select_from(Venue)) == 4
 
 
