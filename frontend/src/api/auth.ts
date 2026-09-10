@@ -26,7 +26,6 @@ import type {
 } from "@/api/types/auth";
 import { authKeys } from "@/features/auth/queryKeys";
 import { useMigrateGuestBookmarks } from "@/features/bookmarks/hooks/useMigrateGuestBookmarks";
-import { trackerKeys } from "@/features/tracker/queryKeys";
 
 export { authKeys };
 export {
@@ -188,7 +187,6 @@ export function useUpdateProfile() {
     onSuccess: async (user, body) => {
       queryClient.setQueryData(authKeys.me(), user);
       if (body.base_currency) {
-        await queryClient.invalidateQueries({ queryKey: trackerKeys.all });
       }
     },
   });

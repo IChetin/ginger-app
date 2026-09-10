@@ -31,22 +31,21 @@ function IconBookmarks() {
   );
 }
 
-function IconTracker() {
-  return (
-    <svg className={iconClass} viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4 19h16M6 16l4-5 3 3 5-7" />
-    </svg>
-  );
-}
+type NavItem = {
+  to: string;
+  label: string;
+  icon: () => JSX.Element;
+  /** series — главная и /series/*, prefix — раздел с подстраницами, exact — точное совпадение */
+  match: "series" | "prefix" | "exact";
+};
 
-const items = [
-  { to: "/", label: "Серии", icon: IconSeries, match: "series" as const },
-  { to: "/calendar", label: "Календарь", icon: IconCalendar, match: "exact" as const },
-  { to: "/bookmarks", label: "Закладки", icon: IconBookmarks, match: "exact" as const },
-  { to: "/tracker", label: "Трекер", icon: IconTracker, match: "prefix" as const },
+const items: NavItem[] = [
+  { to: "/", label: "Серии", icon: IconSeries, match: "series" },
+  { to: "/calendar", label: "Календарь", icon: IconCalendar, match: "exact" },
+  { to: "/bookmarks", label: "Закладки", icon: IconBookmarks, match: "exact" },
 ];
 
-function isItemActive(pathname: string, item: (typeof items)[number]): boolean {
+function isItemActive(pathname: string, item: NavItem): boolean {
   if (item.match === "series") {
     return pathname === "/" || pathname.startsWith("/series/");
   }
@@ -56,13 +55,7 @@ function isItemActive(pathname: string, item: (typeof items)[number]): boolean {
   return pathname === item.to;
 }
 
-export function BottomNav({
-  bookmarkCount = 0,
-  liveActive = false,
-}: {
-  bookmarkCount?: number;
-  liveActive?: boolean;
-}) {
+export function BottomNav({ bookmarkCount = 0 }: { bookmarkCount?: number }) {
   const { pathname } = useLocation();
 
   return (
@@ -92,12 +85,6 @@ export function BottomNav({
               <span className="num bg-gold-grad text-ink-ongold absolute top-1 right-[calc(50%-20px)] flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-extrabold">
                 {bookmarkCount}
               </span>
-            ) : null}
-            {item.to === "/tracker" && liveActive ? (
-              <span
-                className="bg-live absolute top-[5px] right-[calc(50%-15px)] h-[7px] w-[7px] animate-pulse rounded-full"
-                aria-label="Идёт турнир"
-              />
             ) : null}
             <Icon />
             {item.label}

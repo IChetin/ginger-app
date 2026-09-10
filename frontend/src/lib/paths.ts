@@ -19,10 +19,3 @@ export function eventPath(event: { slug: string }, series: { slug: string }): st
   return `/events/${eventPublicKey(series.slug, event.slug)}`;
 }
 
-export function liveSessionPath(eventId: string, flightId?: string | null): string {
-  const params = new URLSearchParams({ event_id: eventId });
-  if (flightId) {
-    params.set("flight_id", flightId);
-  }
-  return `/live?${params.toString()}`;
-}

@@ -20,8 +20,6 @@ import {
 import { TopBar } from "@/components/layout/TopBar";
 import { SeriesCard } from "@/components/series/SeriesCard";
 import { effectiveSeriesPhase } from "@/components/series/seriesDisplay";
-import { LiveActiveBanner } from "@/features/live/components/LiveActiveBanner";
-import { useActiveLiveSession } from "@/features/live/hooks";
 import { BUYIN_HINT, BUYIN_PRESETS } from "@/features/filters/buyinPresets";
 import { useDebouncedValue } from "@/features/filters/useFilterPreviewCount";
 import {
@@ -412,8 +410,6 @@ export function HomePage() {
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams]);
 
-  const liveQuery = useActiveLiveSession();
-  const liveSession = liveQuery.data && liveQuery.data.status === "active" ? liveQuery.data : null;
 
   const feedQuery = useSeriesList(filters);
   const archiveQuery = useSeriesArchiveList(filters);
@@ -461,7 +457,6 @@ export function HomePage() {
           <HomeFiltersSlot filters={filters} onCommit={commitFilters} tabCounts={tabCounts} />
         }
       />
-      {liveSession ? <LiveActiveBanner session={liveSession} /> : null}
 
       {isLoading ? <FeedSkeleton /> : null}
 

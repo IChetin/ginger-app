@@ -35,6 +35,7 @@ import type {
   ApiErrorBody,
   CalendarParams,
   CalendarResponse,
+  CurrencyBrief,
   EventDetail,
   ScheduleFilterCountsResponse,
   ScheduleFiltersResponse,
@@ -43,7 +44,6 @@ import type {
   SeriesListResponse,
   SeriesScheduleResponse,
 } from "@/api/types/schedule";
-import type { StatsFilterParams } from "@/api/types/tracker";
 
 export type ApiRequestHeaders = HeadersInit;
 
@@ -292,26 +292,9 @@ export async function fetchSeriesSchedulePdf(
   return { blob, filename };
 }
 
-export async function fetchStatsShareCard(
-  params: StatsFilterParams = {},
-  options: { signal?: AbortSignal } = {},
-): Promise<{
-  blob: Blob;
-  filename: string;
-}> {
-  const response = await fetch(`/api/v1/stats/share-card.png${buildQuery(params)}`, {
-    credentials: "include",
-    headers: { Accept: "image/png" },
-    signal: options.signal,
-  });
-  if (!response.ok) {
-    throw await parseError(response);
-  }
-  const disposition = response.headers.get("Content-Disposition") ?? "";
-  const match = /filename="([^"]+)"/.exec(disposition);
-  const filename = match?.[1] ?? "Day2_stats.png";
-  const blob = await response.blob();
-  return { blob, filename };
+/** Справочник валют. Раньше жил в трекере (/results/currencies), нужен профилю для базовой валюты. */
+export function fetchCurrencies(): Promise<CurrencyBrief[]> {
+  return apiGet("/api/v1/currencies");
 }
 
 export function fetchEventDetail(eventId: string): Promise<EventDetail> {

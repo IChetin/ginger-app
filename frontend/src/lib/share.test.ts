@@ -46,25 +46,25 @@ describe("shareOrCopyUrl", () => {
   it("copies on desktop and never calls navigator.share", async () => {
     const { share, writeText } = stubShareEnv({ touch: false });
     const outcome = await shareOrCopyUrl({
-      title: "Раздача",
-      url: "https://day2.pro/hand/abc",
+      title: "Турнир",
+      url: "https://day2.pro/events/abc",
     });
     expect(outcome).toBe("copied");
     expect(share).not.toHaveBeenCalled();
-    expect(writeText).toHaveBeenCalledWith("https://day2.pro/hand/abc");
+    expect(writeText).toHaveBeenCalledWith("https://day2.pro/events/abc");
   });
 
   it("uses Web Share on touch devices", async () => {
     const { share, writeText } = stubShareEnv({ touch: true });
     const outcome = await shareOrCopyUrl({
-      title: "Раздача",
-      url: "https://day2.pro/hand/abc",
+      title: "Турнир",
+      url: "https://day2.pro/events/abc",
     });
     expect(outcome).toBe("shared");
     expect(share).toHaveBeenCalledWith({
-      title: "Раздача",
-      url: "https://day2.pro/hand/abc",
-      text: "Раздача · Day2",
+      title: "Турнир",
+      url: "https://day2.pro/events/abc",
+      text: "Турнир · Day2",
     });
     expect(writeText).not.toHaveBeenCalled();
   });

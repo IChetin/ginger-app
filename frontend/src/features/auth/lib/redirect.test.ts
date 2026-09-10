@@ -42,9 +42,9 @@ describe("resolveReturnTo / buildLoginLocation", () => {
   });
 
   it("builds login location with safe state", () => {
-    expect(buildLoginLocation("/tracker")).toEqual({
+    expect(buildLoginLocation("/bookmarks")).toEqual({
       pathname: "/login",
-      state: { returnTo: "/tracker" },
+      state: { returnTo: "/bookmarks" },
     });
   });
 });
@@ -53,8 +53,7 @@ describe("guestSafePath", () => {
   it("keeps paths a guest can open", () => {
     expect(guestSafePath("/")).toBe("/");
     expect(guestSafePath("/bookmarks")).toBe("/bookmarks");
-    expect(guestSafePath("/tracker")).toBe("/tracker");
-    expect(guestSafePath("/tracker")).toBe("/tracker");
+    expect(guestSafePath("/calendar")).toBe("/calendar");
     expect(guestSafePath("/events/abc")).toBe("/events/abc");
     expect(guestSafePath("/bookmarks?tab=history")).toBe("/bookmarks?tab=history");
   });
@@ -62,18 +61,10 @@ describe("guestSafePath", () => {
   it("collapses auth-only paths so the guest is not bounced back to login", () => {
     expect(guestSafePath("/profile")).toBe("/");
     expect(guestSafePath("/profile?x=1")).toBe("/");
-    expect(guestSafePath("/tracker/results/new")).toBe("/");
-    expect(guestSafePath("/tracker/results/r1/edit")).toBe("/");
     expect(guestSafePath("/admin")).toBe("/");
     expect(guestSafePath("/admin/series")).toBe("/");
-    expect(guestSafePath("/hand/new")).toBe("/");
-    expect(guestSafePath("/hand/draft/abc")).toBe("/");
-    expect(guestSafePath("/hand/abc/edit")).toBe("/");
   });
 
-  it("keeps public hand replay links", () => {
-    expect(guestSafePath("/hand/abc")).toBe("/hand/abc");
-  });
 
   it("does not confuse prefixes with auth-only routes", () => {
     expect(guestSafePath("/profiles")).toBe("/profiles");

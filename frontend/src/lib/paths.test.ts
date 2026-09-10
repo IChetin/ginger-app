@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   eventPath,
   eventPublicKey,
-  liveSessionPath,
   seriesPath,
   seriesSchedulePath,
 } from "@/lib/paths";
@@ -43,10 +42,4 @@ describe("paths", () => {
     ).toBe("/events/rpt-sochi-2026-08-5-main-event");
   });
 
-  it("builds live session path with event and optional flight", () => {
-    expect(liveSessionPath("event-1")).toBe("/live?event_id=event-1");
-    expect(liveSessionPath("event-1", "flight-1")).toBe(
-      "/live?event_id=event-1&flight_id=flight-1",
-    );
-  });
 });

@@ -28,7 +28,7 @@ import {
 } from "@/features/auth/hooks";
 import { usePushSubscription, useSubscribePush, useUnsubscribePush } from "@/features/push/hooks";
 import { pushErrorMessage } from "@/features/push/lib/pushErrorMessage";
-import { useResultCurrencies } from "@/features/tracker/hooks";
+import { useCurrencies } from "@/features/auth/hooks";
 import packageJson from "../../../package.json";
 
 const SUPPORT_URL = import.meta.env.VITE_TELEGRAM_SUPPORT_URL || "https://t.me/day2_support";
@@ -37,7 +37,7 @@ export function ProfilePage() {
   const navigate = useNavigate();
   const confirm = useConfirm();
   const { data: user } = useMe();
-  const currencies = useResultCurrencies();
+  const currencies = useCurrencies();
   const updateProfile = useUpdateProfile();
   const setPassword = useSetPassword();
   const changePassword = useChangePassword();

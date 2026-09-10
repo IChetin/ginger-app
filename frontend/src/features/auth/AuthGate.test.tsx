@@ -19,13 +19,13 @@ describe("AuthGate", () => {
           icon={<svg viewBox="0 0 24 24" aria-hidden="true" />}
           title="Ваша статистика турниров"
           description="ROI и график профита"
-          returnTo="/tracker"
+          returnTo="/bookmarks"
         >
           <p data-testid="auth-gate-slot">демо</p>
         </AuthGate>
         <LocationProbe />
       </>,
-      { route: "/tracker" },
+      { route: "/bookmarks" },
     );
 
     expect(screen.getByTestId("auth-gate")).toBeInTheDocument();
@@ -35,7 +35,7 @@ describe("AuthGate", () => {
     const login = screen.getByRole("link", { name: "Войти" });
     expect(login).toHaveAttribute("href", "/login");
     await user.click(login);
-    expect(screen.getByTestId("location")).toHaveTextContent('"returnTo":"/tracker"');
+    expect(screen.getByTestId("location")).toHaveTextContent('"returnTo":"/bookmarks"');
   });
 
   it("links register with the same returnTo", () => {
@@ -63,7 +63,7 @@ describe("AuthGate", () => {
       >
         <div data-testid="future-demo">слот</div>
       </AuthGate>,
-      { route: "/tracker" },
+      { route: "/bookmarks" },
     );
 
     expect(screen.getByTestId("future-demo")).toHaveTextContent("слот");

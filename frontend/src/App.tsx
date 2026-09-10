@@ -13,8 +13,6 @@ import { LoginPage as AdminLoginPage } from "@/features/admin/LoginPage";
 import { BookmarksPage } from "@/features/bookmarks/BookmarksPage";
 import { AuthGuard } from "@/features/auth/AuthGuard";
 import { ProfilePage } from "@/features/auth/ProfilePage";
-import { ResultFormPage } from "@/features/tracker/ResultFormPage";
-import { TrackerPage } from "@/features/tracker/TrackerPage";
 import { AdminChangeLogPage } from "@/pages/admin/AdminChangeLogPage";
 import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
 import { AdminEventDetailPage } from "@/pages/admin/AdminEventDetailPage";
@@ -30,7 +28,6 @@ import { EventPage } from "@/pages/EventPage";
 import { ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from "@/pages/AuthLegacyRedirect";
 import { HomePage } from "@/pages/HomePage";
 import { InstallPage } from "@/pages/InstallPage";
-import { LivePage } from "@/pages/LivePage";
 import { LoginPage } from "@/pages/LoginPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { NotificationsPage } from "@/pages/NotificationsPage";
@@ -50,13 +47,9 @@ export function AppRoutes() {
         <Route path="/series/:seriesId/schedule" element={<SeriesSchedulePage />} />
         <Route path="/events/:eventId" element={<EventPage />} />
         <Route path="/bookmarks" element={<BookmarksPage />} />
-        <Route path="/tracker" element={<TrackerPage />} />
-        <Route path="/live" element={<LivePage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route element={<AuthGuard />}>
           <Route path="/notifications" element={<NotificationsPage />} />
-          <Route path="/tracker/results/new" element={<ResultFormPage />} />
-          <Route path="/tracker/results/:resultId/edit" element={<ResultFormPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Route>

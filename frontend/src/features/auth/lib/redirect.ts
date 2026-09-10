@@ -23,17 +23,8 @@ export function safeInternalNextPath(next: string | null | undefined, fallback =
 /**
  * Routes behind AuthGuard/AdminGuard. Sending a guest there right after they
  * declined to log in bounces them straight back to /login.
- * `/hands` is guest-visible (demo list + AuthGate); only create/edit hand routes stay auth-only.
  */
-const AUTH_ONLY_PATTERNS = [
-  /^\/profile(\/|$)/,
-  /^\/tracker\/results(\/|$)/,
-  /^\/admin(\/|$)/,
-  /^\/notifications(\/|$)/,
-  /^\/hand\/new(\/|$)/,
-  /^\/hand\/draft(\/|$)/,
-  /^\/hand\/[^/]+\/edit(\/|$)/,
-];
+const AUTH_ONLY_PATTERNS = [/^\/profile(\/|$)/, /^\/admin(\/|$)/, /^\/notifications(\/|$)/];
 
 /** Path a guest can actually open: auth-only targets collapse to the fallback. */
 export function guestSafePath(path: string, fallback = "/"): string {

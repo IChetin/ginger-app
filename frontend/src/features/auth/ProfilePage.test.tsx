@@ -6,7 +6,6 @@ import { ApiError } from "@/api/client";
 import type { UserMe } from "@/api/types/auth";
 import { authKeys } from "@/features/auth/queryKeys";
 import { ProfilePage } from "@/features/auth/ProfilePage";
-import { trackerKeys } from "@/features/tracker/queryKeys";
 import { resetThemeStateForTests } from "@/lib/theme";
 import { renderWithProviders } from "@/test/render";
 
@@ -21,15 +20,7 @@ vi.mock("@/api/client", async () => {
     fetchCurrentUser: (...args: unknown[]) => fetchCurrentUser(...args),
     updateCurrentUser: (...args: unknown[]) => updateCurrentUser(...args),
     logoutAuth: (...args: unknown[]) => logoutAuth(...args),
-  };
-});
-
-vi.mock("@/features/tracker/api", async () => {
-  const actual =
-    await vi.importActual<typeof import("@/features/tracker/api")>("@/features/tracker/api");
-  return {
-    ...actual,
-    fetchResultCurrencies: vi.fn().mockResolvedValue([
+    fetchCurrencies: vi.fn().mockResolvedValue([
       { code: "RUB", symbol: "₽" },
       { code: "USD", symbol: "$" },
     ]),
@@ -180,11 +171,10 @@ describe("ProfilePage", () => {
     release({ ...userFixture, nickname: "pro" });
   });
 
-  it("invalidates tracker after base currency change", async () => {
+  it("saves base currency change", async () => {
     const user = userEvent.setup();
     updateCurrentUser.mockResolvedValue({ ...userFixture, base_currency: "USD" });
-    const { queryClient } = renderWithProviders(<ProfilePage />);
-    queryClient.setQueryData(trackerKeys.stats(), { profit: "100" });
+    renderWithProviders(<ProfilePage />);
 
     await screen.findByText("player");
     await user.click(screen.getByRole("button", { name: /Базовая валюта/ }));
@@ -192,7 +182,6 @@ describe("ProfilePage", () => {
 
     await waitFor(() => {
       expect(updateCurrentUser).toHaveBeenCalledWith({ base_currency: "USD" });
-      expect(queryClient.getQueryState(trackerKeys.stats())?.isInvalidated).toBe(true);
     });
   });
 
