@@ -92,8 +92,6 @@ export function SettingsList({
   currencyLabel,
   timezoneLabel,
   themeLabel,
-  handInputModeLabel,
-  cardDeckLabel,
   pushEnabled,
   pushPending,
   hasPassword,
@@ -101,8 +99,6 @@ export function SettingsList({
   onCurrency,
   onTimezone,
   onTheme,
-  onHandInputMode,
-  onCardDeck,
   onPassword,
   onPushChange,
   supportUrl,
@@ -112,8 +108,6 @@ export function SettingsList({
   currencyLabel: string;
   timezoneLabel: string;
   themeLabel: string;
-  handInputModeLabel?: string | null;
-  cardDeckLabel: string;
   pushEnabled: boolean;
   pushPending: boolean;
   hasPassword: boolean;
@@ -123,8 +117,6 @@ export function SettingsList({
   onCurrency: () => void;
   onTimezone: () => void;
   onTheme: () => void;
-  onHandInputMode?: () => void;
-  onCardDeck: () => void;
   onPassword: () => void;
   onPushChange: (enabled: boolean) => void;
 }) {
@@ -194,43 +186,9 @@ export function SettingsList({
           <span className="text-ink-2 text-[13px] font-semibold">{themeLabel}</span>
           <Chevron />
         </button>
-        {handInputModeLabel && onHandInputMode ? (
-          <button
-            type="button"
-            className={rowClass}
-            data-testid="settings-hand-input-mode"
-            onClick={onHandInputMode}
-          >
-            <Icon name="table" />
-            <span className="text-ink min-w-0 flex-1 text-[14px] leading-[1.35] font-semibold">
-              Способ ввода раздачи
-              <span className="text-ink-3 mt-px block text-[12px] font-normal">
-                Визард или на столе
-              </span>
-            </span>
-            <span className="text-ink-2 text-[13px] font-semibold">{handInputModeLabel}</span>
-            <Chevron />
-          </button>
-        ) : null}
       </Group>
 
       <Group title="Аккаунт">
-        <button
-          type="button"
-          className={rowClass}
-          data-testid="settings-card-deck"
-          onClick={onCardDeck}
-        >
-          <Icon name="deck" />
-          <span className="text-ink min-w-0 flex-1 text-[14px] leading-[1.35] font-semibold">
-            Колода
-            <span className="text-ink-3 mt-px block text-[12px] font-normal">
-              Цвета мастей на картах
-            </span>
-          </span>
-          <span className="text-ink-2 text-[13px] font-semibold">{cardDeckLabel}</span>
-          <Chevron />
-        </button>
         <button type="button" className={rowClass} onClick={onCurrency}>
           <Icon name="currency" />
           <span className="text-ink min-w-0 flex-1 text-[14px] leading-[1.35] font-semibold">

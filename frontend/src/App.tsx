@@ -30,10 +30,6 @@ import { EventPage } from "@/pages/EventPage";
 import { ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from "@/pages/AuthLegacyRedirect";
 import { HomePage } from "@/pages/HomePage";
 import { InstallPage } from "@/pages/InstallPage";
-import { CardDeckPreferenceProvider } from "@/features/hands/lib/CardDeckPreferenceProvider";
-import { HandInputPage } from "@/features/hands/pages/HandInputPage";
-import { HandDraftRedirect, HandNewRedirect, HandPage } from "@/features/hands/pages/HandPage";
-import { HandsListPage } from "@/features/hands/pages/HandsListPage";
 import { LivePage } from "@/pages/LivePage";
 import { LoginPage } from "@/pages/LoginPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
@@ -55,19 +51,14 @@ export function AppRoutes() {
         <Route path="/events/:eventId" element={<EventPage />} />
         <Route path="/bookmarks" element={<BookmarksPage />} />
         <Route path="/tracker" element={<TrackerPage />} />
-        <Route path="/hands" element={<HandsListPage />} />
         <Route path="/live" element={<LivePage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route element={<AuthGuard />}>
-          <Route path="/hand/new" element={<HandNewRedirect />} />
-          <Route path="/hand/draft/:draftId" element={<HandDraftRedirect />} />
-          <Route path="/hand/:slug/edit" element={<HandInputPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/tracker/results/new" element={<ResultFormPage />} />
           <Route path="/tracker/results/:resultId/edit" element={<ResultFormPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
-        <Route path="/hand/:slug" element={<HandPage />} />
       </Route>
 
       <Route path="/login" element={<LoginPage />} />
@@ -105,13 +96,11 @@ export function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <CardDeckPreferenceProvider>
-        <DemoProvider>
-          <ConfirmProvider>
-            <AppRoutes />
-          </ConfirmProvider>
-        </DemoProvider>
-      </CardDeckPreferenceProvider>
+      <DemoProvider>
+        <ConfirmProvider>
+          <AppRoutes />
+        </ConfirmProvider>
+      </DemoProvider>
     </BrowserRouter>
   );
 }

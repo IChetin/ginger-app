@@ -99,8 +99,6 @@ const userFixture: UserMe = {
   timezone: null,
   stack_display: "chips",
   hide_holes_until_showdown: true,
-  hand_input_mode: "table",
-  card_deck: "four_color",
   results_visibility: "private",
   role: "user",
   default_reminder_offsets: [1440, 120],

@@ -45,8 +45,6 @@ const userFixture: UserMe = {
   timezone: null,
   stack_display: "chips",
   hide_holes_until_showdown: true,
-  hand_input_mode: "table",
-  card_deck: "four_color",
   results_visibility: "private",
   role: "user",
   default_reminder_offsets: [1440, 120],
@@ -233,26 +231,6 @@ describe("ProfilePage", () => {
     document.documentElement.removeAttribute("data-theme");
   });
 
-  it("saves a classic deck from the settings sheet", async () => {
-    const user = userEvent.setup();
-    updateCurrentUser.mockResolvedValue({ ...userFixture, card_deck: "classic" });
-    renderWithProviders(<ProfilePage />);
-
-    await screen.findByText("player");
-    expect(screen.getByTestId("settings-card-deck")).toHaveTextContent("Четырёхцветная");
-
-    await user.click(screen.getByTestId("settings-card-deck"));
-    expect(await screen.findByTestId("card-deck-four_color")).toBeInTheDocument();
-    expect(screen.getAllByTestId("playing-card")).toHaveLength(8);
-    await user.click(screen.getByTestId("card-deck-classic"));
-
-    await waitFor(() => {
-      expect(updateCurrentUser).toHaveBeenCalledWith({ card_deck: "classic" });
-    });
-    await waitFor(() => {
-      expect(screen.getByTestId("settings-card-deck")).toHaveTextContent("Классическая");
-    });
-  });
 
   // BUG-5: the denial toast always talked about Safari settings.
   it("explains a denied permission in the words of the current browser", async () => {

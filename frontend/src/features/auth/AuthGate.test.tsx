@@ -63,7 +63,7 @@ describe("AuthGate", () => {
       >
         <div data-testid="future-demo">слот</div>
       </AuthGate>,
-      { route: "/hands" },
+      { route: "/tracker" },
     );
 
     expect(screen.getByTestId("future-demo")).toHaveTextContent("слот");

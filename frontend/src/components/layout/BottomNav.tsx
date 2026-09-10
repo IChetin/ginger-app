@@ -39,21 +39,11 @@ function IconTracker() {
   );
 }
 
-function IconHands() {
-  return (
-    <svg className={iconClass} viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="5" y="4" width="9" height="13" rx="1.5" />
-      <rect x="10" y="7" width="9" height="13" rx="1.5" />
-    </svg>
-  );
-}
-
 const items = [
   { to: "/", label: "Серии", icon: IconSeries, match: "series" as const },
   { to: "/calendar", label: "Календарь", icon: IconCalendar, match: "exact" as const },
   { to: "/bookmarks", label: "Закладки", icon: IconBookmarks, match: "exact" as const },
   { to: "/tracker", label: "Трекер", icon: IconTracker, match: "prefix" as const },
-  { to: "/hands", label: "Раздачи", icon: IconHands, match: "prefix" as const },
 ];
 
 function isItemActive(pathname: string, item: (typeof items)[number]): boolean {

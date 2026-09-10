@@ -3,8 +3,6 @@ export type UserRole = "user" | "editor" | "admin";
 export type ResultsVisibility = "private" | "itm_only" | "full";
 
 export type StackDisplay = "chips" | "bb";
-export type HandInputMode = "wizard" | "table";
-export type CardDeck = "classic" | "four_color";
 
 export interface UserMe {
   id: string;
@@ -19,9 +17,7 @@ export interface UserMe {
   /** Replayer: hide opponent holes until showdown. */
   hide_holes_until_showdown: boolean;
   /** Hand input shell: wizard or table. */
-  hand_input_mode: HandInputMode;
   /** Playing-card suit colors: two-color or four-color. */
-  card_deck: CardDeck;
   results_visibility: ResultsVisibility;
   role: UserRole;
   default_reminder_offsets: number[];
@@ -87,6 +83,4 @@ export interface UpdateMePayload {
   default_reminder_offsets?: number[];
   stack_display?: StackDisplay;
   hide_holes_until_showdown?: boolean;
-  hand_input_mode?: HandInputMode;
-  card_deck?: CardDeck;
 }

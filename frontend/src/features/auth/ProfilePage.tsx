@@ -3,8 +3,6 @@ import { useNavigate } from "react-router-dom";
 
 import type { BaseCurrencyCode } from "@/api/types/auth";
 import { IntervalSheet } from "@/components/bookmarks/IntervalSheet";
-import { CardDeckSheet } from "@/components/profile/CardDeckSheet";
-import { HandInputModeSheet } from "@/components/profile/HandInputModeSheet";
 import { InstallBanner } from "@/components/profile/InstallBanner";
 import { PasswordSheet } from "@/components/profile/PasswordSheet";
 import {
@@ -28,8 +26,6 @@ import {
   useSetPassword,
   useUpdateProfile,
 } from "@/features/auth/hooks";
-import { CARD_DECK_LABELS, parseCardDeck } from "@/features/hands/lib/cardDeck";
-import { useHandInputMode } from "@/features/hands/lib/useHandInputMode";
 import { usePushSubscription, useSubscribePush, useUnsubscribePush } from "@/features/push/hooks";
 import { pushErrorMessage } from "@/features/push/lib/pushErrorMessage";
 import { useResultCurrencies } from "@/features/tracker/hooks";
@@ -50,14 +46,11 @@ export function ProfilePage() {
   const subscribePush = useSubscribePush();
   const unsubscribePush = useUnsubscribePush();
   const theme = useTheme();
-  const handInput = useHandInputMode();
   const [nicknameOpen, setNicknameOpen] = useState(false);
   const [offsetsOpen, setOffsetsOpen] = useState(false);
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [timezoneOpen, setTimezoneOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
-  const [handInputOpen, setHandInputOpen] = useState(false);
-  const [cardDeckOpen, setCardDeckOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -96,10 +89,6 @@ export function ProfilePage() {
         currencyLabel={`${currency?.symbol ?? ""} ${user.base_currency}`.trim()}
         timezoneLabel={timezoneLabel}
         themeLabel={THEME_LABELS[theme.choice]}
-        handInputModeLabel={
-          handInput.canChoose ? (handInput.mode === "table" ? "На столе" : "Визард") : null
-        }
-        cardDeckLabel={CARD_DECK_LABELS[parseCardDeck(user.card_deck)]}
         pushEnabled={Boolean(pushSubscription.data)}
         pushPending={pushPending}
         hasPassword={user.has_password}
@@ -117,11 +106,6 @@ export function ProfilePage() {
           setTimezoneOpen(true);
         }}
         onTheme={() => setThemeOpen(true)}
-        onHandInputMode={handInput.canChoose ? () => setHandInputOpen(true) : undefined}
-        onCardDeck={() => {
-          updateProfile.reset();
-          setCardDeckOpen(true);
-        }}
         onPassword={() => {
           setPassword.reset();
           changePassword.reset();
@@ -214,25 +198,6 @@ export function ProfilePage() {
         onSelect={(next) => {
           theme.setTheme(next);
           setThemeOpen(false);
-        }}
-      />
-      <HandInputModeSheet
-        open={handInputOpen}
-        onOpenChange={setHandInputOpen}
-        mode={handInput.mode}
-        onSelect={(next) => {
-          handInput.setMode(next);
-          setHandInputOpen(false);
-        }}
-      />
-      <CardDeckSheet
-        open={cardDeckOpen}
-        onOpenChange={setCardDeckOpen}
-        scheme={parseCardDeck(user.card_deck)}
-        onSelect={(next) => {
-          void updateProfile.mutateAsync({ card_deck: next }).then(() => {
-            setCardDeckOpen(false);
-          });
         }}
       />
       <PasswordSheet

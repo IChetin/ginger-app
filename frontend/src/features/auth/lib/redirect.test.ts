@@ -54,7 +54,7 @@ describe("guestSafePath", () => {
     expect(guestSafePath("/")).toBe("/");
     expect(guestSafePath("/bookmarks")).toBe("/bookmarks");
     expect(guestSafePath("/tracker")).toBe("/tracker");
-    expect(guestSafePath("/hands")).toBe("/hands");
+    expect(guestSafePath("/tracker")).toBe("/tracker");
     expect(guestSafePath("/events/abc")).toBe("/events/abc");
     expect(guestSafePath("/bookmarks?tab=history")).toBe("/bookmarks?tab=history");
   });

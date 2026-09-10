@@ -4,7 +4,6 @@ import { MemoryRouter, type MemoryRouterProps } from "react-router-dom";
 
 import { ConfirmProvider } from "@/components/ui/ConfirmDialog";
 import { DemoProvider } from "@/demo/DemoProvider";
-import { CardDeckPreferenceProvider } from "@/features/hands/lib/CardDeckPreferenceProvider";
 
 export function renderWithProviders(
   ui: React.ReactElement,
@@ -31,7 +30,7 @@ export function renderWithProviders(
       >
         <ConfirmProvider>
           <DemoProvider>
-            <CardDeckPreferenceProvider>{ui}</CardDeckPreferenceProvider>
+            {ui}
           </DemoProvider>
         </ConfirmProvider>
       </MemoryRouter>

@@ -17,9 +17,6 @@ vi.mock("@/features/live/hooks", () => ({
   useActiveLiveSession: () => ({ data: null }),
 }));
 
-vi.mock("@/features/hands/lib/draftSync", () => ({
-  registerHandDraftSyncTriggers: () => () => undefined,
-}));
 
 function renderShell(route: string) {
   return renderWithProviders(
@@ -33,12 +30,3 @@ function renderShell(route: string) {
   );
 }
 
-describe("AppShell hand width", () => {
-  it("keeps the 420 column for a draft and a published hand", () => {
-    renderShell("/hand/abc");
-    const shell = screen.getByTestId("mobile-shell");
-    expect(shell.className).toMatch(/max-w-\[420px\]/);
-    expect(shell.className).not.toMatch(/max-w-none/);
-    expect(shell.getAttribute("data-wide-hand")).toBeNull();
-  });
-});
