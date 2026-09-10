@@ -23,10 +23,6 @@ class UserRole(str, Enum):
     ADMIN = "admin"
 
 
-
-
-
-
 class SeriesStatus(str, Enum):
     ANNOUNCED = "announced"
     SCHEDULE_PUBLISHED = "schedule_published"
@@ -109,5 +105,32 @@ class AuthTokenPurpose(str, Enum):
     ACCOUNT_LOOKUP = "account_lookup"  # existence-probe accounting (anti-enumeration captcha)
 
 
+# --- Ginger APP: клубы и турниры ---
 
 
+class PokerApp(str, Enum):
+    """Приложение, в котором живёт клуб. Фильтр расписания по приложению — у игрока стоят не все."""
+
+    PPPOKER = "pppoker"
+    XPOKER = "xpoker"
+    POKER21 = "poker21"
+    OTHER = "other"
+
+
+class ClubBlock(str, Enum):
+    """Онлайн-клубы видны всем, офлайн — только игрокам с флагом доступа (ТЗ §7)."""
+
+    ONLINE = "online"
+    OFFLINE = "offline"
+
+
+class BountyKind(str, Enum):
+    NONE = "none"
+    KO = "ko"
+    PKO = "pko"
+    MYSTERY = "mystery"
+
+
+class TournamentStatus(str, Enum):
+    SCHEDULED = "scheduled"
+    CANCELLED = "cancelled"

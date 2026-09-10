@@ -5,7 +5,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from enum import StrEnum
 
-from sqlalchemy import CHAR, Date, DateTime, Enum, Numeric, SmallInteger, String, Text, func, text
+from sqlalchemy import Date, DateTime, Enum, Numeric, SmallInteger, String, Text, func, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -97,7 +97,7 @@ class PushSubscription(Base):
 class FxRate(Base):
     __tablename__ = "fx_rates"
 
-    currency_code: Mapped[str] = mapped_column(CHAR(3), primary_key=True)
+    currency_code: Mapped[str] = mapped_column(String(8), primary_key=True)
     rate_date: Mapped[date] = mapped_column(Date, primary_key=True)
     rate_rub: Mapped[Decimal] = mapped_column(Numeric(14, 6), nullable=False)
 
@@ -110,4 +110,4 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
-    base_currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
+    base_currency: Mapped[str] = mapped_column(String(8), nullable=False)

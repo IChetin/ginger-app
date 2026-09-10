@@ -87,6 +87,11 @@ class Settings(BaseSettings):
     pdf_generation_timeout_seconds: float = Field(default=15.0, gt=0)
     pdf_rate_limit_per_minute: int = Field(default=10, ge=1)
 
+    # Ginger APP: сетки клубов разворачиваются в старты на горизонт вперёд; фоновая задача
+    # бэкенда докручивает горизонт с этим интервалом. 0 — выключено.
+    schedule_horizon_days: int = Field(default=14, ge=1, le=60)
+    schedule_rollforward_interval_seconds: int = Field(default=6 * 3600, ge=0)
+
     # Schedule import pipeline.
     import_max_file_bytes: int = Field(default=20 * 1024 * 1024, ge=1)
     import_confidence_threshold: float = Field(default=0.8, ge=0.0, le=1.0)

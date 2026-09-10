@@ -6,6 +6,7 @@ from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.models.clubs import Club
 from app.models.references import Country, Currency, Organizer, Venue
 from app.models.schedule import Flight
 from app.seeds import seed_reference_data
@@ -36,10 +37,10 @@ async def test_migration_created_tables_and_native_enums(db_session: AsyncSessio
         )
     )
 
-    # Сверено с базой после миграции 1ede63461589. В исходнике Day2 стояли 19 и 14,
+    # Сверено с базой после миграции 2a7c9e41b3d0. В исходнике Day2 стояли 19 и 14,
     # что не совпадало с его же схемой (25 таблиц, 20 типов) — тест был устаревшим.
-    assert table_count == 20
-    assert enum_count == 13
+    assert table_count == 23
+    assert enum_count == 17
 
 
 async def test_reference_seeds_are_idempotent(db_session: AsyncSession) -> None:
@@ -47,10 +48,28 @@ async def test_reference_seeds_are_idempotent(db_session: AsyncSession) -> None:
     await seed_reference_data(db_session)
 
     assert await db_session.scalar(select(func.count()).select_from(Country)) == 3
-    assert await db_session.scalar(select(func.count()).select_from(Currency)) == 4
-    # В сидах пять организаторов: RPT, EAPT, APC, RPF, BPT (BPT добавлен в Day2 без правки теста).
-    assert await db_session.scalar(select(func.count()).select_from(Organizer)) == 5
+    assert await db_session.scalar(select(func.count()).select_from(Currency)) == 5
+    # Организаторы Day2 (RPT, EAPT, APC, RPF, BPT) и союзы Ginger APP (NUTS, Black Sea, Poker21).
+    assert await db_session.scalar(select(func.count()).select_from(Organizer)) == 8
     assert await db_session.scalar(select(func.count()).select_from(Venue)) == 4
+    assert await db_session.scalar(select(func.count()).select_from(Club)) == 7
+
+
+async def test_club_seed_does_not_resurrect_deleted_clubs(db_session: AsyncSession) -> None:
+    await seed_reference_data(db_session)
+    ginger = await db_session.scalar(select(Club).where(Club.slug == "ginger"))
+    assert ginger is not None
+    assert ginger.chip_currency_code == "USDT"
+    assert ginger.chip_value == Decimal("1")
+
+    godaddy = await db_session.scalar(select(Club).where(Club.slug == "godaddy"))
+    assert godaddy is not None
+    assert godaddy.is_visible is False
+    await db_session.delete(godaddy)
+    await db_session.flush()
+
+    await seed_reference_data(db_session)
+    assert await db_session.scalar(select(func.count()).select_from(Club)) == 6
 
 
 async def test_schedule_factory_persists_decimal_and_aware_time(

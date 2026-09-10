@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.v1 import (
     auth,
     bookmarks,
+    clubs,
     currencies,
     health,
     media,
@@ -22,5 +23,6 @@ api_router.include_router(bookmarks.router)
 api_router.include_router(notifications.router)
 api_router.include_router(push.router)
 api_router.include_router(currencies.router)
+api_router.include_router(clubs.router)
 api_router.include_router(media.router)
 api_router.include_router(admin_router)

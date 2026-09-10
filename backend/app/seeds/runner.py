@@ -1,10 +1,12 @@
 import logging
 
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.clubs import Club
 from app.models.references import Country, Currency, Organizer, Venue
-from app.seeds.data import COUNTRIES, CURRENCIES, ORGANIZERS, VENUES
+from app.seeds.data import CLUBS, COUNTRIES, CURRENCIES, ORGANIZERS, VENUES
 from app.services.parser_profiles import (
     apply_default_organizer_bindings,
     sync_parser_profiles,
@@ -54,6 +56,11 @@ async def seed_reference_data(session: AsyncSession) -> None:
             },
         )
     )
+
+    # Клубы — рабочие данные, а не справочник: сеем только в пустую таблицу. Иначе удалённый
+    # в админке клуб воскресал бы при каждом db-init, а правки перетирались.
+    if await session.scalar(select(func.count()).select_from(Club)) == 0:
+        await session.execute(insert(Club).values(CLUBS))
 
     await sync_parser_profiles(session)
     await apply_default_organizer_bindings(session)

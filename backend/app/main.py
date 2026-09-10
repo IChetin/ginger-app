@@ -1,5 +1,6 @@
+import asyncio
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from urllib.parse import urlparse
 
 from fastapi import FastAPI, Request
@@ -35,7 +36,18 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         import logging
 
         logging.getLogger(__name__).exception("parser_profiles sync on startup failed")
+
+    rollforward: asyncio.Task[None] | None = None
+    interval = get_settings().schedule_rollforward_interval_seconds
+    if interval > 0:
+        from app.services.tournaments.rollforward import run_periodically
+
+        rollforward = asyncio.create_task(run_periodically(interval))
     yield
+    if rollforward is not None:
+        rollforward.cancel()
+        with suppress(asyncio.CancelledError):
+            await rollforward
     await engine.dispose()
 
 

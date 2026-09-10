@@ -7,7 +7,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -25,5 +25,9 @@ async def list_currencies(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> list[CurrencyBrief]:
     del user  # Auth dependency: справочник отдаём только вошедшим, как было в трекере.
-    currencies = await db.scalars(select(Currency).order_by(Currency.code.asc()))
+    # Базовая валюта профиля пересчитывается по курсам ЦБ, поэтому только ISO-коды: USDT
+    # (курс задаётся вручную, для фишек клубов) сюда не попадает.
+    currencies = await db.scalars(
+        select(Currency).where(func.length(Currency.code) == 3).order_by(Currency.code.asc())
+    )
     return [CurrencyBrief(code=item.code, symbol=item.symbol) for item in currencies]

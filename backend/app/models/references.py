@@ -27,7 +27,8 @@ class Country(Base):
 class Currency(Base):
     __tablename__ = "currencies"
 
-    code: Mapped[str] = mapped_column(CHAR(3), primary_key=True)
+    # Ginger APP: String(8) вместо CHAR(3) — нужен USDT, в ISO 4217 его нет.
+    code: Mapped[str] = mapped_column(String(8), primary_key=True)
     symbol: Mapped[str] = mapped_column(String(4), nullable=False)
 
     users: Mapped[list["User"]] = relationship(back_populates="currency")
