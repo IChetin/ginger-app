@@ -10,6 +10,7 @@ import {
   fetchPublicClubs,
   fetchReferral,
   rotateReferral,
+  updatePlayerMe,
   uploadScreenshot,
 } from "@/features/chips/api";
 import { isOpen } from "@/features/chips/lib/format";
@@ -78,6 +79,14 @@ export function useAddPlayerAccount() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: chipsKeys.player });
     },
+  });
+}
+
+export function useUpdatePlayerMe() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updatePlayerMe,
+    onSuccess: (player) => queryClient.setQueryData(chipsKeys.player, player),
   });
 }
 

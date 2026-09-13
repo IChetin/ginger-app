@@ -297,7 +297,7 @@ export function RegisterPage() {
                   invite_token: inviteToken ?? undefined,
                 });
                 forgetInvite();
-                navigate("/", { replace: true });
+                navigate("/welcome", { replace: true });
               } catch (error) {
                 if (!(error instanceof ApiError)) {
                   showToast("Нет соединения, попробуйте ещё раз");

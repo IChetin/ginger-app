@@ -40,7 +40,9 @@ import { DialogsPage } from "@/pages/DialogsPage";
 import { MorePage } from "@/pages/MorePage";
 import { OfflinePage } from "@/pages/OfflinePage";
 import { PlayerHomePage } from "@/pages/PlayerHomePage";
+import { listenInstallPrompt } from "@/features/onboarding/platform";
 import { InvitePage } from "@/pages/InvitePage";
+import { OnboardingPage } from "@/pages/OnboardingPage";
 import { ReferralPage } from "@/pages/ReferralPage";
 import { TournamentsPage } from "@/pages/TournamentsPage";
 import { EventPage } from "@/pages/EventPage";
@@ -54,6 +56,9 @@ import { RegisterPage } from "@/pages/RegisterPage";
 import { SearchPage } from "@/pages/SearchPage";
 import { SeriesPage } from "@/pages/SeriesPage";
 import { SeriesSchedulePage } from "@/pages/SeriesSchedulePage";
+
+// Android присылает предложение установки рано — ловим его до экрана установки.
+listenInstallPrompt();
 
 export function AppRoutes() {
   return (
@@ -76,6 +81,7 @@ export function AppRoutes() {
           <Route path="/chips/accounts" element={<ChipAccountsPage />} />
           <Route path="/chips/:requestId" element={<ChipRequestPage />} />
           <Route path="/referral" element={<ReferralPage />} />
+          <Route path="/welcome" element={<OnboardingPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>

@@ -5,6 +5,7 @@ import { isStaffUser, useMe } from "@/features/auth/hooks";
 import { RequestRow } from "@/features/chips/components/RequestRow";
 import { useChipRequests, usePlayerMe } from "@/features/chips/hooks";
 import { isOpen, requestSummary } from "@/features/chips/lib/format";
+import { InstallPlaque } from "@/features/onboarding/InstallPlaque";
 import { TournamentCard } from "@/features/tournaments/components/TournamentCard";
 import { useThreads } from "@/features/threads/hooks";
 import { EMPTY_FILTERS, useNow, useTournaments } from "@/features/tournaments/hooks";
@@ -92,6 +93,8 @@ export function PlayerHomePage() {
             : `Касса закрыта · ${me.cashdesk_hours} МСК — заявка встанет в очередь`}
         </p>
       ) : null}
+
+      {me ? <InstallPlaque /> : null}
 
       {notPlayer && isStaffUser(user) ? (
         <Link

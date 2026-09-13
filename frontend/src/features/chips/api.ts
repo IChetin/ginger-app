@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPostForm } from "@/api/client";
+import { apiGet, apiPatch, apiPost, apiPostForm } from "@/api/client";
 import type {
   ChipRequest,
   ChipRequestCreatePayload,
@@ -12,6 +12,13 @@ import type {
 
 export function fetchPlayerMe(): Promise<PlayerMe> {
   return apiGet("/api/v1/me/player");
+}
+
+export function updatePlayerMe(body: {
+  results_consent?: boolean;
+  birthday?: string | null;
+}): Promise<PlayerMe> {
+  return apiPatch("/api/v1/me/player", body);
 }
 
 export function fetchChipRequests(): Promise<ChipRequest[]> {

@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import type { BaseCurrencyCode } from "@/api/types/auth";
 import { IntervalSheet } from "@/components/bookmarks/IntervalSheet";
 import { InstallBanner } from "@/components/profile/InstallBanner";
+import { PlayerProfileSection } from "@/features/chips/components/PlayerProfileSection";
 import { PasswordSheet } from "@/components/profile/PasswordSheet";
 import {
   CurrencySheet,
@@ -80,6 +81,7 @@ export function ProfilePage() {
         }}
       />
       <InstallBanner />
+      <PlayerProfileSection />
       <SettingsList
         staffEntry={
           isStaffUser(user)
