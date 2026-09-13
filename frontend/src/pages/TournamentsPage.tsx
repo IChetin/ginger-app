@@ -13,6 +13,7 @@ import {
 import {
   APP_ICONS,
   APP_LABELS,
+  displayName,
   formatCountdown,
   formatDayLabel,
   formatMoney,
@@ -142,7 +143,7 @@ function TournamentCard({ tournament, now }: { tournament: Tournament; now: Date
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-ink line-clamp-2 text-[15px] leading-tight font-bold">
-            {tournament.name}
+            {displayName(tournament)}
           </h3>
           <p className="text-ink-3 mt-0.5 text-[12px]">
             <AppIcon app={tournament.club.app} className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />
@@ -243,7 +244,7 @@ function TableView({ groups, now }: { groups: [string, Tournament[]][]; now: Dat
                       )}
                     >
                       <span className={item.is_promoted ? undefined : "text-ink font-semibold"}>
-                        {item.name}
+                        {displayName(item)}
                       </span>
                       <span className="text-ink-3 ml-1.5 text-[11px] font-normal">
                         <AppIcon app={item.club.app} className="mr-1 inline h-3 w-3 align-[-1px]" />

@@ -73,6 +73,9 @@ def test_fields_and_late_reg(templates: list[TemplateDraft]) -> None:
     assert weekday_river.structure == "Deepstack"
     assert weekday_river.early_bird_players == 10
     assert weekday_river.notes is None
+    assert weekday_river.satellite_target is None
+    (main_sat,) = {t.satellite_target for t in templates if t.name == "MAIN SAT (Stack!)"}
+    assert main_sat == "MAIN (Stack!)"
     # 14 × 12 = 168 минут игры от 09:00: 55+5+55+5+55+5+3 = 183.
     assert weekday_river.late_reg_close_offset_min == 183
 

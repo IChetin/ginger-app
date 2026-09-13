@@ -14,6 +14,8 @@
     buyin     бай-ин в фишках клуба
     guarantee гарантия в фишках
     ticket    номинал билета у сателлита
+    target    на какой турнир ведёт сателлит (иначе берётся из названия: «X SAT», «Sat to X»)
+    early_bird сколько первых регистраций получают бонус
     late_reg  уровней поздней регистрации
     minutes   длительность уровней, «15/12/12»
     addon     стоимость аддона
@@ -32,6 +34,7 @@ from app.models.enums import BountyKind, GameType
 from app.schemas.tournaments import ParseIssue, TemplateDraft, TemplateParseResult
 from app.services.tournaments.late_reg import late_reg_close_offset
 from app.services.tournaments.nuts_csv import _decimal, _int, _minutes, _text, normalize_name
+from app.services.tournaments.satellites import satellite_target
 
 SOURCE = "manual-csv"
 REQUIRED_COLUMNS = ("days", "time", "name", "buyin")
@@ -147,6 +150,8 @@ def parse_manual_csv(data: bytes) -> TemplateParseResult:
             late_reg_levels=late_reg_levels,
             level_minutes=level_minutes,
             ticket_value=_decimal(row.get("ticket", "")),
+            satellite_target=_text(row.get("target", "")) or satellite_target(name),
+            early_bird_players=_int(row.get("early_bird", "")),
             notes=_text(row.get("notes", "")),
             weekdays=days,
             start_time=time(minutes // 60, start_minute),

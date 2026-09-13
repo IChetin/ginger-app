@@ -33,6 +33,8 @@ export interface Tournament {
   level_minutes: string | null;
   structure: string | null;
   ticket_value: string | null;
+  /** Куда ведёт сателлит: показываем «Sat → цель». */
+  satellite_target: string | null;
   early_bird_players: number | null;
   notes: string | null;
   club: TournamentClub;

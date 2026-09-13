@@ -27,6 +27,7 @@ class TournamentFields(BaseModel):
     level_minutes: str | None = Field(default=None, max_length=16)
     structure: str | None = Field(default=None, max_length=32)
     ticket_value: Decimal | None = Field(default=None, ge=0)
+    satellite_target: str | None = Field(default=None, max_length=160)
     early_bird_players: int | None = Field(default=None, ge=0)
     notes: str | None = None
 

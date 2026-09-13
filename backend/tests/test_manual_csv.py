@@ -35,7 +35,7 @@ def test_parse_days(raw: str, expected: list[int] | None) -> None:
 def test_poker21_week() -> None:
     result = parse_manual_csv(POKER21)
     assert result.issues == []
-    assert result.rows_total == 23
+    assert result.rows_total == 20
 
     # «Турнир дня MKO» по 18:00 — три разных бай-ина, значит три шаблона.
     mko = [t for t in result.templates if t.name == "Турнир дня MKO"]
@@ -46,23 +46,42 @@ def test_poker21_week() -> None:
     }
     assert all(t.bounty_kind is BountyKind.MYSTERY for t in mko)
 
-    # Одинаковый «21 очко Rebuy» в среду и субботу схлопывается в один шаблон.
-    (twenty_one,) = [t for t in result.templates if t.name == "21 очко Rebuy"]
-    assert twenty_one.weekdays == [3, 6]
-    assert twenty_one.game_type is GameType.OTHER
-
     (big_boss,) = [t for t in result.templates if t.name == "Big Boss PKO"]
     assert (big_boss.weekdays, big_boss.start_time, big_boss.guarantee) == (
         [6],
         time(18, 0),
         Decimal("250000"),
     )
-    (satellite,) = [t for t in result.templates if t.name == "Сателлит на Big Boss"]
+    assert big_boss.satellite_target is None
+    (satellite,) = [t for t in result.templates if t.name == "Sat Big Boss PKO"]
     assert satellite.ticket_value == Decimal("5000")
+    assert satellite.satellite_target == "Big Boss PKO"
     assert satellite.weekdays == [1, 2, 3, 4, 5, 6, 7]
 
-    # Всего стартов в неделю: 9 турниров дня + 8×7 ежедневных + 5×7 сателлитов + Super Sat.
-    assert sum(len(t.weekdays) for t in result.templates) == 9 + 56 + 35 + 1
+    (plo6,) = [t for t in result.templates if t.name == "PLO 6"]
+    assert plo6.game_type is GameType.OTHER
+
+    # Стартов в неделю: 7 турниров дня + 8×7 ежедневных + 4×7 сателлитов + Super Sat.
+    assert sum(len(t.weekdays) for t in result.templates) == 7 + 56 + 28 + 1
+
+
+def test_same_tournament_on_several_rows_merges_days() -> None:
+    data = "\n".join(
+        [
+            "days,time,name,buyin,guarantee",
+            "ср,18:00,DEEP,500,30000",
+            "сб,18:00,DEEP,500,30000",
+            "вс,18:00,DEEP,500,40000",
+        ]
+    ).encode()
+    result = parse_manual_csv(data)
+    assert sorted(t.weekdays for t in result.templates) == [[3, 6], [7]]
+
+
+def test_satellite_target_from_name_when_no_column() -> None:
+    data = "days,time,name,buyin,ticket\nпн,18:00,MAIN SAT,2,16\n".encode()
+    (template,) = parse_manual_csv(data).templates
+    assert template.satellite_target == "MAIN"
 
 
 def test_issues_do_not_stop_the_rest() -> None:

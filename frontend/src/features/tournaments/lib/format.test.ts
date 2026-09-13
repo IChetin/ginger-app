@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { Tournament, TournamentClub } from "@/api/types/tournaments";
 import {
+  displayName,
   formatCountdown,
   formatDayLabel,
   formatMoney,
@@ -40,6 +41,7 @@ export function tournamentFixture(overrides: Partial<Tournament> = {}): Tourname
     level_minutes: "15/12/12",
     structure: "Turbo",
     ticket_value: null,
+    satellite_target: null,
     early_bird_players: null,
     notes: null,
     club: ginger,
@@ -104,6 +106,17 @@ describe("время и фазы", () => {
       tournamentFixture({ id: "b", starts_at: "2026-09-13T22:30:00Z" }),
     ]);
     expect(groups.map(([day]) => day)).toEqual(["2026-09-13", "2026-09-14"]);
+  });
+
+  it("сателлит — «Sat → цель» и билет в метках", () => {
+    const sat = tournamentFixture({
+      name: "MAIN SAT",
+      satellite_target: "MAIN",
+      ticket_value: "16.00",
+    });
+    expect(displayName(sat)).toBe("Sat → MAIN");
+    expect(formatTags(sat)).toContain("Билет $16");
+    expect(displayName(tournamentFixture())).toBe("MAIN");
   });
 
   it("метки формата", () => {

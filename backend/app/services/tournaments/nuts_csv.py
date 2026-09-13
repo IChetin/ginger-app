@@ -27,6 +27,7 @@ from decimal import Decimal, InvalidOperation
 from app.models.enums import BountyKind, GameType
 from app.schemas.tournaments import ParseIssue, TemplateDraft, TemplateParseResult
 from app.services.tournaments.late_reg import late_reg_close_offset
+from app.services.tournaments.satellites import satellite_target
 
 SOURCE = "nuts-csv"
 
@@ -214,6 +215,7 @@ def parse_nuts_csv(data: bytes) -> TemplateParseResult:
             structure=_structure(cell("Structure")),
             ticket_value=_decimal(cell("Ticket")),
             early_bird_players=_int(cell("EB")),
+            satellite_target=satellite_target(name),
             weekdays=[msk_weekday],
             start_time=start_time,
             late_reg_close_offset_min=offset,

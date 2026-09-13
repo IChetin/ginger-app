@@ -53,6 +53,7 @@ function tournament(overrides: Partial<Tournament>): Tournament {
     level_minutes: "15/12/12",
     structure: "Turbo",
     ticket_value: null,
+    satellite_target: null,
     early_bird_players: 10,
     notes: null,
     club: {

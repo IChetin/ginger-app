@@ -61,6 +61,8 @@ class TournamentFieldsMixin:
     structure: Mapped[str | None] = mapped_column(String(32))
     # Для сателлитов — номинал разыгрываемого билета.
     ticket_value: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    # На какой турнир ведёт сателлит — игроку показываем «Sat → {цель}».
+    satellite_target: Mapped[str | None] = mapped_column(String(160))
     # Early Bird: сколько первых зарегистрировавшихся получают бонус (больше стек, скидку).
     early_bird_players: Mapped[int | None] = mapped_column(SmallInteger)
     password: Mapped[str | None] = mapped_column(String(64))

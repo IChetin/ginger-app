@@ -108,6 +108,11 @@ export function lateRegLabel(tournament: Tournament): string | null {
   return tournament.has_addon ? `Аддон в ${time}` : `Рег. до ${time}`;
 }
 
+/** Сателлит показываем как «Sat → Main Event», остальные турниры — по названию. */
+export function displayName(tournament: Tournament): string {
+  return tournament.satellite_target ? `Sat → ${tournament.satellite_target}` : tournament.name;
+}
+
 /** Короткие метки формата: PKO, Mystery, PLO5, Early Bird. */
 export function formatTags(tournament: Tournament): string[] {
   const tags: string[] = [];
@@ -117,6 +122,10 @@ export function formatTags(tournament: Tournament): string[] {
   if (tournament.bounty_kind === "ko") tags.push("KO");
   if (tournament.bounty_kind === "mystery") tags.push("Mystery");
   if (tournament.early_bird_players) tags.push(`Early Bird ×${tournament.early_bird_players}`);
+  if (tournament.ticket_value) {
+    const ticket = formatMoney(tournament.ticket_value, tournament.club);
+    if (ticket) tags.push(`Билет ${ticket}`);
+  }
   return tags;
 }
 
