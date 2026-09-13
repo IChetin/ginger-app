@@ -103,7 +103,7 @@ describe("TournamentsPage", () => {
     expect(river.getByText("$16")).toBeInTheDocument();
     expect(river.getByText("PKO")).toBeInTheDocument();
     expect(river.getByText("Early Bird ×10")).toBeInTheDocument();
-    expect(within(cards[0]).getByText(/Регистрация ещё 4\d:\d\d/)).toBeInTheDocument();
+    expect(within(cards[0]).getByText(/Рег. ещё 4\d:\d\d/)).toBeInTheDocument();
     expect(screen.getByText(/2 турнира/)).toBeInTheDocument();
   });
 

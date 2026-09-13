@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, time
+from datetime import date, datetime, time
 from decimal import Decimal
 from uuid import UUID
 
@@ -37,6 +37,9 @@ class TemplateDraft(TournamentFields):
 
     weekdays: list[int] = Field(min_length=1)
     start_time: time
+    # Разовое событие (турнир месяца, серия): valid_from = valid_until = дата.
+    valid_from: date | None = None
+    valid_until: date | None = None
     late_reg_close_offset_min: int | None = Field(default=None, ge=0)
 
 

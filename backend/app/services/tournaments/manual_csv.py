@@ -4,9 +4,11 @@
 неделю в таблицу, импорт превращает её в шаблоны. Та же схема, что у NUTS: предпросмотр,
 затем применение; повторный импорт следующей недели заменяет сетку.
 
-Колонки (порядок любой, лишние игнорируются; обязательны days, time, name, buyin):
+Колонки (порядок любой, лишние игнорируются; обязательны time, name, buyin и days или date):
 
     days      пн,ср,пт · ежедневно · будни · выходные
+    date      разовое событие: 2026-09-15 · 15.09.2026 · 15.09 (год — ближайший);
+              если заполнена, days не нужны
     time      18:00 — по МСК
     name      название, как увидит игрок
     game      NLH (по умолчанию) · PLO · PLO5 · другое
@@ -28,7 +30,8 @@ from __future__ import annotations
 import csv
 import io
 from collections import OrderedDict
-from datetime import time
+from datetime import date, datetime, time
+from zoneinfo import ZoneInfo
 
 from app.models.enums import BountyKind, GameType
 from app.schemas.tournaments import ParseIssue, TemplateDraft, TemplateParseResult
@@ -37,7 +40,9 @@ from app.services.tournaments.nuts_csv import _decimal, _int, _minutes, _text, n
 from app.services.tournaments.satellites import satellite_target
 
 SOURCE = "manual-csv"
-REQUIRED_COLUMNS = ("days", "time", "name", "buyin")
+REQUIRED_COLUMNS = ("time", "name", "buyin")
+# Плюс хотя бы одна из них: регулярная сетка или разовое событие.
+SCHEDULE_COLUMNS = ("days", "date")
 
 _DAY_TOKENS = {
     "пн": 1,
@@ -74,7 +79,9 @@ def looks_like_manual_csv(data: bytes) -> bool:
     except (UnicodeDecodeError, IndexError):
         return False
     header = {cell.strip().lower() for cell in next(csv.reader([first_line]))}
-    return all(column in header for column in REQUIRED_COLUMNS)
+    return all(column in header for column in REQUIRED_COLUMNS) and any(
+        column in header for column in SCHEDULE_COLUMNS
+    )
 
 
 def parse_days(value: str) -> list[int] | None:
@@ -94,9 +101,35 @@ def parse_days(value: str) -> list[int] | None:
     return sorted(days) or None
 
 
-def parse_manual_csv(data: bytes) -> TemplateParseResult:
+def parse_date(value: str, today: date) -> date | None:
+    """«2026-09-15», «15.09.2026» или «15.09». Без года — ближайшая такая дата не старше недели
+    назад: сетку заводят заранее, и «15.01» в декабре — это январь следующего года."""
+    cleaned = value.strip()
+    if not cleaned:
+        return None
+    try:
+        if "-" in cleaned:
+            return date.fromisoformat(cleaned)
+        parts = [int(part) for part in cleaned.split(".") if part]
+        if len(parts) == 3:
+            year = parts[2] + 2000 if parts[2] < 100 else parts[2]
+            return date(year, parts[1], parts[0])
+        if len(parts) == 2:
+            candidate = date(today.year, parts[1], parts[0])
+            if (today - candidate).days > 7:
+                candidate = date(today.year + 1, parts[1], parts[0])
+            return candidate
+    except ValueError:
+        return None
+    return None
+
+
+def parse_manual_csv(data: bytes, *, today: date | None = None) -> TemplateParseResult:
     if not looks_like_manual_csv(data):
-        raise ManualCsvError(f"Нужны колонки: {', '.join(REQUIRED_COLUMNS)}")
+        raise ManualCsvError(
+            f"Нужны колонки: {', '.join(REQUIRED_COLUMNS)} и {' или '.join(SCHEDULE_COLUMNS)}"
+        )
+    today = today or datetime.now(ZoneInfo("Europe/Moscow")).date()
     reader = csv.DictReader(io.StringIO(data.decode("utf-8-sig")))
     issues: list[ParseIssue] = []
     groups: OrderedDict[tuple[object, ...], TemplateDraft] = OrderedDict()
@@ -108,7 +141,23 @@ def parse_manual_csv(data: bytes) -> TemplateParseResult:
         if not name:
             continue
         rows_total += 1
-        days = parse_days(row.get("days", ""))
+        one_off: date | None = None
+        days: list[int] | None
+        if row.get("date"):
+            one_off = parse_date(row["date"], today)
+            if one_off is None:
+                issues.append(
+                    ParseIssue(row=index, message=f"{name}: не разобрана дата «{row['date']}»")
+                )
+                continue
+            if one_off < today:
+                issues.append(
+                    ParseIssue(row=index, message=f"{name}: дата {one_off:%d.%m.%Y} уже прошла")
+                )
+                continue
+            days = [one_off.isoweekday()]
+        else:
+            days = parse_days(row.get("days", ""))
         minutes = _minutes(row.get("time", ""))
         buyin = _decimal(row.get("buyin", ""))
         if days is None:
@@ -156,6 +205,8 @@ def parse_manual_csv(data: bytes) -> TemplateParseResult:
             weekdays=days,
             start_time=time(minutes // 60, start_minute),
             late_reg_close_offset_min=offset,
+            valid_from=one_off,
+            valid_until=one_off,
         )
         key = tuple(value for field, value in draft.model_dump().items() if field != "weekdays")
         existing = groups.get(key)

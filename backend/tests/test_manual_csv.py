@@ -1,4 +1,4 @@
-from datetime import time
+from datetime import date, time
 from decimal import Decimal
 from pathlib import Path
 
@@ -104,3 +104,36 @@ def test_detection() -> None:
     assert not looks_like_manual_csv(b",MONDAY,,\n,-5,-3,UTC\n")
     with pytest.raises(ManualCsvError):
         parse_manual_csv(b"a,b\n1,2\n")
+
+
+def test_one_off_events_by_date() -> None:
+    data = "\n".join(
+        [
+            "days,date,time,name,bounty,buyin,guarantee",
+            ",15.09,18:00,MAIN EVENT PKO,PKO,10000,800000",
+            ",2026-09-30,18:00,MAIN EVENT NLH,,3000,1000000",
+            ",01.09.2026,18:00,OLD,,100,",
+            ",31.02,18:00,BAD DATE,,100,",
+            "ежедневно,,12:00,Daily,,800,30000",
+        ]
+    ).encode()
+    result = parse_manual_csv(data, today=date(2026, 9, 13))
+    by_name = {t.name: t for t in result.templates}
+    pko = by_name["MAIN EVENT PKO"]
+    assert (pko.valid_from, pko.valid_until, pko.weekdays) == (
+        date(2026, 9, 15),
+        date(2026, 9, 15),
+        [2],
+    )
+    assert by_name["MAIN EVENT NLH"].valid_from == date(2026, 9, 30)
+    assert by_name["Daily"].valid_from is None
+    assert [issue.message for issue in result.issues] == [
+        "OLD: дата 01.09.2026 уже прошла",
+        "BAD DATE: не разобрана дата «31.02»",
+    ]
+
+
+def test_date_without_year_rolls_to_next_year() -> None:
+    data = b"date,time,name,buyin\n15.01,18:00,NEW YEAR,100\n"
+    (template,) = parse_manual_csv(data, today=date(2026, 12, 20)).templates
+    assert template.valid_from == date(2027, 1, 15)

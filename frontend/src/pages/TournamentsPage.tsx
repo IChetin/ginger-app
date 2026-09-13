@@ -1,7 +1,6 @@
 import { useMemo, type ReactNode } from "react";
 
 import type { DayPeriod, PokerApp, ScheduleView, Tournament } from "@/api/types/tournaments";
-import { SegmentedControl } from "@/components/filters";
 import { useMe } from "@/features/auth/hooks";
 import {
   BUYIN_STEPS_RUB,
@@ -68,7 +67,7 @@ function Chip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[13px] font-bold whitespace-nowrap",
+        "inline-flex h-8 shrink-0 items-center gap-1 rounded-full border px-2.5 text-[12px] font-bold whitespace-nowrap",
         active ? "border-line-gold bg-gold-soft text-gold" : "border-line bg-surface text-ink-2",
       )}
     >
@@ -87,15 +86,22 @@ function BuyinSelect({
   onChange: (value: number | null) => void;
 }) {
   return (
-    <label className="border-line bg-surface text-ink-2 flex h-9 min-w-0 flex-1 items-center gap-1.5 rounded-full border px-3 text-[13px] font-bold">
+    <label
+      className={cn(
+        "inline-flex h-8 shrink-0 items-center gap-1 rounded-full border pr-1.5 pl-2.5 text-[12px] font-bold",
+        value === null
+          ? "border-line bg-surface text-ink-2"
+          : "border-line-gold bg-gold-soft text-gold",
+      )}
+    >
       {label}
       <select
         aria-label={`Бай-ин ${label}`}
-        className="text-ink min-w-0 flex-1 bg-transparent font-bold outline-none"
+        className="bg-transparent font-bold outline-none"
         value={value ?? ""}
         onChange={(event) => onChange(event.target.value ? Number(event.target.value) : null)}
       >
-        <option value="">любой</option>
+        <option value="">—</option>
         {BUYIN_STEPS_RUB.map((step) => (
           <option key={step} value={step}>
             {rubFormat.format(step)} ₽
@@ -119,12 +125,15 @@ function LateRegCountdown({ closesAt, compact }: { closesAt: Date; compact?: boo
       </span>
     );
   }
-  return <span className="text-warn num font-bold tabular-nums">Регистрация ещё {left}</span>;
+  return <span className="text-warn num shrink-0 font-bold tabular-nums">Рег. ещё {left}</span>;
 }
 
+/**
+ * Карточка в две строки — телефон первым: время, название, бай-ин; под ними клуб, метки,
+ * регистрация и гарантия.
+ */
 function TournamentCard({ tournament, now }: { tournament: Tournament; now: Date }) {
   const phase = tournamentPhase(tournament, now);
-  const buyin = formatMoney(tournament.buyin, tournament.club);
   const guarantee = formatMoney(tournament.guarantee, tournament.club);
   const tags = formatTags(tournament);
   const closes = lateRegLabel(tournament);
@@ -133,57 +142,63 @@ function TournamentCard({ tournament, now }: { tournament: Tournament; now: Date
     <article
       data-testid="tournament-card"
       className={cn(
-        "bg-surface rounded-lg border p-3",
+        "bg-surface rounded-md border px-2.5 py-2",
         tournament.is_promoted ? "border-line-gold" : "border-line",
       )}
     >
-      <div className="flex items-start gap-3">
-        <div className="num w-[52px] shrink-0 text-[17px] font-extrabold tabular-nums">
+      <div className="flex items-baseline gap-2">
+        <span className="num w-[42px] shrink-0 text-[15px] font-extrabold tabular-nums">
           {formatTimeMsk(tournament.starts_at)}
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-ink line-clamp-2 text-[15px] leading-tight font-bold">
-            {displayName(tournament)}
-          </h3>
-          <p className="text-ink-3 mt-0.5 text-[12px]">
-            <AppIcon app={tournament.club.app} className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />
-            {tournament.club.name} · {APP_LABELS[tournament.club.app]}
-          </p>
-        </div>
-        <div className="shrink-0 text-right">
-          <div className="num text-ink text-[16px] font-extrabold">{buyin}</div>
-          {guarantee ? (
-            <div className="num text-ink-2 text-[12px] font-semibold">GTD {guarantee}</div>
-          ) : null}
-        </div>
+        </span>
+        <h3 className="text-ink min-w-0 flex-1 truncate text-[14px] font-bold">
+          {displayName(tournament)}
+        </h3>
+        <span className="num text-ink shrink-0 text-[15px] font-extrabold">
+          {formatMoney(tournament.buyin, tournament.club)}
+        </span>
       </div>
-      {tags.length > 0 || closes || phase.kind === "late_reg" ? (
-        <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-[64px] text-[12px]">
+      <div className="mt-0.5 flex items-center gap-2 text-[11.5px]">
+        <span className="w-[42px] shrink-0" aria-hidden="true" />
+        <span className="text-ink-3 flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden whitespace-nowrap">
+          <AppIcon app={tournament.club.app} className="h-3.5 w-3.5 shrink-0" />
+          <span className="shrink-0">{tournament.club.name}</span>
           {tags.map((tag) => (
-            <span key={tag} className="bg-surface-3 text-ink-2 rounded-sm px-1.5 py-0.5 font-bold">
+            <span
+              key={tag}
+              className="bg-surface-3 text-ink-2 shrink-0 rounded-[4px] px-1 leading-4 font-bold"
+            >
               {tag}
             </span>
           ))}
           {phase.kind === "late_reg" ? (
             <LateRegCountdown closesAt={phase.closesAt} />
           ) : closes ? (
-            <span className="text-ink-3 font-semibold">{closes}</span>
+            <span className="shrink-0 font-semibold">{closes}</span>
           ) : null}
-        </div>
-      ) : null}
+        </span>
+        {guarantee ? (
+          <span className="num text-ink-2 shrink-0 font-semibold">GTD {guarantee}</span>
+        ) : null}
+      </div>
     </article>
+  );
+}
+
+function DayHeader({ day, now }: { day: string; now: Date }) {
+  return (
+    <h2 className="text-ink-3 px-4 pt-3 pb-1.5 text-[11px] font-bold tracking-[0.04em] uppercase">
+      {formatDayLabel(day, now)} · МСК
+    </h2>
   );
 }
 
 function CardsView({ groups, now }: { groups: [string, Tournament[]][]; now: Date }) {
   return (
-    <div className="px-4">
+    <div>
       {groups.map(([day, items]) => (
-        <section key={day} className="pt-4">
-          <h2 className="text-ink-3 mb-2 text-[13px] font-bold tracking-[0.04em] uppercase">
-            {formatDayLabel(day, now)}
-          </h2>
-          <div className="flex flex-col gap-2">
+        <section key={day}>
+          <DayHeader day={day} now={now} />
+          <div className="flex flex-col gap-1.5 px-3">
             {items.map((item) => (
               <TournamentCard key={item.id} tournament={item} now={now} />
             ))}
@@ -197,20 +212,20 @@ function CardsView({ groups, now }: { groups: [string, Tournament[]][]; now: Dat
 /** Плотный вид по образцу лобби Покерка: одна строка — один турнир. */
 function TableView({ groups, now }: { groups: [string, Tournament[]][]; now: Date }) {
   return (
-    <div className="mt-3 overflow-x-auto">
+    <div className="mt-1 overflow-x-auto">
       <table className="w-full table-fixed border-collapse text-[13px]">
         <colgroup>
-          <col className="w-[76px]" />
+          <col className="w-[64px]" />
           <col />
-          <col className="w-[62px]" />
-          <col className="w-[72px]" />
+          <col className="w-[58px]" />
+          <col className="w-[70px]" />
         </colgroup>
         <thead>
-          <tr className="text-ink-3 border-line border-b text-[11px] font-bold uppercase">
-            <th className="py-2 pl-4 text-left">Старт</th>
-            <th className="py-2 text-left">Турнир</th>
-            <th className="py-2 text-right">Бай-ин</th>
-            <th className="py-2 pr-4 text-right">GTD</th>
+          <tr className="text-ink-3 border-line border-b text-[10px] font-bold uppercase">
+            <th className="py-1.5 pl-3 text-left">МСК</th>
+            <th className="py-1.5 text-left">Турнир</th>
+            <th className="py-1.5 text-right">Бай-ин</th>
+            <th className="py-1.5 pr-3 text-right">GTD</th>
           </tr>
         </thead>
         {groups.map(([day, items]) => (
@@ -219,7 +234,7 @@ function TableView({ groups, now }: { groups: [string, Tournament[]][]; now: Dat
               <th
                 colSpan={4}
                 scope="colgroup"
-                className="bg-surface-2 text-ink-2 px-4 py-1.5 text-left text-[12px] font-bold"
+                className="bg-surface-2 text-ink-2 px-3 py-1 text-left text-[11px] font-bold"
               >
                 {formatDayLabel(day, now)}
               </th>
@@ -228,14 +243,14 @@ function TableView({ groups, now }: { groups: [string, Tournament[]][]; now: Dat
               const phase = tournamentPhase(item, now);
               return (
                 <tr key={item.id} className="border-line border-b" data-testid="tournament-row">
-                  <td className="num py-2 pl-4 whitespace-nowrap tabular-nums">
+                  <td className="num py-1.5 pl-3 whitespace-nowrap tabular-nums">
                     {phase.kind === "late_reg" ? (
                       <LateRegCountdown closesAt={phase.closesAt} compact />
                     ) : (
                       <span className="text-ink font-bold">{formatTimeMsk(item.starts_at)}</span>
                     )}
                   </td>
-                  <td className="min-w-0 py-2 pr-2">
+                  <td className="min-w-0 py-1.5 pr-2">
                     <div
                       className={cn(
                         "truncate",
@@ -243,19 +258,19 @@ function TableView({ groups, now }: { groups: [string, Tournament[]][]; now: Dat
                           "bg-gold-soft text-gold -mx-1.5 rounded-sm px-1.5 font-bold",
                       )}
                     >
+                      <AppIcon
+                        app={item.club.app}
+                        className="mr-1.5 inline h-3.5 w-3.5 align-[-2px]"
+                      />
                       <span className={item.is_promoted ? undefined : "text-ink font-semibold"}>
                         {displayName(item)}
                       </span>
-                      <span className="text-ink-3 ml-1.5 text-[11px] font-normal">
-                        <AppIcon app={item.club.app} className="mr-1 inline h-3 w-3 align-[-1px]" />
-                        {item.club.name}
-                      </span>
                     </div>
                   </td>
-                  <td className="num text-ink py-2 text-right font-bold whitespace-nowrap">
+                  <td className="num text-ink py-1.5 text-right font-bold whitespace-nowrap">
                     {formatMoney(item.buyin, item.club)}
                   </td>
-                  <td className="num text-ink-2 py-2 pr-4 text-right whitespace-nowrap">
+                  <td className="num text-ink-2 py-1.5 pr-3 text-right whitespace-nowrap">
                     {formatMoney(item.guarantee, item.club) ?? "—"}
                   </td>
                 </tr>
@@ -287,25 +302,59 @@ export function TournamentsPage() {
     filters.buyinMax !== null;
 
   return (
-    <div className="bg-bg min-h-full pb-5" data-testid="tournaments-page">
-      <header className="border-line bg-bg/88 sticky top-0 z-20 border-b pt-3.5 backdrop-blur-[14px]">
-        <div className="flex items-baseline justify-between px-4 pb-2.5">
-          <h1 className="text-[19px] font-extrabold tracking-tight">Турниры</h1>
-          <span className="text-ink-3 text-[12px] font-semibold">Время московское</span>
+    <div className="bg-bg min-h-full pb-4" data-testid="tournaments-page">
+      {/* Телефон первым: заголовок, счётчик и период — одна строка, все фильтры — вторая. */}
+      <header className="border-line bg-bg/90 sticky top-0 z-20 border-b backdrop-blur-[14px]">
+        <div className="flex items-center gap-2 px-3 pt-2.5 pb-2">
+          <h1 className="text-[17px] font-extrabold tracking-tight">Турниры</h1>
+          <span
+            aria-live="polite"
+            className="text-ink-3 num min-w-0 flex-1 truncate text-[12px] font-semibold"
+          >
+            {query.isSuccess
+              ? `${visible.length} ${pluralRu(visible.length, "турнир", "турнира", "турниров")}`
+              : ""}
+          </span>
+          <div
+            role="tablist"
+            aria-label="Период"
+            className="bg-surface border-line flex shrink-0 rounded-full border p-0.5"
+          >
+            {RANGE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                role="tab"
+                aria-selected={filters.range === option.value}
+                onClick={() => update({ range: option.value })}
+                className={cn(
+                  "h-7 rounded-full px-2.5 text-[12px] font-bold",
+                  filters.range === option.value ? "bg-surface-3 text-ink" : "text-ink-3",
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
-        <SegmentedControl
-          options={RANGE_OPTIONS}
-          value={filters.range}
-          onChange={(value) => update({ range: value as RangeKey })}
-        />
-        <div className="flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-4 pb-2 [&::-webkit-scrollbar]:hidden">
+        <div className="flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-3 pb-2 [&::-webkit-scrollbar]:hidden">
+          {hasFilters ? (
+            <button
+              type="button"
+              aria-label="Сбросить фильтры"
+              onClick={reset}
+              className="text-gold border-line-gold h-8 shrink-0 rounded-full border px-2.5 text-[12px] font-bold"
+            >
+              ✕
+            </button>
+          ) : null}
           {APP_OPTIONS.map((app) => (
             <Chip
               key={app}
               active={filters.apps.includes(app)}
               onClick={() => update({ apps: toggle(filters.apps, app) })}
             >
-              <AppIcon app={app} className="h-5 w-5" />
+              <AppIcon app={app} className="h-4 w-4" />
               {APP_LABELS[app]}
             </Chip>
           ))}
@@ -318,8 +367,6 @@ export function TournamentsPage() {
               {period.label}
             </Chip>
           ))}
-        </div>
-        <div className="flex gap-1.5 px-4 pb-2.5">
           <BuyinSelect
             label="от"
             value={filters.buyinMin}
@@ -333,41 +380,27 @@ export function TournamentsPage() {
         </div>
       </header>
 
-      <div className="text-ink-3 flex items-center justify-between px-4 pt-3 text-[12px] font-semibold">
-        <span aria-live="polite">
-          {query.isSuccess
-            ? `${visible.length} ${pluralRu(visible.length, "турнир", "турнира", "турниров")}`
-            : " "}
-          {filters.buyinMin !== null || filters.buyinMax !== null ? " · бай-ин примерно в ₽" : ""}
-        </span>
-        {hasFilters ? (
-          <button type="button" className="text-gold font-bold" onClick={reset}>
-            Сбросить
-          </button>
-        ) : null}
-      </div>
-
       {query.isPending ? (
-        <div className="space-y-2 px-4 pt-4" data-testid="tournaments-loading">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="bg-surface h-[72px] rounded-lg" />
+        <div className="space-y-1.5 px-3 pt-3" data-testid="tournaments-loading">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="bg-surface h-[52px] rounded-md" />
           ))}
         </div>
       ) : query.isError ? (
-        <div className="border-line bg-surface mx-4 mt-4 rounded-lg border px-4 py-8 text-center">
-          <p className="text-ink text-[15px] font-semibold">Не удалось загрузить турниры</p>
+        <div className="border-line bg-surface mx-3 mt-3 rounded-md border px-4 py-6 text-center">
+          <p className="text-ink text-[14px] font-semibold">Не удалось загрузить турниры</p>
           <button
             type="button"
             onClick={() => void query.refetch()}
-            className="bg-gold-soft text-gold mt-4 h-11 rounded-full px-5 text-[13px] font-bold"
+            className="bg-gold-soft text-gold mt-3 h-10 rounded-full px-5 text-[13px] font-bold"
           >
             Повторить
           </button>
         </div>
       ) : visible.length === 0 ? (
-        <div className="border-line-gold bg-surface mx-4 mt-4 rounded-lg border border-dashed px-4 py-10 text-center">
-          <p className="text-ink text-base font-bold">Турниров не найдено</p>
-          <p className="text-ink-2 mt-2 text-sm">
+        <div className="border-line-gold bg-surface mx-3 mt-3 rounded-md border border-dashed px-4 py-6 text-center">
+          <p className="text-ink text-[15px] font-bold">Турниров не найдено</p>
+          <p className="text-ink-2 mt-1 text-[13px]">
             {hasFilters ? "Попробуйте ослабить фильтры" : "Расписание ещё не загружено"}
           </p>
         </div>
@@ -377,8 +410,8 @@ export function TournamentsPage() {
         <CardsView groups={groups} now={now} />
       )}
 
-      <p className="text-ink-3 px-4 pt-5 text-center text-[12px]">
-        Расписание ориентировочное: клубы могут менять сетку
+      <p className="text-ink-3 px-4 pt-4 text-center text-[11px]">
+        Расписание ориентировочное · бай-ин в ₽ в фильтре — примерно
       </p>
     </div>
   );

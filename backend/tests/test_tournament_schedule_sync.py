@@ -169,3 +169,14 @@ async def test_rollforward_extends_horizon(db_session: AsyncSession) -> None:
     assert summary is not None
     assert summary.created == 15
     assert len(await _tournaments(db_session, club_id)) == 22
+
+
+async def test_one_off_template_expands_only_on_its_date(db_session: AsyncSession) -> None:
+    club_id = await _club(db_session)
+    wednesday = NOW.date() + timedelta(days=2)
+    one_off = _draft([wednesday.isoweekday()], "800000", name="MAIN EVENT")
+    one_off.valid_from = one_off.valid_until = wednesday
+    await _import(db_session, club_id, [one_off])
+
+    tournaments = await _tournaments(db_session, club_id)
+    assert [item.starts_at.astimezone(MSK).date() for item in tournaments] == [wednesday]

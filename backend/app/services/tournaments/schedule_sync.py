@@ -60,6 +60,8 @@ _SIGNATURE_FIELDS: tuple[str, ...] = (
     *(name for name in COPIED_FIELDS if name not in {"password", "is_promoted"}),
     "start_time",
     "late_reg_close_offset_min",
+    "valid_from",
+    "valid_until",
 )
 
 
@@ -127,6 +129,8 @@ async def sync_club_templates(
                     weekdays=weekdays,
                     start_time=draft.start_time,
                     late_reg_close_offset_min=draft.late_reg_close_offset_min,
+                    valid_from=draft.valid_from,
+                    valid_until=draft.valid_until,
                     **{name: getattr(draft, name) for name in draft_fields},
                 )
             )
