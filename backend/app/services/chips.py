@@ -56,6 +56,7 @@ from app.schemas.chips import (
     PlayerBrief,
     PlayerMe,
     PlayerMeUpdate,
+    ReferralRead,
     RejectBody,
     RequisitesBody,
     RequisiteTemplateCreate,
@@ -63,6 +64,7 @@ from app.schemas.chips import (
     RequisiteTemplateUpdate,
 )
 from app.services import attachments as attachments_service
+from app.services import referrals
 from app.services.push_notify import enqueue_push
 
 logger = logging.getLogger(__name__)
@@ -811,7 +813,8 @@ def _players_query() -> Select[tuple[Player]]:
     )
 
 
-def _player_admin_read(player: Player) -> PlayerAdminRead:
+def _player_admin_read(player: Player, invited: tuple[int, int] = (0, 0)) -> PlayerAdminRead:
+    total, recent = invited
     return PlayerAdminRead(
         id=player.id,
         user_id=player.user_id,
@@ -826,12 +829,31 @@ def _player_admin_read(player: Player) -> PlayerAdminRead:
         referrer_player_id=player.referrer_player_id,
         accounts=[account_read(account) for account in player.accounts],
         created_at=player.created_at,
+        invited_total=total,
+        invited_24h=recent,
+        referral_paused=recent >= get_settings().referral_daily_limit,
     )
 
 
 async def list_players(session: AsyncSession) -> list[PlayerAdminRead]:
     players = await session.scalars(_players_query().order_by(Player.created_at.desc()))
-    return [_player_admin_read(player) for player in players]
+    counts = await referrals.invited_counts(session)
+    return [_player_admin_read(player, counts.get(player.id, (0, 0))) for player in players]
+
+
+async def referral_me(session: AsyncSession, user: User, *, rotate: bool = False) -> ReferralRead:
+    player = await get_player(session, user)
+    _require_active(player)
+    if rotate:
+        return await referrals.rotate_code(session, player)
+    return await referrals.referral_read(session, player)
+
+
+async def rotate_player_referral(session: AsyncSession, player_id: uuid.UUID) -> ReferralRead:
+    player = await session.get(Player, player_id)
+    if player is None:
+        raise NotFoundError("Игрок не найден")
+    return await referrals.rotate_code(session, player)
 
 
 async def update_player(

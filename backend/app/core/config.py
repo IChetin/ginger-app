@@ -102,6 +102,8 @@ class Settings(BaseSettings):
     # Регистрация только по инвайту — клуб закрытый (ТЗ §5, вопрос 11.8).
     registration_requires_invite: bool = True
     invite_ttl_days: int = Field(default=7, ge=1)
+    # Регистраций по личной ссылке за сутки, сверх — ссылка приостанавливается (E5.3б).
+    referral_daily_limit: int = Field(default=5, ge=1)
     # Депозитный: без скриншота оплаты заявка сгорает (ТЗ §3.3).
     chip_payment_timeout_minutes: int = Field(default=20, ge=1)
     # Часы кассы по Москве: 12:00–03:00 (ТЗ §3.2). Заявка принимается всегда.

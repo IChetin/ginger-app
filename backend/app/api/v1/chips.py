@@ -17,6 +17,7 @@ from app.schemas.chips import (
     PlayerAccountRead,
     PlayerMe,
     PlayerMeUpdate,
+    ReferralRead,
 )
 from app.services import chips as chips_service
 from app.services import invites as invites_service
@@ -35,6 +36,18 @@ async def get_player_me(user: CurrentUser, db: Db) -> PlayerMe:
 @router.patch("/me/player", response_model=PlayerMe)
 async def update_player_me(body: PlayerMeUpdate, user: CurrentUser, db: Db) -> PlayerMe:
     return await chips_service.update_player_me(db, user, body)
+
+
+@router.get("/me/referral", response_model=ReferralRead)
+async def get_referral(user: CurrentUser, db: Db) -> ReferralRead:
+    """Личная ссылка «Пригласить» и сколько человек по ней пришло."""
+    return await chips_service.referral_me(db, user)
+
+
+@router.post("/me/referral/rotate", response_model=ReferralRead)
+async def rotate_referral(user: CurrentUser, db: Db) -> ReferralRead:
+    """Перевыпустить ссылку: старая перестаёт работать (например, утекла в общий чат)."""
+    return await chips_service.referral_me(db, user, rotate=True)
 
 
 @router.post("/me/accounts", response_model=PlayerAccountRead, status_code=status.HTTP_201_CREATED)

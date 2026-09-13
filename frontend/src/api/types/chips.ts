@@ -100,4 +100,16 @@ export interface PublicClub {
 export interface InviteCheck {
   valid: boolean;
   reason: string | null;
+  /** Для личной ссылки игрока: «Вас пригласил …». */
+  referrer_nickname?: string | null;
+}
+
+/** Личная многоразовая ссылка «Пригласить» (вопрос 11.8). */
+export interface ReferralRead {
+  code: string;
+  path: string;
+  invited_total: number;
+  registrations_24h: number;
+  daily_limit: number;
+  paused: boolean;
 }

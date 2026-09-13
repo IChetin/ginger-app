@@ -7,6 +7,7 @@ import type {
   PlayerAccountCreatePayload,
   PlayerMe,
   PublicClub,
+  ReferralRead,
 } from "@/api/types/chips";
 
 export function fetchPlayerMe(): Promise<PlayerMe> {
@@ -45,4 +46,12 @@ export function fetchPublicClubs(): Promise<PublicClub[]> {
 
 export function checkInvite(token: string): Promise<InviteCheck> {
   return apiGet(`/api/v1/invites/${encodeURIComponent(token)}`);
+}
+
+export function fetchReferral(): Promise<ReferralRead> {
+  return apiGet("/api/v1/me/referral");
+}
+
+export function rotateReferral(): Promise<ReferralRead> {
+  return apiPost("/api/v1/me/referral/rotate");
 }

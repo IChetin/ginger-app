@@ -36,6 +36,8 @@ class Player(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __table_args__ = (
         Index("uq_players_user_id", "user_id", unique=True),
         Index("ix_players_status", "status"),
+        Index("uq_players_referral_code", "referral_code", unique=True),
+        Index("ix_players_referrer_player_id", "referrer_player_id"),
     )
 
     user_id: Mapped[uuid.UUID] = mapped_column(
@@ -67,6 +69,8 @@ class Player(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         ForeignKey("players.id", ondelete="SET NULL"),
     )
     notes: Mapped[str | None] = mapped_column(Text)
+    # Личная многоразовая ссылка «Пригласить» (/r/<код>); выдаётся при первом открытии.
+    referral_code: Mapped[str | None] = mapped_column(String(16))
 
     user: Mapped["User"] = relationship()
     accounts: Mapped[list["PlayerAccount"]] = relationship(

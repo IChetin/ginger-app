@@ -8,6 +8,8 @@ import {
   fetchChipRequests,
   fetchPlayerMe,
   fetchPublicClubs,
+  fetchReferral,
+  rotateReferral,
   uploadScreenshot,
 } from "@/features/chips/api";
 import { isOpen } from "@/features/chips/lib/format";
@@ -17,6 +19,7 @@ export const chipsKeys = {
   requests: ["chips", "requests"] as const,
   request: (id: string) => ["chips", "request", id] as const,
   clubs: ["chips", "clubs"] as const,
+  referral: ["chips", "referral"] as const,
 };
 
 export function usePlayerMe() {
@@ -75,6 +78,18 @@ export function useAddPlayerAccount() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: chipsKeys.player });
     },
+  });
+}
+
+export function useReferral() {
+  return useQuery({ queryKey: chipsKeys.referral, queryFn: fetchReferral });
+}
+
+export function useRotateReferral() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: rotateReferral,
+    onSuccess: (referral) => queryClient.setQueryData(chipsKeys.referral, referral),
   });
 }
 

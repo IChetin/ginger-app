@@ -17,6 +17,7 @@ from app.schemas.chips import (
     PendingAccountRead,
     PlayerAdminRead,
     PlayerAdminUpdate,
+    ReferralRead,
     RejectBody,
     RequisitesBody,
     RequisiteTemplateCreate,
@@ -108,6 +109,12 @@ async def update_player(
 ) -> PlayerAdminRead:
     """Тип игрока, блокировка, офлайн-доступ — только админ (ТЗ §9а.1)."""
     return await chips_service.update_player(db, player_id, body)
+
+
+@router.post("/players/{player_id}/referral/rotate", response_model=ReferralRead)
+async def rotate_player_referral(player_id: UUID, _: Admin, db: Db) -> ReferralRead:
+    """Перевыпуск личной ссылки игрока — когда она приостановлена или утекла."""
+    return await chips_service.rotate_player_referral(db, player_id)
 
 
 @router.get("/player-accounts/pending", response_model=list[PendingAccountRead])

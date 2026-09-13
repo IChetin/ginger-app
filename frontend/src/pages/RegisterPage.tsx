@@ -57,7 +57,8 @@ export function RegisterPage() {
             Регистрация по приглашению
           </h1>
           <p className="text-ink-2 mt-2 text-[14px]">
-            Ginger — закрытый клуб. Попросите у менеджера ссылку-приглашение и откройте её.
+            Ginger — закрытый клуб. Попросите ссылку-приглашение у друга, который уже играет, или у
+            менеджера и откройте её.
           </p>
           <Link to="/login" className="text-gold mt-4 inline-block text-[14px] font-bold">
             Уже есть аккаунт — войти

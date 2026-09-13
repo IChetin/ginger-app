@@ -180,6 +180,9 @@ class PlayerAdminRead(BaseModel):
     referrer_player_id: UUID | None
     accounts: list[PlayerAccountRead]
     created_at: datetime
+    invited_total: int = 0
+    invited_24h: int = 0
+    referral_paused: bool = False
 
 
 class PlayerAdminUpdate(BaseModel):
@@ -220,3 +223,16 @@ class InviteCreated(InviteRead):
 class InviteCheck(BaseModel):
     valid: bool
     reason: str | None
+    # Для личной ссылки: «Вас пригласил …».
+    referrer_nickname: str | None = None
+
+
+class ReferralRead(BaseModel):
+    code: str
+    path: str
+    invited_total: int
+    registrations_24h: int
+    daily_limit: int
+    # Лимит регистраций за сутки исчерпан — ссылка не работает, пока не пройдут сутки
+    # или код не перевыпустят.
+    paused: bool

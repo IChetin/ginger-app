@@ -34,6 +34,7 @@ import { ChipAccountsPage } from "@/pages/ChipAccountsPage";
 import { ChipRequestPage } from "@/pages/ChipRequestPage";
 import { ChipsPage } from "@/pages/ChipsPage";
 import { InvitePage } from "@/pages/InvitePage";
+import { ReferralPage } from "@/pages/ReferralPage";
 import { TournamentsPage } from "@/pages/TournamentsPage";
 import { EventPage } from "@/pages/EventPage";
 import { ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from "@/pages/AuthLegacyRedirect";
@@ -64,6 +65,7 @@ export function AppRoutes() {
           <Route path="/chips" element={<ChipsPage />} />
           <Route path="/chips/accounts" element={<ChipAccountsPage />} />
           <Route path="/chips/:requestId" element={<ChipRequestPage />} />
+          <Route path="/referral" element={<ReferralPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
@@ -72,6 +74,7 @@ export function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/invite/:token" element={<InvitePage />} />
+      <Route path="/r/:token" element={<InvitePage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />

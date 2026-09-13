@@ -427,6 +427,7 @@ async def test_registration_by_invite(
     assert (await client.get(f"/api/v1/invites/{invite['token']}")).json() == {
         "valid": True,
         "reason": None,
+        "referrer_nickname": None,
     }
     email = "oleg@example.com"
     without = await client.post(
@@ -465,6 +466,7 @@ async def test_registration_by_invite(
     assert (await client.get(f"/api/v1/invites/{invite['token']}")).json() == {
         "valid": False,
         "reason": "used",
+        "referrer_nickname": None,
     }
     reuse = await client.post(
         "/api/v1/auth/register/start",
