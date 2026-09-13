@@ -69,6 +69,7 @@ function tournament(overrides: Partial<Tournament>): Tournament {
     status: "scheduled",
     is_promoted: false,
     buyin_rub: "1408",
+    guarantee_rub: "88000",
     has_addon: false,
     ...overrides,
   };

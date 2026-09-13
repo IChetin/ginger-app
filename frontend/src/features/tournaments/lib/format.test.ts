@@ -48,6 +48,7 @@ export function tournamentFixture(overrides: Partial<Tournament> = {}): Tourname
     status: "scheduled",
     is_promoted: false,
     buyin_rub: "1408",
+    guarantee_rub: "88000",
     has_addon: true,
     ...overrides,
   };

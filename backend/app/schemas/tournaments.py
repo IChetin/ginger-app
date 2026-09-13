@@ -99,4 +99,5 @@ class TournamentRead(TournamentFields):
     # Бай-ин в рублях по курсу клуба — «примерно», для фильтра и подписи. None, если курс
     # клуба или валюты не задан.
     buyin_rub: Decimal | None
+    guarantee_rub: Decimal | None
     has_addon: bool

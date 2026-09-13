@@ -41,6 +41,7 @@ export interface Tournament {
   status: "scheduled" | "cancelled";
   is_promoted: boolean;
   buyin_rub: string | null;
+  guarantee_rub: string | null;
   has_addon: boolean;
 }
 

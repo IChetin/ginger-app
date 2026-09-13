@@ -8,6 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.clubs import Club
+from app.models.references import FxRate
 from app.models.tournaments import Tournament
 from app.services.tournaments.queries import DayPeriod, period_of
 
@@ -213,3 +214,35 @@ async def test_profile_schedule_view(user_client: AsyncClient) -> None:
     assert updated.json()["schedule_view"] == "table"
     wrong = await user_client.patch("/api/v1/auth/me", json={"schedule_view": "grid"})
     assert wrong.status_code == 422
+
+
+async def test_highlights_are_top_guarantees_per_day_without_login(
+    client: AsyncClient, seeded_db: None, db_session: AsyncSession
+) -> None:
+    ginger = await _club_id(db_session, "ginger")  # 1 фишка = 1 USDT
+    ginger21 = await _club_id(db_session, "ginger21")  # 1 фишка = 1 ₽
+    db_session.add(FxRate(currency_code="USDT", rate_date=datetime.now(UTC).date(), rate_rub=88))
+    start = datetime.now(UTC).replace(microsecond=0) + timedelta(hours=1)
+    rows = [
+        (ginger, "USDT 1000", Decimal("1000")),  # 88 000 ₽
+        (ginger21, "RUB 50000", Decimal("50000")),  # 50 000 ₽
+        (ginger, "USDT 100", Decimal("100")),  # 8 800 ₽
+        (ginger, "NO GTD", None),
+    ]
+    for index, (club_id, name, guarantee) in enumerate(rows):
+        db_session.add(
+            Tournament(
+                club_id=club_id,
+                name=name,
+                buyin=Decimal("1"),
+                guarantee=guarantee,
+                starts_at=start + timedelta(minutes=index),
+            )
+        )
+    await db_session.flush()
+
+    response = await client.get("/api/v1/tournaments/highlights", params={"per_day": 2, "days": 1})
+    assert response.status_code == 200, response.text
+    items = response.json()
+    assert [item["name"] for item in items] == ["USDT 1000", "RUB 50000"]
+    assert items[0]["guarantee_rub"] == "88000"

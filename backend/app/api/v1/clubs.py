@@ -13,7 +13,7 @@ from app.models.enums import PokerApp
 from app.schemas.clubs import ClubBrief
 from app.schemas.tournaments import TournamentRead
 from app.services import clubs as clubs_service
-from app.services.tournaments.queries import DayPeriod, list_tournaments
+from app.services.tournaments.queries import DayPeriod, list_highlights, list_tournaments
 
 router = APIRouter(tags=["clubs"])
 
@@ -29,6 +29,20 @@ async def list_clubs(
 ) -> list[ClubBrief]:
     del user
     return await clubs_service.list_public_clubs(db)
+
+
+@router.get("/tournaments/highlights", response_model=list[TournamentRead])
+async def get_highlights(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    per_day: Annotated[int, Query(ge=1, le=20)] = 5,
+    days: Annotated[int, Query(ge=1, le=14)] = 7,
+) -> list[TournamentRead]:
+    """Витрина для новых: крупнейшие гарантии каждого дня. Без входа — это приманка для тех,
+    кто ещё не с нами; остальное расписание по-прежнему только для вошедших."""
+    start = datetime.now(UTC)
+    return await list_highlights(
+        db, starts_from=start, starts_to=start + timedelta(days=days), per_day=per_day
+    )
 
 
 @router.get("/tournaments", response_model=list[TournamentRead])

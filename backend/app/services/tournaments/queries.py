@@ -37,6 +37,12 @@ _PERIOD_BOUNDS = {
 }
 
 
+def _to_rub(chips: Decimal | None, rate: Decimal | None) -> Decimal | None:
+    if chips is None or rate is None:
+        return None
+    return (chips * rate).quantize(Decimal("1"))
+
+
 def period_of(moment: datetime) -> DayPeriod:
     local = moment.astimezone(MSK).time()
     for period, (start, end) in _PERIOD_BOUNDS.items():
@@ -91,7 +97,7 @@ async def list_tournaments(
         if periods and period_of(item.starts_at) not in periods:
             continue
         rate = rates.get(item.club_id)
-        buyin_rub = (item.buyin * rate).quantize(Decimal("1")) if rate is not None else None
+        buyin_rub = _to_rub(item.buyin, rate)
         if by_rub:
             # Без курса бай-ин в рублях неизвестен — при фильтре по деньгам такой турнир
             # не показываем, иначе он попадал бы в любой диапазон.
@@ -116,7 +122,36 @@ async def list_tournaments(
                     ),
                 ),
                 buyin_rub=buyin_rub,
+                guarantee_rub=_to_rub(item.guarantee, rate),
                 has_addon=item.addon_cost is not None,
             )
         )
+    return result
+
+
+async def list_highlights(
+    session: AsyncSession,
+    *,
+    starts_from: datetime,
+    starts_to: datetime,
+    per_day: int,
+) -> list[TournamentRead]:
+    """Яркие события для новых игроков: максимальные гарантии (решение Ивана 2026-09-13).
+
+    Гарантии сравниваются в рублях — иначе клубы несравнимы ($1 000 у Ginger и ₽50 000 у
+    Ginger21). Берём `per_day` крупнейших на каждый день по Москве; турниры без гарантии или
+    без курса клуба в отбор не попадают.
+    """
+    tournaments = await list_tournaments(session, starts_from=starts_from, starts_to=starts_to)
+    by_day: dict[str, list[TournamentRead]] = {}
+    for item in tournaments:
+        if item.guarantee_rub is None or item.guarantee_rub <= 0:
+            continue
+        day = item.starts_at.astimezone(MSK).date().isoformat()
+        by_day.setdefault(day, []).append(item)
+    result: list[TournamentRead] = []
+    for items in by_day.values():
+        items.sort(key=lambda item: (-(item.guarantee_rub or 0), item.starts_at))
+        result.extend(items[:per_day])
+    result.sort(key=lambda item: item.starts_at)
     return result
