@@ -270,9 +270,6 @@ export function LoginPage() {
             >
               Забыли пароль?
             </button>
-            <button type="button" className="text-ink-3 font-semibold" onClick={leave}>
-              Продолжить без входа
-            </button>
           </div>
 
           <p className="text-ink-3 mt-6 text-center text-[13px]">

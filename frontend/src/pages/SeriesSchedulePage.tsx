@@ -21,8 +21,7 @@ const iconClass =
 
 /** Высота панели PDF/Структуры (~ h-11 + py-2.5×2). */
 const SCHEDULE_TOOLS_H = "3.75rem";
-const SCHEDULE_DAY_TOP =
-  `calc(${STICKY_BELOW_HEADER_TOP} + ${SCHEDULE_TOOLS_H})` as const;
+const SCHEDULE_DAY_TOP = `calc(${STICKY_BELOW_HEADER_TOP} + ${SCHEDULE_TOOLS_H})` as const;
 
 function ScheduleSkeleton() {
   return (

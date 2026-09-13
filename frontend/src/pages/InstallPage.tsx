@@ -31,7 +31,9 @@ export function InstallPage() {
           </span>
           <span>
             <b className="block text-[15px]">Выберите «На экран „Домой“»</b>
-            <span className="text-ink-2 text-[13px]">Подтвердите добавление приложения Ginger.</span>
+            <span className="text-ink-2 text-[13px]">
+              Подтвердите добавление приложения Ginger.
+            </span>
           </span>
         </li>
       </ol>

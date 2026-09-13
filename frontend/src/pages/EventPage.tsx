@@ -138,7 +138,6 @@ export function EventPage() {
       />
       <BlindStructure levels={event.blind_levels} />
       <VenueCard venue={event.venue} />
-
     </div>
   );
 }

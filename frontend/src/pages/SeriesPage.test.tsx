@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -234,15 +234,6 @@ describe("SeriesPage", () => {
     fetchSeriesDetail.mockResolvedValueOnce(seriesDetailFixture);
     await user.click(screen.getByRole("button", { name: "Повторить" }));
     expect(await screen.findByRole("heading", { name: "RPT Demo" })).toBeInTheDocument();
-  });
-
-  it("keeps series tab active on series page", async () => {
-    renderWithProviders(<AppRoutes />, {
-      route: `/series/${seriesSlug}?day=2026-08-02`,
-    });
-    await screen.findByRole("heading", { name: "RPT Kaliningrad" });
-    const nav = screen.getByRole("navigation", { name: "Основная навигация" });
-    expect(within(nav).getByText("Серии").closest("a")).toHaveAttribute("aria-current", "page");
   });
 
   it("changes day via strip", async () => {

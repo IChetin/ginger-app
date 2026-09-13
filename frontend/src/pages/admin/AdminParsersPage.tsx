@@ -168,11 +168,7 @@ export function AdminParsersPage() {
                           : "text-ink-3",
                     )}
                   >
-                    {!parser.is_available
-                      ? "нет в коде"
-                      : parser.is_active
-                        ? "активен"
-                        : "выкл."}
+                    {!parser.is_available ? "нет в коде" : parser.is_active ? "активен" : "выкл."}
                   </span>
                 ),
               },
@@ -226,9 +222,7 @@ export function AdminParsersPage() {
           >
             <div className="text-ink-3 mb-3 font-mono text-[12px]">
               {editing.name} · {kindLabel(editing.kind)}
-              {editing.supported_types.length
-                ? ` · ${editing.supported_types.join(", ")}`
-                : ""}
+              {editing.supported_types.length ? ` · ${editing.supported_types.join(", ")}` : ""}
             </div>
             {editing.description ? (
               <p className="text-ink-2 mb-3 text-[12.5px]">{editing.description}</p>

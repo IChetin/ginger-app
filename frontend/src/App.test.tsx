@@ -36,10 +36,9 @@ describe("App routes", () => {
     fetchCurrentUser.mockRejectedValue(new ApiError(401, "unauthorized", "Unauthorized"));
   });
 
-  it("renders feed at /", async () => {
+  it("sends a guest from home to login", async () => {
     renderWithProviders(<AppRoutes />, { route: "/" });
-    expect(await screen.findByTestId("home-page")).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Основная навигация" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Вход" })).toBeInTheDocument();
   });
 
   it("renders calendar at /calendar", async () => {

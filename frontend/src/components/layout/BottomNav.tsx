@@ -5,11 +5,10 @@ import { cn } from "@/lib/utils";
 const iconClass =
   "h-[22px] w-[22px] stroke-current fill-none [stroke-width:1.8] [stroke-linecap:round] [stroke-linejoin:round]";
 
-function IconTournaments() {
+function IconHome() {
   return (
     <svg className={iconClass} viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M8 4h8v5a4 4 0 0 1-8 0z" />
-      <path d="M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M9 20h6M10 17h4" />
+      <path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z" />
     </svg>
   );
 }
@@ -23,19 +22,19 @@ function IconChips() {
   );
 }
 
-function IconSeries() {
+function IconDialogs() {
   return (
     <svg className={iconClass} viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="4" y="5" width="16" height="15" rx="3" />
-      <path d="M8 3v4M16 3v4M4 10h16" />
+      <path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-4 3.5V16H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" />
+      <path d="M8 9.5h8M8 12.5h5" />
     </svg>
   );
 }
 
-function IconBookmarks() {
+function IconMore() {
   return (
     <svg className={iconClass} viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M6 4h12v17l-6-4-6 4z" />
+      <path d="M5 7h14M5 12h14M5 17h14" />
     </svg>
   );
 }
@@ -44,28 +43,29 @@ type NavItem = {
   to: string;
   label: string;
   icon: () => JSX.Element;
-  /** series — главная и /series/*, prefix — раздел с подстраницами, exact — точное совпадение */
-  match: "series" | "prefix" | "exact";
+  /** Префиксы путей, на которых пункт подсвечен; пустой список — только точный путь. */
+  sections: string[];
 };
 
+// Четыре пункта — больше на телефон не помещается без потери читаемости (экраны §1).
 const items: NavItem[] = [
-  { to: "/tournaments", label: "Турниры", icon: IconTournaments, match: "exact" },
-  { to: "/", label: "Серии", icon: IconSeries, match: "series" },
-  { to: "/chips", label: "Фишки", icon: IconChips, match: "prefix" },
-  { to: "/bookmarks", label: "Закладки", icon: IconBookmarks, match: "exact" },
+  { to: "/", label: "Главная", icon: IconHome, sections: [] },
+  { to: "/chips", label: "Фишки", icon: IconChips, sections: ["/chips"] },
+  { to: "/dialogs", label: "Диалоги", icon: IconDialogs, sections: ["/dialogs"] },
+  {
+    to: "/more",
+    label: "Ещё",
+    icon: IconMore,
+    sections: ["/more", "/tournaments", "/clubs", "/profile", "/referral", "/offline"],
+  },
 ];
 
 function isItemActive(pathname: string, item: NavItem): boolean {
-  if (item.match === "series") {
-    return pathname === "/" || pathname.startsWith("/series/");
-  }
-  if (item.match === "prefix") {
-    return pathname === item.to || pathname.startsWith(`${item.to}/`);
-  }
-  return pathname === item.to;
+  if (item.sections.length === 0) return pathname === item.to;
+  return item.sections.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
-export function BottomNav({ bookmarkCount = 0 }: { bookmarkCount?: number }) {
+export function BottomNav({ dialogsUnread = 0 }: { dialogsUnread?: number }) {
   const { pathname } = useLocation();
 
   return (
@@ -91,9 +91,9 @@ export function BottomNav({ bookmarkCount = 0 }: { bookmarkCount?: number }) {
             )}
             aria-current={active ? "page" : undefined}
           >
-            {item.to === "/bookmarks" && bookmarkCount > 0 ? (
+            {item.to === "/dialogs" && dialogsUnread > 0 ? (
               <span className="num bg-gold-grad text-ink-ongold absolute top-1 right-[calc(50%-20px)] flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-extrabold">
-                {bookmarkCount}
+                {dialogsUnread}
               </span>
             ) : null}
             <Icon />

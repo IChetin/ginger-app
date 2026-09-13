@@ -124,7 +124,7 @@ describe("SeriesSchedulePage back navigation", () => {
 
     await user.click(screen.getByRole("button", { name: "Назад" }));
     await waitFor(() => {
-      expect(screen.getByTestId("home-page")).toBeInTheDocument();
+      expect(screen.queryByTestId("series-page")).not.toBeInTheDocument();
     });
     expect(screen.queryByTestId("series-schedule-page")).not.toBeInTheDocument();
     expect(screen.queryByTestId("series-page")).not.toBeInTheDocument();

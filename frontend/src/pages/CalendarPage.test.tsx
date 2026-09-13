@@ -117,9 +117,7 @@ describe("CalendarPage", () => {
           overlap_starts_on: "2026-08-13",
           overlap_ends_on: "2026-08-24",
           events_in_period: 28,
-          min_buyins_in_period: [
-            { amount: "110.00", currency: { code: "USD", symbol: "$" } },
-          ],
+          min_buyins_in_period: [{ amount: "110.00", currency: { code: "USD", symbol: "$" } }],
         }),
         calendarSeries({
           id: "series-partial",
@@ -131,18 +129,18 @@ describe("CalendarPage", () => {
           overlap_starts_on: "2026-08-10",
           overlap_ends_on: "2026-08-11",
           events_in_period: 5,
-          min_buyins_in_period: [
-            { amount: "150.00", currency: { code: "USD", symbol: "$" } },
-          ],
+          min_buyins_in_period: [{ amount: "150.00", currency: { code: "USD", symbol: "$" } }],
         }),
       ],
     };
-    fetchCalendar.mockImplementation(async (params: { month: string; from?: string; to?: string }) => {
-      if (params.from && params.to) {
-        return periodFixture;
-      }
-      return calendarFixture;
-    });
+    fetchCalendar.mockImplementation(
+      async (params: { month: string; from?: string; to?: string }) => {
+        if (params.from && params.to) {
+          return periodFixture;
+        }
+        return calendarFixture;
+      },
+    );
 
     renderWithProviders(<AppRoutes />, { route: "/calendar?month=2026-08" });
     await screen.findByText("RPT Kaliningrad");

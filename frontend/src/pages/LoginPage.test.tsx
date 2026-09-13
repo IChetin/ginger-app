@@ -112,7 +112,7 @@ describe("LoginPage", () => {
         password: "CorrectHorse1",
       });
     });
-    expect(await screen.findByTestId("home-page")).toBeInTheDocument();
+    expect(await screen.findByTestId("player-home")).toBeInTheDocument();
   });
 
   it("shows generic error on bad password", async () => {
@@ -198,28 +198,10 @@ describe("LoginPage", () => {
     );
   });
 
-  it("continues without login to returnTo", async () => {
-    const user = userEvent.setup();
-    renderWithProviders(<AppRoutes />, {
-      routerProps: {
-        initialEntries: [{ pathname: "/login", state: { returnTo: "/" } }],
-      },
-    });
-    await user.click(await screen.findByRole("button", { name: "Продолжить без входа" }));
-    expect(await screen.findByTestId("home-page")).toBeInTheDocument();
-  });
-
-  it("leaves login for home when the guest was bounced off an auth-only route", async () => {
-    const user = userEvent.setup();
-    renderWithProviders(<AppRoutes />, { route: "/profile" });
-    await user.click(await screen.findByRole("button", { name: "Продолжить без входа" }));
-    expect(await screen.findByTestId("home-page")).toBeInTheDocument();
-  });
-
   it("redirects authenticated user away from login", async () => {
     fetchCurrentUser.mockResolvedValue(userWithPassword);
     renderWithProviders(<AppRoutes />, { route: "/login" });
-    expect(await screen.findByTestId("home-page")).toBeInTheDocument();
+    expect(await screen.findByTestId("player-home")).toBeInTheDocument();
   });
 
   it("returns to protected page after OTP login when password already set", async () => {

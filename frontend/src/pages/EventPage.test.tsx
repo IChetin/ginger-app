@@ -27,7 +27,6 @@ vi.mock("@/api/client", async () => {
   };
 });
 
-
 const seriesSlug = "rpt-kaliningrad-2026-08";
 const eventSlug = "5-main-event";
 const eventPublicPath = `/events/${seriesSlug}-${eventSlug}`;

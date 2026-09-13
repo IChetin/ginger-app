@@ -95,6 +95,11 @@ export interface PublicClub {
   chip_currency_code: string | null;
   download_url: string | null;
   join_steps: string | null;
+  games: string | null;
+  limits: string | null;
+  peak_hours: string | null;
+  active_players: string | null;
+  is_promoted: boolean;
 }
 
 export interface InviteCheck {

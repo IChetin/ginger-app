@@ -4,13 +4,11 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { MobileLayoutHint } from "@/components/layout/MobileLayoutHint";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { UserTimezoneSync } from "@/components/layout/UserTimezoneSync";
-import { useBookmarkCount } from "@/features/bookmarks/hooks";
 import { EnableRemindersBanner } from "@/features/push/components/EnableRemindersBanner";
 import { cn } from "@/lib/utils";
 
 export function AppShell() {
   const location = useLocation();
-  const bookmarkCount = useBookmarkCount();
   const hideBottomNav = Boolean(
     matchPath({ path: "/events/:eventId", end: true }, location.pathname) ||
     location.pathname === "/search" ||
@@ -40,7 +38,7 @@ export function AppShell() {
           </div>
         )}
         <Outlet />
-        {hideBottomNav ? null : <BottomNav bookmarkCount={bookmarkCount} />}
+        {hideBottomNav ? null : <BottomNav />}
       </div>
     </div>
   );

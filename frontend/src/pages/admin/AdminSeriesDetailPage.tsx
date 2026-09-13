@@ -534,9 +534,7 @@ export function AdminSeriesDetailPage() {
           <div className="truncate text-xl font-extrabold">{series.name}</div>
         </div>
         <div className="flex-1" />
-        <OpenInAppLink
-          href={seriesPath(series, { day: dayParam })}
-        />
+        <OpenInAppLink href={seriesPath(series, { day: dayParam })} />
         <button
           type="button"
           disabled={pdfBusy}

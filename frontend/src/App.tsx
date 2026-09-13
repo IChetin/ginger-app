@@ -33,12 +33,16 @@ import { CalendarPage } from "@/pages/CalendarPage";
 import { ChipAccountsPage } from "@/pages/ChipAccountsPage";
 import { ChipRequestPage } from "@/pages/ChipRequestPage";
 import { ChipsPage } from "@/pages/ChipsPage";
+import { ClubsPage } from "@/pages/ClubsPage";
+import { DialogsPage } from "@/pages/DialogsPage";
+import { MorePage } from "@/pages/MorePage";
+import { OfflinePage } from "@/pages/OfflinePage";
+import { PlayerHomePage } from "@/pages/PlayerHomePage";
 import { InvitePage } from "@/pages/InvitePage";
 import { ReferralPage } from "@/pages/ReferralPage";
 import { TournamentsPage } from "@/pages/TournamentsPage";
 import { EventPage } from "@/pages/EventPage";
 import { ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from "@/pages/AuthLegacyRedirect";
-import { HomePage } from "@/pages/HomePage";
 import { InstallPage } from "@/pages/InstallPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
@@ -53,7 +57,6 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route element={<AppShell />}>
-        <Route path="/" element={<HomePage />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/series/:seriesId" element={<SeriesPage />} />
         <Route path="/series/:seriesId/schedule" element={<SeriesSchedulePage />} />
@@ -61,6 +64,11 @@ export function AppRoutes() {
         <Route path="/bookmarks" element={<BookmarksPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route element={<AuthGuard />}>
+          <Route path="/" element={<PlayerHomePage />} />
+          <Route path="/more" element={<MorePage />} />
+          <Route path="/clubs" element={<ClubsPage />} />
+          <Route path="/offline" element={<OfflinePage />} />
+          <Route path="/dialogs/*" element={<DialogsPage />} />
           <Route path="/tournaments" element={<TournamentsPage />} />
           <Route path="/chips" element={<ChipsPage />} />
           <Route path="/chips/accounts" element={<ChipAccountsPage />} />

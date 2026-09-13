@@ -145,10 +145,7 @@ export function NotificationsPage() {
   }, [tab]);
 
   const list = useInfiniteNotifications(filters);
-  const items = useMemo(
-    () => list.data?.pages.flatMap((page) => page.items) ?? [],
-    [list.data],
-  );
+  const items = useMemo(() => list.data?.pages.flatMap((page) => page.items) ?? [], [list.data]);
   const groups = useMemo(
     () =>
       groupHistoryByLocalDay(
@@ -214,7 +211,7 @@ export function NotificationsPage() {
             {hasUnread ? (
               <button
                 type="button"
-                className="text-gold whitespace-nowrap text-[13px] font-bold"
+                className="text-gold text-[13px] font-bold whitespace-nowrap"
                 onClick={() => markRead.mutate({ all: true })}
               >
                 Прочитать всё
@@ -225,13 +222,13 @@ export function NotificationsPage() {
               className="bg-surface-2 text-ink-2 inline-flex h-9 w-9 items-center justify-center rounded-[11px]"
               aria-label="Настройки уведомлений"
             >
-              <IconSettings className="h-[18px] w-[18px] stroke-current fill-none [stroke-width:1.8]" />
+              <IconSettings className="h-[18px] w-[18px] fill-none stroke-current [stroke-width:1.8]" />
             </Link>
           </>
         }
       />
 
-      <div className="flex gap-2 overflow-x-auto px-4 pt-3 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex [scrollbar-width:none] gap-2 overflow-x-auto px-4 pt-3 pb-1 [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {TABS.map((item) => (
           <button
             key={item.id}
@@ -270,11 +267,7 @@ export function NotificationsPage() {
           <section key={group.key}>
             <div className="text-ink-3 px-4 pt-4 pb-1.5 text-[12px] font-bold">{group.label}</div>
             {group.items.map((item, index) => (
-              <NotificationRow
-                key={item.id}
-                item={item}
-                showSep={index < group.items.length - 1}
-              />
+              <NotificationRow key={item.id} item={item} showSep={index < group.items.length - 1} />
             ))}
           </section>
         ))}
@@ -324,7 +317,9 @@ function NotificationRow({
           ) : null}
         </div>
         {when ? (
-          <span className="num text-ink-3 shrink-0 pt-0.5 text-[11px]">{formatHistoryTime(when)}</span>
+          <span className="num text-ink-3 shrink-0 pt-0.5 text-[11px]">
+            {formatHistoryTime(when)}
+          </span>
         ) : null}
       </Link>
       {showSep ? <div className="bg-line mx-4 h-px" /> : null}

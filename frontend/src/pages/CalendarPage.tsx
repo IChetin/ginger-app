@@ -30,7 +30,7 @@ const monthNavBtnClass =
 function ChevronIcon({ direction }: { direction: "left" | "right" }) {
   return (
     <svg
-      className="h-5 w-5 stroke-current fill-none [stroke-width:1.8] [stroke-linecap:round] [stroke-linejoin:round]"
+      className="h-5 w-5 fill-none stroke-current [stroke-width:1.8] [stroke-linecap:round] [stroke-linejoin:round]"
       viewBox="0 0 24 24"
       aria-hidden="true"
     >
@@ -210,9 +210,7 @@ export function CalendarPage() {
 
   const listMode = periodComplete ? "period" : pickingEnd ? "picking" : "month";
   const showPeriodBar = Boolean(range.from);
-  const tipText =
-    periodTip ??
-    (pickingEnd ? "Отметьте вторую дату. Месяцы можно листать" : null);
+  const tipText = periodTip ?? (pickingEnd ? "Отметьте вторую дату. Месяцы можно листать" : null);
 
   const monthNav = (
     <>

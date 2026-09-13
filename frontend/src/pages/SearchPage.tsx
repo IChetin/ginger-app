@@ -1,11 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import type {
-  SearchEventItem,
-  SearchSeriesItem,
-  SearchVenueItem,
-} from "@/api/types/search";
+import type { SearchEventItem, SearchSeriesItem, SearchVenueItem } from "@/api/types/search";
 import { StickyHeader } from "@/components/layout/StickyHeader";
 import {
   useClearRecentSearches,
@@ -69,7 +65,7 @@ function seriesBadge(status: SearchSeriesItem["status"]) {
   if (status === "running") {
     return (
       <span className="bg-live-soft text-live inline-flex h-[22px] items-center gap-1.5 rounded-full px-2.5 text-[11px] font-bold">
-        <span className="bg-current h-1.5 w-1.5 rounded-full" />
+        <span className="h-1.5 w-1.5 rounded-full bg-current" />
         Идёт
       </span>
     );
@@ -245,9 +241,7 @@ export function SearchPage() {
     if (!data) {
       return false;
     }
-    return (
-      data.series.total === 0 && data.venues.total === 0 && data.events.total === 0
-    );
+    return data.series.total === 0 && data.venues.total === 0 && data.events.total === 0;
   }, [data]);
 
   /** History only on explicit completion (Enter or result tap) — never on debounce. */
@@ -276,7 +270,7 @@ export function SearchPage() {
         }
       >
         <div className="border-gold bg-surface text-ink-3 flex h-11 items-center gap-2.5 rounded-full border px-3.5">
-          <IconSearch className="h-[18px] w-[18px] stroke-current fill-none [stroke-width:1.8]" />
+          <IconSearch className="h-[18px] w-[18px] fill-none stroke-current [stroke-width:1.8]" />
           <input
             ref={inputRef}
             value={input}
@@ -306,7 +300,7 @@ export function SearchPage() {
                 inputRef.current?.focus();
               }}
             >
-              <IconClear className="h-[11px] w-[11px] stroke-current fill-none [stroke-width:1.8]" />
+              <IconClear className="h-[11px] w-[11px] fill-none stroke-current [stroke-width:1.8]" />
             </button>
           ) : null}
         </div>
@@ -355,7 +349,7 @@ export function SearchPage() {
                           }
                         }}
                       >
-                        <IconClear className="h-3 w-3 stroke-current fill-none [stroke-width:1.8]" />
+                        <IconClear className="h-3 w-3 fill-none stroke-current [stroke-width:1.8]" />
                       </span>
                     </button>
                   ))}
@@ -385,7 +379,7 @@ export function SearchPage() {
         {query.length >= 2 && data && emptyResults ? (
           <div className="flex flex-col items-center gap-2.5 px-[30px] py-12 text-center">
             <div className="bg-gold-soft text-gold flex h-[52px] w-[52px] -rotate-[4deg] items-center justify-center rounded-2xl">
-              <IconSearch className="h-6 w-6 stroke-current fill-none [stroke-width:1.8]" />
+              <IconSearch className="h-6 w-6 fill-none stroke-current [stroke-width:1.8]" />
             </div>
             <div className="text-[16px] font-bold">Ничего не нашлось</div>
             <div className="text-ink-2 text-[13.5px]">
@@ -399,7 +393,10 @@ export function SearchPage() {
             {data.series.items.length > 0 ? (
               <section>
                 <div className="text-ink-3 flex items-center gap-2 px-4 pt-4 pb-2 text-[12px] font-bold tracking-[0.06em] uppercase">
-                  Серии <span className="font-semibold normal-case tracking-normal">· {data.series.total}</span>
+                  Серии{" "}
+                  <span className="font-semibold tracking-normal normal-case">
+                    · {data.series.total}
+                  </span>
                 </div>
                 {data.series.items.map((item) => (
                   <SeriesResult
@@ -425,7 +422,9 @@ export function SearchPage() {
               <section>
                 <div className="text-ink-3 flex items-center gap-2 px-4 pt-4 pb-2 text-[12px] font-bold tracking-[0.06em] uppercase">
                   Площадки{" "}
-                  <span className="font-semibold normal-case tracking-normal">· {data.venues.total}</span>
+                  <span className="font-semibold tracking-normal normal-case">
+                    · {data.venues.total}
+                  </span>
                 </div>
                 {data.venues.items.map((item) => (
                   <VenueResult
@@ -451,7 +450,9 @@ export function SearchPage() {
               <section>
                 <div className="text-ink-3 flex items-center gap-2 px-4 pt-4 pb-2 text-[12px] font-bold tracking-[0.06em] uppercase">
                   Турниры{" "}
-                  <span className="font-semibold normal-case tracking-normal">· {data.events.total}</span>
+                  <span className="font-semibold tracking-normal normal-case">
+                    · {data.events.total}
+                  </span>
                 </div>
                 {data.events.items.map((item) => (
                   <EventResult
@@ -528,7 +529,7 @@ function VenueResult({
   return (
     <ResultRow
       to={`/?venues=${item.id}`}
-      icon={<IconPin className="h-[18px] w-[18px] stroke-current fill-none [stroke-width:1.8]" />}
+      icon={<IconPin className="h-[18px] w-[18px] fill-none stroke-current [stroke-width:1.8]" />}
       title={item.name}
       subtitle={subtitle}
       query={query}
@@ -572,4 +573,3 @@ function EventResult({
     />
   );
 }
-

@@ -125,8 +125,7 @@ export function AdminOrganizersPage() {
     );
   }, [parsersQuery.data, form.structure_parser_id]);
   const withParsers = useMemo(
-    () =>
-      items.filter((item) => item.schedule_parser_id || item.structure_parser_id).length,
+    () => items.filter((item) => item.schedule_parser_id || item.structure_parser_id).length,
     [items],
   );
 
@@ -323,7 +322,9 @@ export function AdminOrganizersPage() {
                       )}
                       <div>
                         <div className="font-bold">{org.name}</div>
-                        <div className="text-ink-3 text-xs">{organizerAbbr(org.slug, org.name)}</div>
+                        <div className="text-ink-3 text-xs">
+                          {organizerAbbr(org.slug, org.name)}
+                        </div>
                       </div>
                     </div>
                   ),
@@ -515,7 +516,9 @@ export function AdminOrganizersPage() {
                   >
                     {shownLogoUrl ? "Заменить изображение" : "Загрузить изображение"}
                   </button>
-                  <p className="text-ink-3 mt-1.5 text-[11px]">PNG / SVG / WebP · до 1 МБ · мин. 120×120</p>
+                  <p className="text-ink-3 mt-1.5 text-[11px]">
+                    PNG / SVG / WebP · до 1 МБ · мин. 120×120
+                  </p>
                   {shownLogoUrl ? (
                     <button
                       type="button"
@@ -533,8 +536,8 @@ export function AdminOrganizersPage() {
             </div>
 
             <div className="border-line bg-surface-2 text-ink-2 mb-1 rounded-[10px] border p-2.5 text-[12.5px]">
-              При импорте сначала пробуется выбранный парсер; если файл не подходит — автоподбор, затем
-              ИИ-фолбэк.
+              При импорте сначала пробуется выбранный парсер; если файл не подходит — автоподбор,
+              затем ИИ-фолбэк.
             </div>
             {error ? <p className="text-danger mt-3 text-sm">{error}</p> : null}
           </Modal>

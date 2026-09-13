@@ -29,12 +29,16 @@ function initialRows(
   accounts: PlayerAccount[],
   repeat: ChipRequest | undefined,
   last: ChipRequest | undefined,
+  clubId: string | null = null,
 ): Row[] {
   const ids = new Set(accounts.map((account) => account.id));
   const fromRepeat = repeat?.items
     .filter((item) => ids.has(item.account_id))
     .map((item) => newRow(item.account_id, String(Number(item.amount))));
   if (fromRepeat && fromRepeat.length > 0) return fromRepeat;
+  // «Запросить фишки сюда» с карточки клуба.
+  const inClub = clubId ? accounts.find((account) => account.club.id === clubId) : undefined;
+  if (inClub) return [newRow(inClub.id)];
   // По умолчанию — клуб последней заявки (ТЗ §3.1).
   const lastAccount = last?.items.find((item) => ids.has(item.account_id))?.account_id;
   const first = lastAccount ?? accounts[0]?.id;
@@ -355,7 +359,7 @@ export function ChipsPage() {
             player={me}
             kind={kind}
             accounts={confirmed}
-            rows={initialRows(confirmed, repeat, lastTopup)}
+            rows={initialRows(confirmed, repeat, lastTopup, params.get("club"))}
           />
         ) : null}
       </section>
