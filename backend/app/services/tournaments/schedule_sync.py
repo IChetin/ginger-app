@@ -306,6 +306,10 @@ async def apply_templates_import(
     if stale:
         await session.execute(delete(TournamentTemplate).where(TournamentTemplate.id.in_(stale)))
         await session.flush()
+    # Время турниров могло сдвинуться — колокольчики должны звонить по новому.
+    from app.services.tournaments.reminders import reschedule_pending
+
+    await reschedule_pending(session)
     return templates_summary, expansion_summary
 
 

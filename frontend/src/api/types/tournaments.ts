@@ -47,6 +47,14 @@ export interface Tournament {
   has_addon: boolean;
 }
 
+/** Колокольчик: за 5 минут до старта или до конца поздней регистрации (ответ 11.7). */
+export type ReminderKind = "start" | "late_reg";
+
+export interface TournamentReminder {
+  tournament_id: string;
+  kind: ReminderKind;
+}
+
 export interface TournamentsParams {
   from?: string;
   to?: string;

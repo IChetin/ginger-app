@@ -82,6 +82,7 @@ class NotificationQueue(UUIDPrimaryKeyMixin, Base):
         ),
         Index("ix_notification_queue_bookmark_id", "bookmark_id"),
         Index("ix_notification_queue_change_log_id", "change_log_id"),
+        Index("ix_notification_queue_tournament_reminder_id", "tournament_reminder_id"),
         Index(
             "uq_notification_queue_change_log_user_type",
             "change_log_id",
@@ -113,6 +114,11 @@ class NotificationQueue(UUIDPrimaryKeyMixin, Base):
     )
     change_log_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("change_log.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    # Ginger APP: напоминание о турнире; снятый колокольчик удаляет пуш каскадом.
+    tournament_reminder_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("tournament_reminders.id", ondelete="CASCADE"),
         nullable=True,
     )
     type: Mapped[NotificationType] = mapped_column(

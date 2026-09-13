@@ -17,13 +17,14 @@ from sqlalchemy import (
     Text,
     Time,
     UniqueConstraint,
+    func,
     text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
-from app.models.enums import BountyKind, GameType, TournamentStatus, pg_enum
+from app.models.enums import BountyKind, GameType, ReminderKind, TournamentStatus, pg_enum
 
 if TYPE_CHECKING:
     from app.models.clubs import Club
@@ -154,3 +155,32 @@ class Tournament(UUIDPrimaryKeyMixin, TimestampMixin, TournamentFieldsMixin, Bas
 
     club: Mapped["Club"] = relationship(back_populates="tournaments")
     template: Mapped["TournamentTemplate | None"] = relationship(back_populates="tournaments")
+
+
+class TournamentReminder(UUIDPrimaryKeyMixin, Base):
+    """Колокольчик игрока на турнире (ответ 11.7). Пуш — в `notification_queue`."""
+
+    __tablename__ = "tournament_reminders"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "tournament_id", "kind", name="uq_tournament_reminders_user_tournament_kind"
+        ),
+        Index("ix_tournament_reminders_tournament_id", "tournament_id"),
+    )
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    tournament_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tournaments.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    kind: Mapped[ReminderKind] = mapped_column(
+        pg_enum(ReminderKind, "reminder_kind"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )

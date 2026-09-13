@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.models.tournaments import TournamentTemplate
+from app.services.tournaments.reminders import reschedule_pending
 from app.services.tournaments.schedule_sync import ExpansionSummary, expand_templates
 
 logger = logging.getLogger(__name__)
@@ -43,9 +44,11 @@ async def expand_all_clubs(
     )
     if not club_ids:
         return ExpansionSummary()
-    return await expand_templates(
+    summary = await expand_templates(
         session, club_ids, now=now, horizon_days=get_settings().schedule_horizon_days
     )
+    await reschedule_pending(session)
+    return summary
 
 
 async def run_periodically(interval_seconds: int) -> None:

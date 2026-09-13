@@ -6,7 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models.enums import BountyKind, GameType, PokerApp, TournamentStatus
+from app.models.enums import BountyKind, GameType, PokerApp, ReminderKind, TournamentStatus
 
 
 class TournamentFields(BaseModel):
@@ -112,3 +112,14 @@ class TemplateDeleteResult(BaseModel):
     """Турнир убран из сетки: сколько будущих стартов пропало из расписания."""
 
     tournaments_deleted: int
+
+
+class TournamentReminderRead(BaseModel):
+    tournament_id: UUID
+    kind: ReminderKind
+
+
+class TournamentRemindersUpdate(BaseModel):
+    """Какие колокольчики должны стоять на турнире; пустой список снимает все."""
+
+    kinds: list[ReminderKind] = Field(default_factory=list, max_length=2)

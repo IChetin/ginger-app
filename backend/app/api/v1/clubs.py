@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,8 +12,13 @@ from app.core.exceptions import AppError
 from app.models.auth import User
 from app.models.enums import PokerApp
 from app.schemas.clubs import ClubBrief
-from app.schemas.tournaments import TournamentRead
+from app.schemas.tournaments import (
+    TournamentRead,
+    TournamentReminderRead,
+    TournamentRemindersUpdate,
+)
 from app.services import clubs as clubs_service
+from app.services.tournaments import reminders as reminders_service
 from app.services.tournaments.queries import DayPeriod, list_highlights, list_tournaments
 
 router = APIRouter(tags=["clubs"])
@@ -82,3 +88,22 @@ def _aware(moment: datetime | None) -> datetime | None:
     if moment is None:
         return None
     return moment if moment.tzinfo else moment.replace(tzinfo=UTC)
+
+
+@router.get("/me/tournament-reminders", response_model=list[TournamentReminderRead])
+async def list_my_reminders(
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[TournamentReminderRead]:
+    """Колокольчики игрока на турниры, где регистрация ещё открыта."""
+    return await reminders_service.list_my_reminders(db, user)
+
+
+@router.put("/me/tournament-reminders/{tournament_id}", response_model=list[TournamentReminderRead])
+async def set_my_reminders(
+    tournament_id: UUID,
+    body: TournamentRemindersUpdate,
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> list[TournamentReminderRead]:
+    return await reminders_service.set_reminders(db, user, tournament_id, set(body.kinds))

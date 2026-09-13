@@ -76,6 +76,13 @@ class NotificationType(str, Enum):
     NEW_CHIP_REQUEST = "new_chip_request"
 
 
+class ReminderKind(str, Enum):
+    """Колокольчик на турнире: за 5 минут до старта или до конца поздней регистрации."""
+
+    START = "start"
+    LATE_REG = "late_reg"
+
+
 class ChangeType(str, Enum):
     CREATED = "created"
     UPDATED = "updated"

@@ -72,7 +72,7 @@ class Settings(BaseSettings):
     # Web Push (VAPID). Private key is used by worker only.
     vapid_public_key: str = ""
     vapid_private_key: str = ""
-    vapid_subject: str = "https://lisa.club"
+    vapid_subject: str = "https://lisa52.com"
 
     # Admin change-notification preview tokens (HMAC).
     preview_hmac_secret: str = Field(default="dev-preview-hmac-secret-change-me")
@@ -91,6 +91,8 @@ class Settings(BaseSettings):
     # бэкенда докручивает горизонт с этим интервалом. 0 — выключено.
     schedule_horizon_days: int = Field(default=14, ge=1, le=60)
     schedule_rollforward_interval_seconds: int = Field(default=6 * 3600, ge=0)
+    # Колокольчик на турнире: за сколько минут до старта / конца регистрации (ответ 11.7).
+    tournament_reminder_lead_minutes: int = Field(default=5, ge=1, le=120)
     # Автозагрузка сеток по ссылкам на листы союзов; 0 — выключена.
     schedule_fetch_interval_seconds: int = Field(default=24 * 3600, ge=0)
     # Сателлиты на турниры дешевле порога игрокам не показываем — это спам для нашей ЦА

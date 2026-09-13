@@ -102,7 +102,7 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     port: 5173,
-    allowedHosts: ["lisa.club", "localhost", "frontend"],
+    allowedHosts: ["lisa52.com", "localhost", "frontend"],
     watch: {
       usePolling: true,
     },
@@ -115,7 +115,7 @@ export default defineConfig({
     host: "0.0.0.0",
     port: 5173,
     // "frontend" — hostname внутри docker-сети (Caddy → frontend:5173).
-    allowedHosts: ["lisa.club", "localhost", "frontend"],
+    allowedHosts: ["lisa52.com", "localhost", "frontend"],
   },
   test: {
     environment: "jsdom",
