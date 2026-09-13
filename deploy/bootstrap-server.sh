@@ -28,13 +28,18 @@ install -m 600 -o "$DEPLOY_USER" -g "$DEPLOY_USER" /root/.ssh/authorized_keys \
   "/home/${DEPLOY_USER}/.ssh/authorized_keys"
 
 echo "==> SSH: только ключи, без root"
-cat >/etc/ssh/sshd_config.d/90-ginger.conf <<'EOF'
+# sshd берёт первое встреченное значение, а файлы читает по алфавиту: облачный образ кладёт
+# 50-cloud-init.conf с PasswordAuthentication yes, поэтому наш файл должен идти первым.
+rm -f /etc/ssh/sshd_config.d/90-ginger.conf
+cat >/etc/ssh/sshd_config.d/00-ginger.conf <<'EOF'
 PasswordAuthentication no
 KbdInteractiveAuthentication no
 PermitRootLogin no
 EOF
 sshd -t
-systemctl reload ssh
+# На 24.04 sshd запускается через ssh.socket; перезагрузка не должна обрывать скрипт.
+systemctl reload ssh.service 2>/dev/null || systemctl restart ssh.service || true
+sshd -T | grep -Ei '^(passwordauthentication|permitrootlogin) '
 
 echo "==> Фаервол"
 ufw default deny incoming
