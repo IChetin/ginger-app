@@ -12,6 +12,7 @@ from app.api.v1.admin import (
     series,
     users,
 )
+from app.api.v1.admin import threads as admin_threads
 from app.core.deps import require_editor
 
 router = APIRouter(
@@ -23,6 +24,7 @@ router.include_router(dashboard.router)
 router.include_router(references.router)
 router.include_router(clubs.router)
 router.include_router(chips.router)
+router.include_router(admin_threads.router)
 router.include_router(series.router)
 router.include_router(events.router)
 # До imports: иначе «/import/bulk» съест маршрут «/import/{job_id}».

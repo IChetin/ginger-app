@@ -104,6 +104,10 @@ class Settings(BaseSettings):
     # Регистрация только по инвайту — клуб закрытый (ТЗ §5, вопрос 11.8).
     registration_requires_invite: bool = True
     invite_ttl_days: int = Field(default=7, ge=1)
+    # Треды: закрытие после тишины (вопрос 11.15) и пуш игроку на ответ менеджера (ТЗ §4.2а:
+    # в v1 нет, включим, если реакция начнёт проваливаться).
+    thread_autoclose_days: int = Field(default=14, ge=1)
+    thread_reply_push: bool = False
     # Регистраций по личной ссылке за сутки, сверх — ссылка приостанавливается (E5.3б).
     referral_daily_limit: int = Field(default=5, ge=1)
     # Депозитный: без скриншота оплаты заявка сгорает (ТЗ §3.3).

@@ -34,6 +34,7 @@ class NotificationType(StrEnum):
     REQUEST_REJECTED = "request_rejected"
     WITHDRAWAL_SENT = "withdrawal_sent"
     NEW_CHIP_REQUEST = "new_chip_request"
+    NEW_THREAD_MESSAGE = "new_thread_message"
 
 
 _notification_status = Enum(

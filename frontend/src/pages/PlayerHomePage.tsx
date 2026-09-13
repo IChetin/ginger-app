@@ -6,6 +6,7 @@ import { RequestRow } from "@/features/chips/components/RequestRow";
 import { useChipRequests, usePlayerMe } from "@/features/chips/hooks";
 import { isOpen, requestSummary } from "@/features/chips/lib/format";
 import { TournamentCard } from "@/features/tournaments/components/TournamentCard";
+import { useThreads } from "@/features/threads/hooks";
 import { EMPTY_FILTERS, useNow, useTournaments } from "@/features/tournaments/hooks";
 
 const NEAREST_LIMIT = 3;
@@ -39,6 +40,7 @@ export function PlayerHomePage() {
   const player = usePlayerMe();
   const requests = useChipRequests(player.isSuccess);
   const tournaments = useTournaments(EMPTY_FILTERS);
+  const threads = useThreads(player.isSuccess);
   const now = useNow(60_000);
 
   const notPlayer = player.error instanceof ApiError && player.error.code === "not_a_player";
@@ -54,6 +56,7 @@ export function PlayerHomePage() {
   }
 
   const open = (requests.data ?? []).filter((item) => isOpen(item.status));
+  const replies = (threads.data ?? []).filter((thread) => thread.unread);
   const lastTopup = (requests.data ?? []).find(
     (item) => item.kind === "topup" && !isOpen(item.status) && item.status !== "rejected",
   );
@@ -105,6 +108,28 @@ export function PlayerHomePage() {
           <div className="flex flex-col gap-1.5" data-testid="home-open-requests">
             {open.map((request) => (
               <RequestRow key={request.id} request={request} />
+            ))}
+          </div>
+        </>
+      ) : null}
+
+      {replies.length > 0 ? (
+        <>
+          <SectionTitle>Ответ менеджера</SectionTitle>
+          <div className="flex flex-col gap-1.5" data-testid="home-replies">
+            {replies.map((thread) => (
+              <Link
+                key={thread.id}
+                to={`/dialogs/${thread.id}`}
+                className="border-line-gold bg-gold-soft block rounded-md border px-2.5 py-2"
+              >
+                <span className="text-ink block truncate text-[14px] font-bold">
+                  {thread.subject}
+                </span>
+                <span className="text-ink-2 block truncate text-[12.5px]">
+                  {thread.last_message_preview}
+                </span>
+              </Link>
             ))}
           </div>
         </>

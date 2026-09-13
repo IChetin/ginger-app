@@ -241,6 +241,13 @@ export function ChipRequestPage() {
         </Box>
       ) : null}
 
+      <Link
+        to={`/dialogs/new?request=${request.id}`}
+        className="border-line-strong bg-surface text-ink mt-3 flex h-10 w-full items-center justify-center rounded-md border text-[14px] font-bold"
+      >
+        Написать по заявке
+      </Link>
+
       {!isOpen(request.status) ? (
         <button
           type="button"

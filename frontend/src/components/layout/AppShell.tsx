@@ -4,11 +4,15 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { MobileLayoutHint } from "@/components/layout/MobileLayoutHint";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
 import { UserTimezoneSync } from "@/components/layout/UserTimezoneSync";
+import { useMe } from "@/features/auth/hooks";
 import { EnableRemindersBanner } from "@/features/push/components/EnableRemindersBanner";
+import { useUnreadDialogs } from "@/features/threads/hooks";
 import { cn } from "@/lib/utils";
 
 export function AppShell() {
   const location = useLocation();
+  const { data: user } = useMe();
+  const dialogsUnread = useUnreadDialogs(Boolean(user));
   const hideBottomNav = Boolean(
     matchPath({ path: "/events/:eventId", end: true }, location.pathname) ||
     location.pathname === "/search" ||
@@ -38,7 +42,7 @@ export function AppShell() {
           </div>
         )}
         <Outlet />
-        {hideBottomNav ? null : <BottomNav />}
+        {hideBottomNav ? null : <BottomNav dialogsUnread={dialogsUnread} />}
       </div>
     </div>
   );

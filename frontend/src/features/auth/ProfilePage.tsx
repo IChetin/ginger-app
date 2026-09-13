@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import type { BaseCurrencyCode } from "@/api/types/auth";
 import { IntervalSheet } from "@/components/bookmarks/IntervalSheet";
@@ -129,9 +129,15 @@ export function ProfilePage() {
         }}
       />
 
+      <Link
+        to="/dialogs/new?topic=data_change"
+        className="border-line-strong bg-surface text-ink mx-4 mt-6 flex h-12 w-[calc(100%-32px)] items-center justify-center rounded-md border text-[15px] font-bold"
+      >
+        Хочу изменить данные
+      </Link>
       <button
         type="button"
-        className="border-danger/35 text-danger mx-4 mt-6 flex h-12 w-[calc(100%-32px)] items-center justify-center rounded-md border text-[15px] font-bold"
+        className="border-danger/35 text-danger mx-4 mt-3 flex h-12 w-[calc(100%-32px)] items-center justify-center rounded-md border text-[15px] font-bold"
         disabled={logout.isPending}
         onClick={() => {
           void (async () => {

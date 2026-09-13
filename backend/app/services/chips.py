@@ -750,9 +750,14 @@ async def run_housekeeping_periodically(interval_seconds: int = 60) -> None:
             async with async_session_factory() as session:
                 expired = await expire_overdue(session)
                 purged = await attachments_service.purge_expired(session)
+                from app.services.threads import close_stale_threads
+
+                closed = await close_stale_threads(session)
                 await session.commit()
-            if expired or purged:
-                logger.info("chips housekeeping: expired=%s purged=%s", expired, purged)
+            if expired or purged or closed:
+                logger.info(
+                    "housekeeping: expired=%s purged=%s threads_closed=%s", expired, purged, closed
+                )
         except Exception:  # noqa: BLE001 — упавший проход не должен убивать цикл
             logger.exception("chips housekeeping failed")
         await asyncio.sleep(interval_seconds)

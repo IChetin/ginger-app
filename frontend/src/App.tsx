@@ -27,6 +27,8 @@ import { AdminPlayersPage } from "@/pages/admin/AdminPlayersPage";
 import { AdminRequisitesPage } from "@/pages/admin/AdminRequisitesPage";
 import { AdminSeriesDetailPage } from "@/pages/admin/AdminSeriesDetailPage";
 import { AdminSeriesPage } from "@/pages/admin/AdminSeriesPage";
+import { AdminThreadPage } from "@/pages/admin/AdminThreadPage";
+import { AdminThreadsPage } from "@/pages/admin/AdminThreadsPage";
 import { AdminUsersPage } from "@/pages/admin/AdminUsersPage";
 import { AdminVenuesPage } from "@/pages/admin/AdminVenuesPage";
 import { CalendarPage } from "@/pages/CalendarPage";
@@ -108,6 +110,8 @@ export function AppRoutes() {
           <Route path="players" element={<AdminPlayersPage />} />
           <Route path="invites" element={<AdminInvitesPage />} />
           <Route path="requisites" element={<AdminRequisitesPage />} />
+          <Route path="threads" element={<AdminThreadsPage />} />
+          <Route path="threads/:threadId" element={<AdminThreadPage />} />
           <Route path="import" element={<ImportListPage />} />
           <Route path="import/bulk" element={<BulkImportPage />} />
           <Route path="import/bulk/:jobId" element={<BulkImportReviewPage />} />

@@ -54,6 +54,8 @@ EXPECTED_TABLES = {
     "series",
     "sessions",
     "slug_redirects",
+    "thread_messages",
+    "threads",
     "tournament_reminders",
     "tournament_templates",
     "tournaments",

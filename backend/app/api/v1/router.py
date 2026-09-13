@@ -12,6 +12,7 @@ from app.api.v1 import (
     push,
     schedule,
     search,
+    threads,
 )
 from app.api.v1.admin.router import router as admin_router
 
@@ -26,5 +27,6 @@ api_router.include_router(push.router)
 api_router.include_router(currencies.router)
 api_router.include_router(clubs.router)
 api_router.include_router(chips.router)
+api_router.include_router(threads.router)
 api_router.include_router(media.router)
 api_router.include_router(admin_router)

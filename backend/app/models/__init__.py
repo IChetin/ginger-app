@@ -13,6 +13,7 @@ from app.models.notifications import Bookmark, NotificationQueue
 from app.models.players import Invite, Player, PlayerAccount
 from app.models.references import Country, Currency, FxRate, Organizer, Venue
 from app.models.schedule import BlindLevel, ChangeLog, Event, Flight, Series, SlugRedirect
+from app.models.threads import Thread, ThreadMessage
 from app.models.tournaments import Tournament, TournamentReminder, TournamentTemplate
 
 __all__ = [
@@ -44,6 +45,8 @@ __all__ = [
     "Series",
     "Session",
     "SlugRedirect",
+    "Thread",
+    "ThreadMessage",
     "Tournament",
     "TournamentReminder",
     "TournamentTemplate",

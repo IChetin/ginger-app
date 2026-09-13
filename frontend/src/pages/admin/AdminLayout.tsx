@@ -5,6 +5,7 @@ import type { UserRole } from "@/api/types/auth";
 import { useAdminDesktop } from "@/components/admin/useAdminDesktop";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { useAdminChipRequests, usePendingAccounts } from "@/features/admin/chips/hooks";
+import { useAdminThreads } from "@/features/admin/threads/hooks";
 import { isAdminUser, useAdminDashboard, useLogout, useMe } from "@/features/admin/hooks";
 import { cn } from "@/lib/utils";
 
@@ -59,6 +60,7 @@ function SidebarNav({ showUsers, onNavigate }: { showUsers: boolean; onNavigate?
   const isBulkImport = useLocation().pathname.startsWith("/admin/import/bulk");
   const openRequests = useAdminChipRequests("open").data?.length ?? 0;
   const pendingAccounts = usePendingAccounts().data?.length ?? 0;
+  const unreadThreads = (useAdminThreads("open").data ?? []).filter((t) => t.unread).length;
 
   return (
     <>
@@ -93,6 +95,17 @@ function SidebarNav({ showUsers, onNavigate }: { showUsers: boolean; onNavigate?
         {openRequests > 0 ? (
           <span className="bg-warn text-ink-ongold ml-auto flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[10px] font-extrabold">
             {openRequests}
+          </span>
+        ) : null}
+      </NavLink>
+      <NavLink to="/admin/threads" className={navClass} onClick={onNavigate}>
+        <NavIcon>
+          <path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-4 3.5V16H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" />
+        </NavIcon>
+        Диалоги
+        {unreadThreads > 0 ? (
+          <span className="bg-warn text-ink-ongold ml-auto flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[10px] font-extrabold">
+            {unreadThreads}
           </span>
         ) : null}
       </NavLink>

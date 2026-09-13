@@ -74,6 +74,8 @@ class NotificationType(str, Enum):
     REQUEST_REJECTED = "request_rejected"
     WITHDRAWAL_SENT = "withdrawal_sent"
     NEW_CHIP_REQUEST = "new_chip_request"
+    # Ginger APP: треды — менеджеру о новом сообщении игрока.
+    NEW_THREAD_MESSAGE = "new_thread_message"
 
 
 class ReminderKind(str, Enum):
@@ -81,6 +83,19 @@ class ReminderKind(str, Enum):
 
     START = "start"
     LATE_REG = "late_reg"
+
+
+class ThreadTopic(str, Enum):
+    QUESTION = "question"
+    HAND_REVIEW = "hand_review"
+    DATA_CHANGE = "data_change"
+    CHIP_REQUEST = "chip_request"
+
+
+class ThreadStatus(str, Enum):
+    OPEN = "open"
+    ANSWERED = "answered"
+    CLOSED = "closed"
 
 
 class ChangeType(str, Enum):
