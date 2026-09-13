@@ -168,13 +168,6 @@ async def test_tournaments_range_limits(user_client: AsyncClient) -> None:
     assert backwards.status_code == 422
 
 
-async def test_currencies_for_profile_exclude_usdt(user_client: AsyncClient) -> None:
-    response = await user_client.get("/api/v1/currencies")
-    codes = [item["code"] for item in response.json()]
-    assert "RUB" in codes
-    assert "USDT" not in codes
-
-
 async def test_running_tournament_shown_while_late_reg_open(
     user_client: AsyncClient, db_session: AsyncSession
 ) -> None:

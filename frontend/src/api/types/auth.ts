@@ -7,13 +7,9 @@ export interface UserMe {
   email: string;
   phone: string | null;
   nickname: string;
-  base_currency: string;
-  /** IANA timezone; null = detect from browser. */
-  timezone: string | null;
   /** Вид расписания турниров: карточки или плотная таблица (как лобби Покерка). */
   schedule_view: ScheduleView;
   role: UserRole;
-  default_reminder_offsets: number[];
   email_verified: boolean;
   has_password: boolean;
   created_at: string;
@@ -68,13 +64,7 @@ export interface ChangePasswordPayload {
   new_password: string;
 }
 
-export type BaseCurrencyCode = "RUB" | "USD" | "EUR" | "BYN";
-
 export interface UpdateMePayload {
   nickname?: string;
-  base_currency?: BaseCurrencyCode;
-  /** IANA string, or null to reset to browser auto-detect. */
-  timezone?: string | null;
-  default_reminder_offsets?: number[];
   schedule_view?: ScheduleView;
 }

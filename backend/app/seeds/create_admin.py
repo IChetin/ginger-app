@@ -33,7 +33,6 @@ async def create_admin(email: str, nickname: str) -> str:
                     email=normalized,
                     nickname=nickname,
                     role=UserRole.ADMIN,
-                    base_currency="RUB",
                     email_verified_at=datetime.now(UTC),
                 )
             )

@@ -23,35 +23,12 @@ class UserRole(str, Enum):
     ADMIN = "admin"
 
 
-class SeriesStatus(str, Enum):
-    ANNOUNCED = "announced"
-    SCHEDULE_PUBLISHED = "schedule_published"
-    RUNNING = "running"
-    FINISHED = "finished"
-    CANCELLED = "cancelled"
-
-
-class EventStatus(str, Enum):
-    SCHEDULED = "scheduled"
-    CHANGED = "changed"
-    CANCELLED = "cancelled"
-
-
 class GameType(str, Enum):
     NLH = "nlh"
     PLO = "plo"
     PLO5 = "plo5"
     MIXED = "mixed"
     OTHER = "other"
-
-
-class EntryType(str, Enum):
-    LIVE_MTT = "live_mtt"
-
-
-class BookmarkTarget(str, Enum):
-    SERIES = "series"
-    FLIGHT = "flight"
 
 
 class NotificationStatus(str, Enum):
@@ -62,12 +39,6 @@ class NotificationStatus(str, Enum):
 
 class NotificationType(str, Enum):
     REMINDER = "reminder"
-    SCHEDULE_PUBLISHED = "schedule_published"
-    TIME_CHANGED = "time_changed"
-    EVENT_CANCELLED = "event_cancelled"
-    GUARANTEE_CHANGED = "guarantee_changed"
-    SERIES_STARTING = "series_starting"
-    SERIES_CANCELLED = "series_cancelled"
     # Ginger APP: заявки на фишки (пушим только итог — ТЗ §4.2а).
     CHIPS_ISSUED = "chips_issued"
     REQUISITES_READY = "requisites_ready"
@@ -96,33 +67,6 @@ class ThreadStatus(str, Enum):
     OPEN = "open"
     ANSWERED = "answered"
     CLOSED = "closed"
-
-
-class ChangeType(str, Enum):
-    CREATED = "created"
-    UPDATED = "updated"
-    CANCELLED = "cancelled"
-    SCHEDULE_PUBLISHED = "schedule_published"
-
-
-class ImportStatus(str, Enum):
-    UPLOADED = "uploaded"
-    PARSING = "parsing"
-    REVIEW = "review"
-    PUBLISHED = "published"
-    FAILED = "failed"
-
-
-class ImportKind(str, Enum):
-    SCHEDULE = "schedule"
-    STRUCTURES = "structures"
-    BULK_XLSX = "bulk_xlsx"
-
-
-class ParsePath(str, Enum):
-    CODE = "code"
-    AI = "ai"
-    MIXED = "mixed"
 
 
 class AuthTokenPurpose(str, Enum):

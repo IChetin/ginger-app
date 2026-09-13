@@ -65,7 +65,6 @@ describe("guestSafePath", () => {
     expect(guestSafePath("/admin/series")).toBe("/");
   });
 
-
   it("does not confuse prefixes with auth-only routes", () => {
     expect(guestSafePath("/profiles")).toBe("/profiles");
     expect(guestSafePath("/administration")).toBe("/administration");

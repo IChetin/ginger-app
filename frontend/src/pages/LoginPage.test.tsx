@@ -5,16 +5,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/api/client";
 import type { UserMe } from "@/api/types/auth";
 import { AppRoutes } from "@/App";
-import { clearGuestBookmarks, putGuestBookmark } from "@/features/bookmarks/lib/guestBookmarksIdb";
 import { renderWithProviders } from "@/test/render";
 
 const requestAuthCode = vi.fn();
 const verifyAuthCode = vi.fn();
 const loginWithPassword = vi.fn();
 const fetchCurrentUser = vi.fn();
-const migrateBookmarks = vi.fn();
-const fetchScheduleFilters = vi.fn();
-const fetchSeriesList = vi.fn();
 const setPassword = vi.fn();
 
 vi.mock("@/api/client", async () => {
@@ -26,9 +22,6 @@ vi.mock("@/api/client", async () => {
     loginWithPassword: (...args: unknown[]) => loginWithPassword(...args),
     setPassword: (...args: unknown[]) => setPassword(...args),
     fetchCurrentUser: (...args: unknown[]) => fetchCurrentUser(...args),
-    migrateBookmarks: (...args: unknown[]) => migrateBookmarks(...args),
-    fetchScheduleFilters: (...args: unknown[]) => fetchScheduleFilters(...args),
-    fetchSeriesList: (...args: unknown[]) => fetchSeriesList(...args),
   };
 });
 
@@ -37,11 +30,8 @@ const userFixture: UserMe = {
   email: "player@example.com",
   phone: null,
   nickname: "player",
-  base_currency: "RUB",
-  timezone: null,
   schedule_view: "cards",
   role: "user",
-  default_reminder_offsets: [1440, 120],
   email_verified: true,
   has_password: false,
   created_at: "2026-01-01T00:00:00Z",
@@ -60,22 +50,11 @@ async function fillCredentials(
 
 describe("LoginPage", () => {
   beforeEach(async () => {
-    await clearGuestBookmarks();
     requestAuthCode.mockReset();
     verifyAuthCode.mockReset();
     loginWithPassword.mockReset();
     fetchCurrentUser.mockReset();
-    migrateBookmarks.mockReset();
     setPassword.mockReset();
-    fetchScheduleFilters.mockResolvedValue({
-      countries: [],
-      zones: [],
-      organizers: [],
-      statuses: [],
-      game_types: [],
-      tags: [],
-    });
-    fetchSeriesList.mockResolvedValue({ items: [], total: 0, limit: 100, offset: 0 });
     fetchCurrentUser.mockRejectedValue(new ApiError(401, "unauthorized", "Unauthorized"));
     requestAuthCode.mockResolvedValue({
       ok: true,
@@ -84,7 +63,6 @@ describe("LoginPage", () => {
     });
     verifyAuthCode.mockResolvedValue(userFixture);
     loginWithPassword.mockResolvedValue(userWithPassword);
-    migrateBookmarks.mockResolvedValue({ created: 0, skipped: 0, items: [] });
   });
 
   it("shows email and password on the login screen", async () => {
@@ -130,7 +108,7 @@ describe("LoginPage", () => {
     const user = userEvent.setup();
     renderWithProviders(<AppRoutes />, {
       routerProps: {
-        initialEntries: [{ pathname: "/login", state: { returnTo: "/events/event-1" } }],
+        initialEntries: [{ pathname: "/login", state: { returnTo: "/tournaments" } }],
       },
     });
     await user.type(await screen.findByLabelText("Email"), "player@example.com");
@@ -221,40 +199,6 @@ describe("LoginPage", () => {
       expect(verifyAuthCode).toHaveBeenCalled();
     });
     expect(await screen.findByTestId("profile-page")).toBeInTheDocument();
-  });
-
-  it("migrates guest bookmarks after verify", async () => {
-    await putGuestBookmark({
-      target_type: "series",
-      target_id: "series-1",
-      reminder_offsets: [],
-      created_at: "2026-01-01T00:00:00.000Z",
-    });
-    migrateBookmarks.mockResolvedValue({
-      created: 1,
-      skipped: 0,
-      items: [
-        {
-          id: "b1",
-          target_type: "series",
-          target_id: "series-1",
-          reminder_offsets: [],
-          created_at: "2026-01-01T00:00:00Z",
-        },
-      ],
-    });
-
-    const user = userEvent.setup();
-    verifyAuthCode.mockResolvedValue(userWithPassword);
-    renderWithProviders(<AppRoutes />, { route: "/login" });
-    await user.type(await screen.findByLabelText("Email"), "player@example.com");
-    await user.click(screen.getByRole("button", { name: "Войти по коду из письма" }));
-    await user.click(await screen.findByLabelText("Цифра 1"));
-    await user.paste("123456");
-
-    await waitFor(() => {
-      expect(migrateBookmarks).toHaveBeenCalled();
-    });
   });
 
   it("renders privacy stub", async () => {

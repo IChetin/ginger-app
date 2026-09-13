@@ -20,10 +20,6 @@ vi.mock("@/api/client", async () => {
     fetchCurrentUser: (...args: unknown[]) => fetchCurrentUser(...args),
     updateCurrentUser: (...args: unknown[]) => updateCurrentUser(...args),
     logoutAuth: (...args: unknown[]) => logoutAuth(...args),
-    fetchCurrencies: vi.fn().mockResolvedValue([
-      { code: "RUB", symbol: "₽" },
-      { code: "USD", symbol: "$" },
-    ]),
   };
 });
 
@@ -32,11 +28,8 @@ const userFixture: UserMe = {
   email: "player@example.com",
   phone: null,
   nickname: "player",
-  base_currency: "RUB",
-  timezone: null,
   schedule_view: "cards",
   role: "user",
-  default_reminder_offsets: [1440, 120],
   email_verified: true,
   has_password: false,
   created_at: "2026-01-01T00:00:00Z",
@@ -169,20 +162,6 @@ describe("ProfilePage", () => {
     release({ ...userFixture, nickname: "pro" });
   });
 
-  it("saves base currency change", async () => {
-    const user = userEvent.setup();
-    updateCurrentUser.mockResolvedValue({ ...userFixture, base_currency: "USD" });
-    renderWithProviders(<ProfilePage />);
-
-    await screen.findByText("player");
-    await user.click(screen.getByRole("button", { name: /Базовая валюта/ }));
-    await user.click(await screen.findByRole("button", { name: /\$ USD/ }));
-
-    await waitFor(() => {
-      expect(updateCurrentUser).toHaveBeenCalledWith({ base_currency: "USD" });
-    });
-  });
-
   it("clears private cache on confirmed logout", async () => {
     const user = userEvent.setup();
     const { queryClient } = renderWithProviders(<ProfilePage />);
@@ -217,7 +196,6 @@ describe("ProfilePage", () => {
     resetThemeStateForTests();
     document.documentElement.removeAttribute("data-theme");
   });
-
 
   // BUG-5: the denial toast always talked about Safari settings.
   it("explains a denied permission in the words of the current browser", async () => {

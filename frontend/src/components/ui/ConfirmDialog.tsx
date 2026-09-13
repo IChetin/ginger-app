@@ -14,7 +14,7 @@ import { createPortal } from "react-dom";
 import { Drawer } from "@base-ui/react/drawer";
 import { AlertTriangle, CircleHelp } from "lucide-react";
 
-import { useIsDesktop } from "@/components/filters/useIsDesktop";
+import { useIsDesktop } from "@/hooks/useIsDesktop";
 import { cn } from "@/lib/utils";
 
 export type ConfirmVariant = "danger" | "default";
@@ -279,12 +279,7 @@ function DialogShell({
   );
 
   const footer = (
-    <div
-      className={cn(
-        "mt-5 gap-2.5",
-        isDesktop ? "flex justify-end" : "flex flex-col",
-      )}
-    >
+    <div className={cn("mt-5 gap-2.5", isDesktop ? "flex justify-end" : "flex flex-col")}>
       {isDesktop ? (
         <>
           {buttons.cancel}
@@ -351,8 +346,15 @@ function DialogShell({
             aria-labelledby={titleId}
             aria-describedby={descriptionId}
             initialFocus={(openType) => {
-              if (openType === "keyboard" || openType === "mouse" || openType === "touch" || openType === "pen") {
-                const root = document.querySelector<HTMLElement>('[data-testid="confirm-dialog-mobile"]');
+              if (
+                openType === "keyboard" ||
+                openType === "mouse" ||
+                openType === "touch" ||
+                openType === "pen"
+              ) {
+                const root = document.querySelector<HTMLElement>(
+                  '[data-testid="confirm-dialog-mobile"]',
+                );
                 return (
                   root?.querySelector<HTMLElement>("[data-confirm-input]") ??
                   root?.querySelector<HTMLElement>("[data-confirm-cancel]") ??
@@ -379,13 +381,7 @@ function DialogShell({
   );
 }
 
-function ConfirmView({
-  request,
-  onSettled,
-}: {
-  request: ConfirmRequest;
-  onSettled: () => void;
-}) {
+function ConfirmView({ request, onSettled }: { request: ConfirmRequest; onSettled: () => void }) {
   const { options, resolve, reject } = request;
   const [loading, setLoading] = useState(false);
   const titleId = useId();
@@ -463,13 +459,7 @@ function ConfirmView({
   );
 }
 
-function PromptView({
-  request,
-  onSettled,
-}: {
-  request: PromptRequest;
-  onSettled: () => void;
-}) {
+function PromptView({ request, onSettled }: { request: PromptRequest; onSettled: () => void }) {
   const { options, resolve } = request;
   const [value, setValue] = useState(options.defaultValue ?? "");
   const titleId = useId();

@@ -1,6 +1,6 @@
 import { Outlet } from "react-router-dom";
 
-import { DetailSkeleton } from "@/features/schedule/components/QueryState";
+import { DetailSkeleton } from "@/components/ui/DetailSkeleton";
 import { isStaffUser, useMe } from "@/features/auth/hooks";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 

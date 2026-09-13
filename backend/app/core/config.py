@@ -17,7 +17,6 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://day2:day2@localhost:5432/day2"
     test_database_url: str = "postgresql+asyncpg://day2:day2@localhost:5433/day2_test"
     database_echo: bool = False
-    seed_demo_data: bool = False
     cors_origins: str = "http://localhost:5173,http://localhost"
 
     # OTP / session
@@ -48,9 +47,6 @@ class Settings(BaseSettings):
     register_token_ttl_seconds: int = 1800
     auth_token_ip_hourly_limit: int = 20
     frontend_base_url: str = "http://localhost:5173"
-    # Internal URL to fetch SPA index.html when serving canonical /series|/events via Caddy.
-    # Empty → minimal HTML stub (tests / local API-only).
-    spa_internal_url: str = ""
 
     # Email adapter: mock (dev/test) | smtp
     email_provider: str = "mock"
@@ -73,19 +69,6 @@ class Settings(BaseSettings):
     vapid_public_key: str = ""
     vapid_private_key: str = ""
     vapid_subject: str = "https://lisa52.com"
-
-    # Admin change-notification preview tokens (HMAC).
-    preview_hmac_secret: str = Field(default="dev-preview-hmac-secret-change-me")
-    preview_token_ttl_seconds: int = 600
-
-    # Organizer logo uploads (admin).
-    logo_max_file_bytes: int = Field(default=1 * 1024 * 1024, ge=1)
-    logo_min_dimension: int = Field(default=120, ge=1)
-
-    # Series schedule PDF export.
-    pdf_cache_dir: str = "/tmp/day2-pdf-cache"
-    pdf_generation_timeout_seconds: float = Field(default=15.0, gt=0)
-    pdf_rate_limit_per_minute: int = Field(default=10, ge=1)
 
     # Ginger APP: сетки клубов разворачиваются в старты на горизонт вперёд; фоновая задача
     # бэкенда докручивает горизонт с этим интервалом. 0 — выключено.
@@ -122,11 +105,8 @@ class Settings(BaseSettings):
     # Проход «сгорание заявок + удаление просроченных скриншотов». 0 — выключено.
     chips_housekeeping_interval_seconds: int = Field(default=60, ge=0)
 
-    # Schedule import pipeline.
+    # Размер файла сетки клуба (импорт в админке и автозагрузка).
     import_max_file_bytes: int = Field(default=20 * 1024 * 1024, ge=1)
-    import_confidence_threshold: float = Field(default=0.8, ge=0.0, le=1.0)
-    # mock | unconfigured (real Anthropic provider TBD)
-    import_ai_provider: str = "mock"
 
     # Playing-card suit colors for new users (classic | four_color).
 
@@ -170,10 +150,8 @@ class Settings(BaseSettings):
         localhost в CORS и пароль базы из примера — следы dev-конфига.
         """
         problems: list[str] = []
-        for name in ("otp_hmac_secret", "preview_hmac_secret"):
-            value: str = getattr(self, name)
-            if "change-me" in value or len(value) < 32:
-                problems.append(f"{name.upper()}: нужен случайный секрет от 32 символов")
+        if "change-me" in self.otp_hmac_secret or len(self.otp_hmac_secret) < 32:
+            problems.append("OTP_HMAC_SECRET: нужен случайный секрет от 32 символов")
         if not self.session_cookie_secure:
             problems.append("SESSION_COOKIE_SECURE=true")
         if any("localhost" in origin for origin in self.cors_origins_list):

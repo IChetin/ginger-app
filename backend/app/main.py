@@ -11,7 +11,6 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
-from app.api.spa_redirects import router as spa_redirects_router
 from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.database import engine
@@ -24,22 +23,6 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     boot_settings = get_settings()
     if boot_settings.is_production and (problems := boot_settings.production_problems()):
         raise RuntimeError("Небезопасные настройки production: " + "; ".join(problems))
-
-    from app.core.database import async_session_factory
-    from app.services.parser_profiles import (
-        apply_default_organizer_bindings,
-        sync_parser_profiles,
-    )
-
-    try:
-        async with async_session_factory() as session:
-            await sync_parser_profiles(session)
-            await apply_default_organizer_bindings(session)
-            await session.commit()
-    except Exception:  # noqa: BLE001 — boot must not die if DB not ready yet
-        import logging
-
-        logging.getLogger(__name__).exception("parser_profiles sync on startup failed")
 
     rollforward: asyncio.Task[None] | None = None
     interval = get_settings().schedule_rollforward_interval_seconds
@@ -192,7 +175,6 @@ def create_app() -> FastAPI:
         return _error_response(exc.status_code, code, message)
 
     app.include_router(api_router, prefix=settings.api_v1_prefix)
-    app.include_router(spa_redirects_router)
     return app
 
 

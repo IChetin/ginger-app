@@ -3,7 +3,7 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { ApiError } from "@/api/client";
 import { useMe } from "@/api/auth";
 import { buildLoginLocation } from "@/features/auth/lib/redirect";
-import { DetailSkeleton } from "@/features/schedule/components/QueryState";
+import { DetailSkeleton } from "@/components/ui/DetailSkeleton";
 
 export function AuthGuard() {
   const location = useLocation();

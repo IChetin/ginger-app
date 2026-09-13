@@ -89,8 +89,8 @@ export function PlayerHomePage() {
       {me ? (
         <p className="text-ink-3 mt-0.5 text-[12px]">
           {me.cashdesk_open
-            ? `Касса открыта · ${me.cashdesk_hours} МСК`
-            : `Касса закрыта · ${me.cashdesk_hours} МСК — заявка встанет в очередь`}
+            ? `Касса открыта · ${me.cashdesk_hours}`
+            : `Касса закрыта · ${me.cashdesk_hours} — заявка встанет в очередь`}
         </p>
       ) : null}
 

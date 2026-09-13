@@ -11,7 +11,6 @@ const registerStart = vi.fn();
 const registerVerify = vi.fn();
 const registerComplete = vi.fn();
 const fetchCurrentUser = vi.fn();
-const migrateBookmarks = vi.fn();
 
 vi.mock("@/api/client", async () => {
   const actual = await vi.importActual<typeof import("@/api/client")>("@/api/client");
@@ -21,7 +20,6 @@ vi.mock("@/api/client", async () => {
     registerVerify: (...args: unknown[]) => registerVerify(...args),
     registerComplete: (...args: unknown[]) => registerComplete(...args),
     fetchCurrentUser: (...args: unknown[]) => fetchCurrentUser(...args),
-    migrateBookmarks: (...args: unknown[]) => migrateBookmarks(...args),
   };
 });
 
@@ -30,11 +28,8 @@ const userFixture: UserMe = {
   email: "new@example.com",
   phone: null,
   nickname: "newbie",
-  base_currency: "RUB",
-  timezone: null,
   schedule_view: "cards",
   role: "user",
-  default_reminder_offsets: [1440, 120],
   email_verified: true,
   has_password: true,
   created_at: "2026-01-01T00:00:00Z",
@@ -46,7 +41,6 @@ describe("RegisterPage", () => {
     registerVerify.mockReset();
     registerComplete.mockReset();
     fetchCurrentUser.mockReset();
-    migrateBookmarks.mockReset();
     fetchCurrentUser.mockRejectedValue(new ApiError(401, "unauthorized", "Unauthorized"));
     registerStart.mockResolvedValue({ ok: true, expires_in_seconds: 300, retry_after: 60 });
     registerVerify.mockResolvedValue({
@@ -54,7 +48,6 @@ describe("RegisterPage", () => {
       expires_in_seconds: 1800,
     });
     registerComplete.mockResolvedValue(userFixture);
-    migrateBookmarks.mockResolvedValue({ created: 0, skipped: 0, items: [] });
   });
 
   it("blocks existing email without sending further", async () => {

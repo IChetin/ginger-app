@@ -4,7 +4,11 @@ import { TEST_PASSWORD } from "./testData";
 
 const DEV_OTP = process.env.E2E_OTP_CODE ?? "123456";
 
-export async function loginWithOtp(page: Page, email: string, code: string = DEV_OTP): Promise<void> {
+export async function loginWithOtp(
+  page: Page,
+  email: string,
+  code: string = DEV_OTP,
+): Promise<void> {
   await page.goto("/login");
   await page.locator("#email").fill(email);
   await page.getByRole("button", { name: "Продолжить" }).click();

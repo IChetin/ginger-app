@@ -19,7 +19,7 @@ from app.core.database import get_db
 from app.main import app
 from app.models.auth import User
 from app.seeds import seed_reference_data
-from app.seeds.data import ORGANIZERS, VENUES
+from app.seeds.data import ORGANIZERS
 from app.seeds.dev_users import seed_dev_users
 
 
@@ -98,10 +98,6 @@ async def login_as(
 
 def seed_organizer_id(index: int = 0) -> UUID:
     return ORGANIZERS[index]["id"]
-
-
-def seed_venue_id(index: int = 0) -> UUID:
-    return VENUES[index]["id"]
 
 
 @pytest_asyncio.fixture

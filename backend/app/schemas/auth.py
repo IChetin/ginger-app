@@ -7,9 +7,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, mo
 from app.core.config import get_settings
 from app.core.nickname import validate_nickname
 from app.core.password_policy import is_common_password
-from app.core.reminders import normalize_reminder_offsets
 from app.models.enums import UserRole
-from app.utils.timezone import validate_iana_timezone
 
 
 def _password_bounds() -> tuple[int, int]:
@@ -118,10 +116,6 @@ class GenericAuthMessage(BaseModel):
 
 class UpdateMeBody(BaseModel):
     nickname: str | None = Field(default=None, min_length=2, max_length=32)
-    base_currency: str | None = Field(default=None, min_length=3, max_length=3)
-    # None clears to auto (browser); omit field to leave unchanged.
-    timezone: str | None = None
-    default_reminder_offsets: list[int] | None = None
     schedule_view: Literal["cards", "table"] | None = None
 
     @field_validator("nickname")
@@ -131,30 +125,6 @@ class UpdateMeBody(BaseModel):
             return None
         return validate_nickname(value)
 
-    @field_validator("base_currency")
-    @classmethod
-    def validate_currency(cls, value: str | None) -> str | None:
-        if value is None:
-            return None
-        return value.strip().upper()
-
-    @field_validator("timezone")
-    @classmethod
-    def validate_timezone(cls, value: str | None) -> str | None:
-        if value is None:
-            return None
-        cleaned = value.strip()
-        if not cleaned:
-            return None
-        return validate_iana_timezone(cleaned)
-
-    @field_validator("default_reminder_offsets")
-    @classmethod
-    def validate_offsets(cls, value: list[int] | None) -> list[int] | None:
-        if value is None:
-            return None
-        return normalize_reminder_offsets(value, allow_empty=False)
-
 
 class UserMe(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -163,11 +133,8 @@ class UserMe(BaseModel):
     email: str
     phone: str | None
     nickname: str
-    base_currency: str
-    timezone: str | None
     schedule_view: Literal["cards", "table"]
     role: UserRole
-    default_reminder_offsets: list[int]
     email_verified: bool
     has_password: bool
     created_at: datetime

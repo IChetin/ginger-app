@@ -52,7 +52,6 @@ async def seed_dev_users(session: AsyncSession) -> None:
         user.email = email
         user.nickname = nickname
         user.role = role
-        user.base_currency = "RUB"
         if user.email_verified_at is None:
             user.email_verified_at = datetime.now(UTC)
     await session.flush()

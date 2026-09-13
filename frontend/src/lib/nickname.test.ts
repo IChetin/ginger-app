@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  NICKNAME_DIGITS_MSG,
-  NICKNAME_LENGTH_MSG,
-  nicknameFieldSchema,
-} from "@/lib/nickname";
+import { NICKNAME_DIGITS_MSG, NICKNAME_LENGTH_MSG, nicknameFieldSchema } from "@/lib/nickname";
 
 // Keep in sync with backend/tests/test_nickname.py (parity cases).
 const VALID_NICKNAMES = [

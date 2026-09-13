@@ -41,7 +41,6 @@ from app.core.security import (
 from app.core.system_accounts import is_system_user_email, is_system_user_id
 from app.models.auth import AuthToken, OtpCode, Session, User
 from app.models.enums import AuthTokenPurpose, UserRole
-from app.models.references import Currency
 from app.schemas.auth import UpdateMeBody, UserMe
 from app.services import captcha as captcha_service
 from app.services import invites as invites_service
@@ -402,7 +401,6 @@ async def _create_user(
         nickname=nickname,
         password_hash=password_hash,
         role=role,
-        base_currency="RUB",
         email_verified_at=datetime.now(UTC),
     )
     session.add(user)
@@ -813,20 +811,6 @@ async def update_profile(
             raise ConflictError(NICKNAME_TAKEN_MSG)
         user.nickname = body.nickname
 
-    if body.base_currency is not None and body.base_currency != user.base_currency:
-        currency = await session.scalar(
-            select(Currency.code).where(Currency.code == body.base_currency)
-        )
-        if currency is None:
-            raise NotFoundError("Валюта не найдена")
-        user.base_currency = body.base_currency
-
-    if body.default_reminder_offsets is not None:
-        user.default_reminder_offsets = body.default_reminder_offsets
-
-    if "timezone" in body.model_fields_set:
-        user.timezone = body.timezone
-
     if body.schedule_view is not None:
         user.schedule_view = body.schedule_view
 
@@ -841,11 +825,8 @@ def user_to_me(user: User) -> UserMe:
         email=user.email,
         phone=user.phone,
         nickname=user.nickname,
-        base_currency=user.base_currency,
-        timezone=user.timezone,
         schedule_view="table" if user.schedule_view == "table" else "cards",
         role=user.role,
-        default_reminder_offsets=list(user.default_reminder_offsets),
         email_verified=user.email_verified_at is not None,
         has_password=user.password_hash is not None,
         created_at=user.created_at,

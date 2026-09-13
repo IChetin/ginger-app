@@ -1,16 +1,13 @@
-from datetime import UTC
 from decimal import Decimal
 
 import pytest
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
+from app.models import Base
 from app.models.clubs import Club
-from app.models.references import Country, Currency, Organizer, Venue
-from app.models.schedule import Flight
+from app.models.references import Currency, Organizer
 from app.seeds import seed_reference_data
-from tests.factories import FlightFactory, persist
 
 pytestmark = pytest.mark.integration
 
@@ -37,21 +34,18 @@ async def test_migration_created_tables_and_native_enums(db_session: AsyncSessio
         )
     )
 
-    # Сверено с базой после миграции 2a7c9e41b3d0. В исходнике Day2 стояли 19 и 14,
-    # что не совпадало с его же схемой (25 таблиц, 20 типов) — тест был устаревшим.
-    assert table_count == 34
-    assert enum_count == 25
+    # Сверено с базой после удаления модели Day2 (миграция c4e2f7a9b1d3).
+    assert table_count == len(Base.metadata.tables)
+    assert enum_count == 17
 
 
 async def test_reference_seeds_are_idempotent(db_session: AsyncSession) -> None:
     await seed_reference_data(db_session)
     await seed_reference_data(db_session)
 
-    assert await db_session.scalar(select(func.count()).select_from(Country)) == 3
     assert await db_session.scalar(select(func.count()).select_from(Currency)) == 5
-    # Организаторы Day2 (RPT, EAPT, APC, RPF, BPT) и союзы Ginger APP (NUTS, Black Sea, Poker21).
-    assert await db_session.scalar(select(func.count()).select_from(Organizer)) == 9
-    assert await db_session.scalar(select(func.count()).select_from(Venue)) == 4
+    # Союзы Ginger APP: NUTS, Black Sea, Poker21, ProSto.
+    assert await db_session.scalar(select(func.count()).select_from(Organizer)) == 4
     assert await db_session.scalar(select(func.count()).select_from(Club)) == 6
 
 
@@ -70,34 +64,3 @@ async def test_club_seed_does_not_resurrect_deleted_clubs(db_session: AsyncSessi
 
     await seed_reference_data(db_session)
     assert await db_session.scalar(select(func.count()).select_from(Club)) == 5
-
-
-async def test_schedule_factory_persists_decimal_and_aware_time(
-    db_session: AsyncSession,
-) -> None:
-    flight = await persist(db_session, FlightFactory())
-    flight_id = flight.id
-    db_session.expire_all()
-
-    stored = await db_session.scalar(
-        select(Flight).options(selectinload(Flight.event)).where(Flight.id == flight_id)
-    )
-
-    assert stored is not None
-    assert stored.start_at.tzinfo is not None
-    assert stored.start_at.utcoffset() == UTC.utcoffset(stored.start_at)
-    assert isinstance(stored.event.buyin, Decimal)
-    assert stored.label is None
-
-
-async def test_series_delete_cascades_to_event_and_flight(
-    db_session: AsyncSession,
-) -> None:
-    flight = await persist(db_session, FlightFactory())
-    await db_session.delete(flight.event.series)
-    await db_session.flush()
-
-    remaining = await db_session.scalar(
-        select(func.count()).select_from(Flight).where(Flight.id == flight.id)
-    )
-    assert remaining == 0

@@ -7,14 +7,12 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Index,
-    Integer,
     SmallInteger,
     String,
     Text,
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -25,10 +23,7 @@ from app.models.enums import (
 )
 
 if TYPE_CHECKING:
-    from app.models.imports import ImportJob
-    from app.models.notifications import Bookmark, NotificationQueue
-    from app.models.references import Currency
-    from app.models.schedule import ChangeLog
+    from app.models.notifications import NotificationQueue
 
 
 class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -44,15 +39,6 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     password_hash: Mapped[str | None] = mapped_column(Text)
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    base_currency: Mapped[str] = mapped_column(
-        ForeignKey("currencies.code"),
-        nullable=False,
-        server_default=text("'RUB'"),
-    )
-    timezone: Mapped[str | None] = mapped_column(
-        String(64),
-        comment="IANA timezone; NULL = detect from browser",
-    )
     # Ginger APP: вид расписания турниров — карточки или плотная таблица (как лобби Покерка).
     schedule_view: Mapped[str] = mapped_column(
         String(16),
@@ -64,15 +50,9 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         nullable=False,
         server_default=text("'user'"),
     )
-    default_reminder_offsets: Mapped[list[int]] = mapped_column(
-        ARRAY(Integer),
-        nullable=False,
-        server_default=text("'{1440,120}'::integer[]"),
-    )
 
     __table_args__ = (Index("uq_users_nickname_lower", func.lower(nickname), unique=True),)
 
-    currency: Mapped["Currency"] = relationship(back_populates="users")
     sessions: Mapped[list["Session"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
@@ -85,16 +65,10 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
-    bookmarks: Mapped[list["Bookmark"]] = relationship(
-        back_populates="user",
-        cascade="all, delete-orphan",
-    )
     notifications: Mapped[list["NotificationQueue"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
     )
-    changes: Mapped[list["ChangeLog"]] = relationship(back_populates="actor")
-    import_jobs: Mapped[list["ImportJob"]] = relationship(back_populates="uploader")
 
 
 class OtpCode(UUIDPrimaryKeyMixin, Base):

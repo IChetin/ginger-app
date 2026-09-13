@@ -22,12 +22,6 @@ class NotificationStatus(StrEnum):
 
 class NotificationType(StrEnum):
     REMINDER = "reminder"
-    SCHEDULE_PUBLISHED = "schedule_published"
-    TIME_CHANGED = "time_changed"
-    EVENT_CANCELLED = "event_cancelled"
-    GUARANTEE_CHANGED = "guarantee_changed"
-    SERIES_STARTING = "series_starting"
-    SERIES_CANCELLED = "series_cancelled"
     # Ginger APP: заявки на фишки (пушим только итог — ТЗ §4.2а).
     CHIPS_ISSUED = "chips_issued"
     REQUISITES_READY = "requisites_ready"
@@ -60,8 +54,6 @@ class NotificationQueue(Base):
         server_default=text("gen_random_uuid()"),
     )
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
-    bookmark_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
-    change_log_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     type: Mapped[NotificationType] = mapped_column(_notification_type, nullable=False)
     payload: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
     scheduled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
@@ -111,10 +103,3 @@ class FxRate(Base):
 
 
 
-class User(Base):
-    """Minimal projection for FX backfill selection."""
-
-    __tablename__ = "users"
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
-    base_currency: Mapped[str] = mapped_column(String(8), nullable=False)

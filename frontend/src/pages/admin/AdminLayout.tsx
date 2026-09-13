@@ -6,7 +6,7 @@ import { useAdminDesktop } from "@/components/admin/useAdminDesktop";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { useAdminChipRequests, usePendingAccounts } from "@/features/admin/chips/hooks";
 import { useAdminThreads } from "@/features/admin/threads/hooks";
-import { isAdminUser, useAdminDashboard, useLogout, useMe } from "@/features/admin/hooks";
+import { isAdminUser, useLogout, useMe } from "@/features/admin/hooks";
 import { cn } from "@/lib/utils";
 
 const ROLE_FOOTER: Record<UserRole, string> = {
@@ -55,9 +55,6 @@ function SidebarNav({ showUsers, onNavigate }: { showUsers: boolean; onNavigate?
   const logout = useLogout();
   const confirm = useConfirm();
   const navigate = useNavigate();
-  const dashboardQuery = useAdminDashboard();
-  const importsReview = dashboardQuery.data?.nav.imports_review_count ?? 0;
-  const isBulkImport = useLocation().pathname.startsWith("/admin/import/bulk");
   const openRequests = useAdminChipRequests("open").data?.length ?? 0;
   const pendingAccounts = usePendingAccounts().data?.length ?? 0;
   const unreadThreads = (useAdminThreads("open").data ?? []).filter((t) => t.unread).length;
@@ -155,43 +152,6 @@ function SidebarNav({ showUsers, onNavigate }: { showUsers: boolean; onNavigate?
         </NavIcon>
         Сетки клубов
       </NavLink>
-      <NavLink to="/admin/series" className={navClass} onClick={onNavigate}>
-        <NavIcon>
-          <rect x="4" y="5" width="16" height="15" rx="3" />
-          <path d="M8 3v4M16 3v4M4 10h16" />
-        </NavIcon>
-        Серии
-      </NavLink>
-      <NavLink
-        to="/admin/import"
-        className={({ isActive }) => navClass({ isActive: isActive && !isBulkImport })}
-        onClick={onNavigate}
-      >
-        <NavIcon>
-          <path d="M12 15V3M12 3 8 7M12 3l4 4" />
-          <path d="M5 15v4h14v-4" />
-        </NavIcon>
-        Импорт
-        {importsReview > 0 ? (
-          <span className="bg-warn text-ink-ongold ml-auto flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[10px] font-extrabold">
-            {importsReview}
-          </span>
-        ) : null}
-      </NavLink>
-      <NavLink to="/admin/import/bulk" className={navClass} onClick={onNavigate}>
-        <NavIcon>
-          <rect x="3" y="4" width="18" height="16" rx="2" />
-          <path d="M3 10h18M9 10v10" />
-        </NavIcon>
-        Массовая загрузка
-      </NavLink>
-      <NavLink to="/admin/venues" className={navClass} onClick={onNavigate}>
-        <NavIcon>
-          <path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z" />
-          <circle cx="12" cy="10" r="2.5" />
-        </NavIcon>
-        Площадки
-      </NavLink>
       <NavLink to="/admin/organizers" className={navClass} onClick={onNavigate}>
         <NavIcon>
           <circle cx="12" cy="12" r="9" />
@@ -199,33 +159,22 @@ function SidebarNav({ showUsers, onNavigate }: { showUsers: boolean; onNavigate?
         </NavIcon>
         Организаторы
       </NavLink>
-      <NavLink to="/admin/parsers" className={navClass} onClick={onNavigate}>
-        <NavIcon>
-          <path d="M4 7h16M4 12h10M4 17h14" />
-          <path d="M18 10v8M15 13l3 3 3-3" />
-        </NavIcon>
-        Парсеры
-      </NavLink>
 
-      <div className="text-ink-3 px-2 pt-3 pb-1.5 text-[10px] font-bold tracking-[0.1em] uppercase">
-        Управление
-      </div>
       {showUsers ? (
-        <NavLink to="/admin/users" className={navClass} onClick={onNavigate}>
-          <NavIcon>
-            <circle cx="9" cy="8" r="4" />
-            <path d="M2 21c1.2-3.5 4-5 7-5s5.8 1.5 7 5" />
-            <path d="M17 11h5M19.5 8.5v5" />
-          </NavIcon>
-          Пользователи
-        </NavLink>
+        <>
+          <div className="text-ink-3 px-2 pt-3 pb-1.5 text-[10px] font-bold tracking-[0.1em] uppercase">
+            Управление
+          </div>
+          <NavLink to="/admin/users" className={navClass} onClick={onNavigate}>
+            <NavIcon>
+              <circle cx="9" cy="8" r="4" />
+              <path d="M2 21c1.2-3.5 4-5 7-5s5.8 1.5 7 5" />
+              <path d="M17 11h5M19.5 8.5v5" />
+            </NavIcon>
+            Пользователи
+          </NavLink>
+        </>
       ) : null}
-      <NavLink to="/admin/change-log" className={navClass} onClick={onNavigate}>
-        <NavIcon>
-          <path d="M4 6h16M4 12h16M4 18h10" />
-        </NavIcon>
-        Журнал изменений
-      </NavLink>
 
       <div className="border-line mt-auto flex flex-col gap-1 border-t pt-2.5">
         <Link to="/" className={footNavClass} onClick={onNavigate}>
@@ -244,7 +193,7 @@ function SidebarNav({ showUsers, onNavigate }: { showUsers: boolean; onNavigate?
             void (async () => {
               const ok = await confirm({
                 title: "Выйти из аккаунта?",
-                description: "Закладки и результаты сохранятся — они привязаны к вашему email.",
+                description: "Данные аккаунта сохранятся — войти снова можно по email.",
                 confirmLabel: "Выйти",
                 cancelLabel: "Отмена",
                 variant: "danger",

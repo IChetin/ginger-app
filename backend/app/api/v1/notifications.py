@@ -22,7 +22,7 @@ router = APIRouter(prefix="/notifications", tags=["notifications"])
 async def list_notifications(
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
-    type: Annotated[Literal["reminders", "changes"] | None, Query()] = None,
+    type: Annotated[Literal["reminders"] | None, Query()] = None,
     unread_only: Annotated[bool, Query()] = False,
     limit: Annotated[int, Query(ge=1, le=50)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,

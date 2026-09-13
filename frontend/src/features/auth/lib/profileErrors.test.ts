@@ -2,11 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { ApiError } from "@/api/client";
 import { nicknameErrorMessage } from "@/features/auth/lib/profileErrors";
-import {
-  NICKNAME_DIGITS_MSG,
-  NICKNAME_LENGTH_MSG,
-  NICKNAME_TAKEN_MSG,
-} from "@/lib/nickname";
+import { NICKNAME_DIGITS_MSG, NICKNAME_LENGTH_MSG, NICKNAME_TAKEN_MSG } from "@/lib/nickname";
 
 // BUG-6: every failure looked like «Не удалось сохранить никнейм».
 describe("nicknameErrorMessage", () => {

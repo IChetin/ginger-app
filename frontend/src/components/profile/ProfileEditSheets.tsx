@@ -1,16 +1,11 @@
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import type { BaseCurrencyCode } from "@/api/types/auth";
-import type { CurrencyBrief } from "@/api/types/schedule";
 import { ProfileSheet } from "@/components/profile/ProfileSheet";
 import { nicknameErrorMessage } from "@/features/auth/lib/profileErrors";
 import { NICKNAME_HINT, nicknameFormSchema } from "@/lib/nickname";
-import { getBrowserTimezone } from "@/lib/time";
-import { formatUtcOffset, listIanaTimeZones } from "@/lib/timezoneOffset";
-import { cn } from "@/lib/utils";
 
 export function NicknameSheet({
   open,
@@ -145,147 +140,6 @@ export function EmailSheet({
         {error ? <p className="text-danger mt-1 text-[12px]">Не удалось сохранить email</p> : null}
         <SaveButton pending={isPending} />
       </form>
-    </ProfileSheet>
-  );
-}
-
-export function CurrencySheet({
-  open,
-  onOpenChange,
-  currencies,
-  selected,
-  isPending,
-  error,
-  onSave,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  currencies: CurrencyBrief[];
-  selected: string;
-  isPending: boolean;
-  error: Error | null;
-  onSave: (currency: BaseCurrencyCode) => Promise<void>;
-}) {
-  return (
-    <ProfileSheet
-      open={open}
-      onOpenChange={onOpenChange}
-      title="Базовая валюта"
-      description="В неё пересчитываются бай-ины и суммы."
-    >
-      <div className="border-line bg-surface-2 overflow-hidden rounded-md border">
-        {currencies.map((currency) => (
-          <button
-            key={currency.code}
-            type="button"
-            disabled={isPending}
-            className={cn(
-              "border-line flex w-full items-center border-t px-4 py-3.5 text-left first:border-t-0",
-              currency.code === selected && "bg-gold-soft text-gold",
-            )}
-            onClick={() => {
-              void onSave(currency.code as BaseCurrencyCode)
-                .then(() => onOpenChange(false))
-                .catch(() => undefined);
-            }}
-          >
-            <span className="w-8 text-[17px] font-bold">{currency.symbol}</span>
-            <span className="font-semibold">{currency.code}</span>
-            {currency.code === selected ? <span className="ml-auto">✓</span> : null}
-          </button>
-        ))}
-      </div>
-      {error ? <p className="text-danger mt-2 text-[12px]">Не удалось сменить валюту</p> : null}
-    </ProfileSheet>
-  );
-}
-
-export function TimezoneSheet({
-  open,
-  onOpenChange,
-  selected,
-  isPending,
-  error,
-  onSave,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  /** null = automatic (browser). */
-  selected: string | null;
-  isPending: boolean;
-  error: Error | null;
-  onSave: (timezone: string | null) => Promise<void>;
-}) {
-  const [query, setQuery] = useState("");
-  const browserZone = getBrowserTimezone();
-  const zones = useMemo(() => listIanaTimeZones(), []);
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return zones;
-    return zones.filter((zone) => zone.toLowerCase().includes(q));
-  }, [query, zones]);
-
-  return (
-    <ProfileSheet
-      open={open}
-      onOpenChange={onOpenChange}
-      title="Часовой пояс"
-      description="Для «времени у вас» на карточках и в закладках."
-    >
-      <div className="border-line bg-surface-2 mb-3 overflow-hidden rounded-md border">
-        <button
-          type="button"
-          disabled={isPending}
-          className={cn(
-            "flex w-full items-center px-4 py-3.5 text-left",
-            selected == null && "bg-gold-soft text-gold",
-          )}
-          onClick={() => {
-            void onSave(null)
-              .then(() => onOpenChange(false))
-              .catch(() => undefined);
-          }}
-        >
-          <span className="min-w-0 flex-1">
-            <span className="block font-semibold">Автоматически</span>
-            <span className="text-ink-3 mt-0.5 block text-[12px] font-normal">
-              сейчас: {browserZone}
-            </span>
-          </span>
-          {selected == null ? <span className="ml-2">✓</span> : null}
-        </button>
-      </div>
-      <input
-        type="search"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder="Поиск зоны…"
-        className="tracker-input"
-        aria-label="Поиск часового пояса"
-      />
-      <div className="border-line bg-surface-2 mt-3 max-h-[40vh] overflow-y-auto rounded-md border">
-        {filtered.map((zone) => (
-          <button
-            key={zone}
-            type="button"
-            disabled={isPending}
-            className={cn(
-              "border-line flex w-full items-center border-t px-4 py-3 text-left first:border-t-0",
-              selected === zone && "bg-gold-soft text-gold",
-            )}
-            onClick={() => {
-              void onSave(zone)
-                .then(() => onOpenChange(false))
-                .catch(() => undefined);
-            }}
-          >
-            <span className="min-w-0 flex-1 font-mono text-[13px] font-semibold">{zone}</span>
-            <span className="text-ink-3 ml-2 shrink-0 text-[12px]">{formatUtcOffset(zone)}</span>
-            {selected === zone ? <span className="ml-2">✓</span> : null}
-          </button>
-        ))}
-      </div>
-      {error ? <p className="text-danger mt-2 text-[12px]">Не удалось сменить пояс</p> : null}
     </ProfileSheet>
   );
 }

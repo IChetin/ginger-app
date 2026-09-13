@@ -101,7 +101,9 @@ describe("unsubscribeFromPushNotifications", () => {
 
   it("clears a local subscription when the server row is already gone", async () => {
     const { localUnsubscribe, subscription } = stubLocalSubscription();
-    unsubscribePush.mockRejectedValue(new ApiError(404, "not_found", "Push subscription not found"));
+    unsubscribePush.mockRejectedValue(
+      new ApiError(404, "not_found", "Push subscription not found"),
+    );
 
     await unsubscribeFromPushNotifications();
 

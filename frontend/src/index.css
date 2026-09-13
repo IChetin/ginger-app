@@ -357,19 +357,6 @@ html.day2-layout-wide [data-mobile-nav] {
   max-width: none !important;
 }
 
-html.day2-viewport-lock,
-html.day2-viewport-lock body {
-  height: 100%;
-  overflow: hidden;
-}
-
-html.day2-viewport-lock [data-mobile-shell-outer],
-html.day2-viewport-lock [data-mobile-shell] {
-  min-height: 0;
-  height: 100%;
-  overflow: hidden;
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -394,10 +381,14 @@ html.day2-viewport-lock [data-mobile-shell] {
 @keyframes seatpulse {
   0%,
   100% {
-    box-shadow: 0 0 0 3px rgba(217, 179, 106, 0.25), 0 0 14px rgba(217, 179, 106, 0.3);
+    box-shadow:
+      0 0 0 3px rgba(217, 179, 106, 0.25),
+      0 0 14px rgba(217, 179, 106, 0.3);
   }
   50% {
-    box-shadow: 0 0 0 5px rgba(217, 179, 106, 0.4), 0 0 18px rgba(217, 179, 106, 0.45);
+    box-shadow:
+      0 0 0 5px rgba(217, 179, 106, 0.4),
+      0 0 18px rgba(217, 179, 106, 0.45);
   }
 }
 

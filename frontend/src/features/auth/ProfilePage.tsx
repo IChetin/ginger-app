@@ -1,16 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import type { BaseCurrencyCode } from "@/api/types/auth";
-import { IntervalSheet } from "@/components/bookmarks/IntervalSheet";
 import { InstallBanner } from "@/components/profile/InstallBanner";
 import { PlayerProfileSection } from "@/features/chips/components/PlayerProfileSection";
 import { PasswordSheet } from "@/components/profile/PasswordSheet";
-import {
-  CurrencySheet,
-  NicknameSheet,
-  TimezoneSheet,
-} from "@/components/profile/ProfileEditSheets";
+import { NicknameSheet } from "@/components/profile/ProfileEditSheets";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ScheduleViewSheet } from "@/components/profile/ScheduleViewSheet";
 import { SCHEDULE_VIEW_LABELS } from "@/features/tournaments/lib/scheduleView";
@@ -19,8 +13,6 @@ import { ThemeSheet } from "@/components/profile/ThemeSheet";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { useTheme } from "@/hooks/useTheme";
 import { THEME_LABELS } from "@/lib/theme";
-import { getBrowserTimezone } from "@/lib/time";
-import { formatReminderOffsetsPhrase } from "@/features/bookmarks/lib/reminderPresets";
 import {
   isStaffUser,
   useChangePassword,
@@ -31,16 +23,15 @@ import {
 } from "@/features/auth/hooks";
 import { usePushSubscription, useSubscribePush, useUnsubscribePush } from "@/features/push/hooks";
 import { pushErrorMessage } from "@/features/push/lib/pushErrorMessage";
-import { useCurrencies } from "@/features/auth/hooks";
 import packageJson from "../../../package.json";
 
-const SUPPORT_URL = import.meta.env.VITE_TELEGRAM_SUPPORT_URL || "https://t.me/day2_support";
+/** Ссылка на поддержку в Telegram; без переменной окружения пункт не показывается. */
+const SUPPORT_URL = import.meta.env.VITE_TELEGRAM_SUPPORT_URL || null;
 
 export function ProfilePage() {
   const navigate = useNavigate();
   const confirm = useConfirm();
   const { data: user } = useMe();
-  const currencies = useCurrencies();
   const updateProfile = useUpdateProfile();
   const setPassword = useSetPassword();
   const changePassword = useChangePassword();
@@ -50,9 +41,6 @@ export function ProfilePage() {
   const unsubscribePush = useUnsubscribePush();
   const theme = useTheme();
   const [nicknameOpen, setNicknameOpen] = useState(false);
-  const [offsetsOpen, setOffsetsOpen] = useState(false);
-  const [currencyOpen, setCurrencyOpen] = useState(false);
-  const [timezoneOpen, setTimezoneOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
   const [scheduleViewOpen, setScheduleViewOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
@@ -62,9 +50,7 @@ export function ProfilePage() {
     return null;
   }
 
-  const currency = currencies.data?.find((item) => item.code === user.base_currency);
   const pushPending = subscribePush.isPending || unsubscribePush.isPending;
-  const timezoneLabel = user.timezone ?? `Авто · ${getBrowserTimezone()}`;
 
   const showToast = (message: string) => {
     setToast(message);
@@ -90,27 +76,12 @@ export function ProfilePage() {
               }
             : null
         }
-        offsetsLabel={formatReminderOffsetsPhrase(user.default_reminder_offsets)}
-        currencyLabel={`${currency?.symbol ?? ""} ${user.base_currency}`.trim()}
-        timezoneLabel={timezoneLabel}
         themeLabel={THEME_LABELS[theme.choice]}
         scheduleViewLabel={SCHEDULE_VIEW_LABELS[user.schedule_view]}
         pushEnabled={Boolean(pushSubscription.data)}
         pushPending={pushPending}
         hasPassword={user.has_password}
         supportUrl={SUPPORT_URL}
-        onOffsets={() => {
-          updateProfile.reset();
-          setOffsetsOpen(true);
-        }}
-        onCurrency={() => {
-          updateProfile.reset();
-          setCurrencyOpen(true);
-        }}
-        onTimezone={() => {
-          updateProfile.reset();
-          setTimezoneOpen(true);
-        }}
         onTheme={() => setThemeOpen(true)}
         onScheduleView={() => setScheduleViewOpen(true)}
         onPassword={() => {
@@ -145,7 +116,7 @@ export function ProfilePage() {
           void (async () => {
             const ok = await confirm({
               title: "Выйти из аккаунта?",
-              description: "Закладки и результаты сохранятся — они привязаны к вашему email.",
+              description: "Данные аккаунта сохранятся — войти снова можно по email.",
               confirmLabel: "Выйти",
               cancelLabel: "Отмена",
               variant: "danger",
@@ -169,40 +140,6 @@ export function ProfilePage() {
         isPending={updateProfile.isPending}
         error={updateProfile.error}
         onSave={(nickname) => updateProfile.mutateAsync({ nickname }).then(() => undefined)}
-      />
-      <IntervalSheet
-        open={offsetsOpen}
-        onOpenChange={setOffsetsOpen}
-        title="Интервалы по умолчанию"
-        offsets={user.default_reminder_offsets}
-        isSubmitting={updateProfile.isPending}
-        onSave={async (default_reminder_offsets) => {
-          try {
-            await updateProfile.mutateAsync({ default_reminder_offsets });
-            setOffsetsOpen(false);
-          } catch {
-            showToast("Не удалось сохранить интервалы");
-          }
-        }}
-      />
-      <CurrencySheet
-        open={currencyOpen}
-        onOpenChange={setCurrencyOpen}
-        currencies={currencies.data ?? []}
-        selected={user.base_currency}
-        isPending={updateProfile.isPending}
-        error={updateProfile.error}
-        onSave={(base_currency: BaseCurrencyCode) =>
-          updateProfile.mutateAsync({ base_currency }).then(() => undefined)
-        }
-      />
-      <TimezoneSheet
-        open={timezoneOpen}
-        onOpenChange={setTimezoneOpen}
-        selected={user.timezone}
-        isPending={updateProfile.isPending}
-        error={updateProfile.error}
-        onSave={(timezone) => updateProfile.mutateAsync({ timezone }).then(() => undefined)}
       />
       <ThemeSheet
         open={themeOpen}

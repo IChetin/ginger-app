@@ -38,7 +38,6 @@ async def _ensure_user(
             email=email_n,
             nickname=f"u_{email_n.split('@')[0][:12]}",
             role=UserRole.USER,
-            base_currency="RUB",
             email_verified_at=datetime.now(UTC),
             password_hash=hash_password(password) if password else None,
         )
@@ -210,9 +209,10 @@ async def test_expired_otp(client: AsyncClient, db_session: AsyncSession) -> Non
     )
     assert verify.status_code == 401
     assert verify.json()["error"]["code"] == "otp_expired"
-    assert "истёк" in verify.json()["error"]["message"].lower() or "истек" in verify.json()[
-        "error"
-    ]["message"].lower()
+    assert (
+        "истёк" in verify.json()["error"]["message"].lower()
+        or "истек" in verify.json()["error"]["message"].lower()
+    )
 
 
 async def test_captcha_required_on_third_request(

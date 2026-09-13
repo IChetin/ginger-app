@@ -59,7 +59,9 @@ export const PasswordInput = forwardRef<HTMLInputElement, Props>(function Passwo
               />
             ))}
           </div>
-          <span className="text-ink-3 text-[12px] font-semibold">{passwordStrengthLabel(level)}</span>
+          <span className="text-ink-3 text-[12px] font-semibold">
+            {passwordStrengthLabel(level)}
+          </span>
         </div>
       ) : null}
     </div>

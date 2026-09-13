@@ -22,6 +22,7 @@ async def _prepare(session: AsyncSession) -> None:
     await seed_reference_data(session)
     await seed_dev_users(session)
 
+
 async def _seed_sent(
     session: AsyncSession,
     *,
@@ -33,12 +34,11 @@ async def _seed_sent(
     sent_at: datetime | None = None,
 ) -> NotificationQueue:
     now = datetime.now(UTC)
-    payload = {"title": title, "body": f"body-{title}", "url": "/events/1", "type": ntype.value}
+    payload = {"title": title, "body": f"body-{title}", "url": "/tournaments", "type": ntype.value}
     if payload_extra:
         payload.update(payload_extra)
     row = NotificationQueue(
         user_id=user_id,
-        bookmark_id=None,
         type=ntype,
         payload=payload,
         scheduled_at=now - timedelta(hours=2),
@@ -72,15 +72,14 @@ async def test_notifications_inbox_mark_read_and_unread_count(
         db_session,
         user_id=editor.id,
         title="Guarantee",
-        ntype=NotificationType.GUARANTEE_CHANGED,
-        payload_extra={"old_guarantee": "300000", "new_guarantee": "500000"},
+        ntype=NotificationType.CHIPS_ISSUED,
         sent_at=datetime.now(UTC) - timedelta(minutes=30),
     )
     await _seed_sent(
         db_session,
         user_id=editor.id,
         title="Already read",
-        ntype=NotificationType.SCHEDULE_PUBLISHED,
+        ntype=NotificationType.NEW_THREAD_MESSAGE,
         read_at=datetime.now(UTC) - timedelta(days=1),
         sent_at=datetime.now(UTC) - timedelta(days=1),
     )
@@ -95,17 +94,12 @@ async def test_notifications_inbox_mark_read_and_unread_count(
     assert body["total"] == 3
     assert len(body["items"]) == 3
     guarantee = next(item for item in body["items"] if item["id"] == str(unread_change.id))
-    assert guarantee["diff"] == {"old": "300 000 ₽", "new": "500 000 ₽"}
     assert guarantee["is_unread"] is True
 
     reminders = await client.get("/api/v1/notifications", params={"type": "reminders"})
     assert reminders.status_code == 200
     assert reminders.json()["total"] == 1
     assert reminders.json()["items"][0]["id"] == str(unread_reminder.id)
-
-    changes = await client.get("/api/v1/notifications", params={"type": "changes"})
-    assert changes.status_code == 200
-    assert changes.json()["total"] == 2
 
     unread_only = await client.get("/api/v1/notifications", params={"unread_only": True})
     assert unread_only.status_code == 200

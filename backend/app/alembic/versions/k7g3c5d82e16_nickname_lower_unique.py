@@ -19,9 +19,7 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     op.drop_constraint(op.f("uq_users_nickname"), "users", type_="unique")
-    op.execute(
-        "CREATE UNIQUE INDEX uq_users_nickname_lower ON users (lower(nickname))"
-    )
+    op.execute("CREATE UNIQUE INDEX uq_users_nickname_lower ON users (lower(nickname))")
 
 
 def downgrade() -> None:

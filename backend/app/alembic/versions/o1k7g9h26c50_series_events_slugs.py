@@ -13,6 +13,7 @@ from collections.abc import Sequence
 from datetime import date
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision: str = "o1k7g9h26c50"

@@ -86,7 +86,6 @@ async def test_register_start_rejects_existing(
             email=email,
             nickname="exists_user",
             role=UserRole.USER,
-            base_currency="RUB",
             email_verified_at=datetime.now(UTC),
         )
     )
@@ -224,7 +223,6 @@ async def test_otp_only_user_set_password_then_login(
             email=email,
             nickname="otponly",
             role=UserRole.USER,
-            base_currency="RUB",
             email_verified_at=datetime.now(UTC),
             password_hash=None,
         )
@@ -278,17 +276,6 @@ async def test_password_login_lockout(
     )
     assert locked.status_code == 429
     assert "попыток" in locked.json()["error"]["message"].lower()
-
-
-async def test_password_session_can_access_bookmarks(
-    client: AsyncClient,
-    db_session: AsyncSession,
-) -> None:
-    await seed_reference_data(db_session)
-    email = "bookmarker@example.com"
-    await _register_flow(client, email=email, nickname="bookmarker")
-    response = await client.get("/api/v1/bookmarks")
-    assert response.status_code == 200
 
 
 async def test_login_unknown_email_generic_error(

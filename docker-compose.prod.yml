@@ -35,9 +35,6 @@ services:
     build:
       context: ./backend
     env_file: .env
-    environment:
-      # Канонические страницы серий Day2 не отдаём.
-      SPA_INTERNAL_URL: ""
     volumes:
       - uploads:/data/uploads
     depends_on:

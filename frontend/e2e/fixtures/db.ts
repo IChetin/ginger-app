@@ -57,63 +57,10 @@ export async function createStaffUser(opts: {
   return (await runE2eDb(args)) as { id: string; email: string; role: string };
 }
 
-export async function createPublishedSeries(opts: {
-  name: string;
-  venueTimezone?: string;
-  startAt?: string;
-}): Promise<{
-  series_id: string;
-  event_id: string;
-  flight_id: string;
-  name: string;
-  start_at: string;
-}> {
-  const args = ["create-published-series", "--name", opts.name];
-  if (opts.venueTimezone) {
-    args.push("--venue-timezone", opts.venueTimezone);
-  }
-  if (opts.startAt) {
-    args.push("--start-at", opts.startAt);
-  }
-  return (await runE2eDb(args)) as {
-    series_id: string;
-    event_id: string;
-    flight_id: string;
-    name: string;
-    start_at: string;
-  };
-}
-
-export async function queueForFlight(flightId: string): Promise<{
-  items: Array<{
-    id: string;
-    user_id: string;
-    type: string;
-    scheduled_at: string;
-    status: string;
-  }>;
-}> {
-  return (await runE2eDb(["queue-for-flight", "--flight-id", flightId])) as {
-    items: Array<{
-      id: string;
-      user_id: string;
-      type: string;
-      scheduled_at: string;
-      status: string;
-    }>;
-  };
-}
-
-export async function cleanupTestData(opts: {
-  email?: string;
-  seriesPrefix?: string;
-}): Promise<void> {
+export async function cleanupTestData(opts: { email?: string }): Promise<void> {
   const args = ["cleanup"];
   if (opts.email) {
     args.push("--email", opts.email);
-  }
-  if (opts.seriesPrefix) {
-    args.push("--series-prefix", opts.seriesPrefix);
   }
   await runE2eDb(args);
 }

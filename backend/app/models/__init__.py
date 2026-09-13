@@ -8,48 +8,35 @@ from app.models.chips import (
     RequisiteTemplate,
 )
 from app.models.clubs import Club
-from app.models.imports import ImportJob, ParserProfile
-from app.models.notifications import Bookmark, NotificationQueue
+from app.models.notifications import NotificationQueue
 from app.models.players import Invite, Player, PlayerAccount
-from app.models.references import Country, Currency, FxRate, Organizer, Venue
-from app.models.schedule import BlindLevel, ChangeLog, Event, Flight, Series, SlugRedirect
+from app.models.references import Currency, FxRate, Organizer
 from app.models.threads import Thread, ThreadMessage
 from app.models.tournaments import Tournament, TournamentReminder, TournamentTemplate
 
 __all__ = [
     "Attachment",
+    "AuthToken",
+    "Base",
     "ChipRequest",
     "ChipRequestEvent",
     "ChipRequestItem",
-    "Invite",
-    "Player",
-    "PlayerAccount",
-    "RequisiteTemplate",
-    "AuthToken",
-    "Base",
-    "BlindLevel",
-    "Bookmark",
-    "ChangeLog",
     "Club",
-    "Country",
     "Currency",
-    "Event",
-    "Flight",
     "FxRate",
-    "ImportJob",
+    "Invite",
     "NotificationQueue",
     "Organizer",
     "OtpCode",
-    "ParserProfile",
+    "Player",
+    "PlayerAccount",
     "PushSubscription",
-    "Series",
+    "RequisiteTemplate",
     "Session",
-    "SlugRedirect",
     "Thread",
     "ThreadMessage",
     "Tournament",
     "TournamentReminder",
     "TournamentTemplate",
     "User",
-    "Venue",
 ]

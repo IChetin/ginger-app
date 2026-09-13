@@ -44,11 +44,7 @@ export const passwordLoginSchema = z.object({
 
 export const registerCompleteSchema = z
   .object({
-    nickname: z
-      .string()
-      .trim()
-      .min(2, "Минимум 2 символа")
-      .max(32, "Максимум 32 символа"),
+    nickname: z.string().trim().min(2, "Минимум 2 символа").max(32, "Максимум 32 символа"),
     password: passwordField,
     passwordConfirm: z.string(),
   })

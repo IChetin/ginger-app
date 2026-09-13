@@ -3,7 +3,6 @@ import { render, type RenderOptions } from "@testing-library/react";
 import { MemoryRouter, type MemoryRouterProps } from "react-router-dom";
 
 import { ConfirmProvider } from "@/components/ui/ConfirmDialog";
-import { DemoProvider } from "@/demo/DemoProvider";
 
 export function renderWithProviders(
   ui: React.ReactElement,
@@ -28,11 +27,7 @@ export function renderWithProviders(
         future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         {...options?.routerProps}
       >
-        <ConfirmProvider>
-          <DemoProvider>
-            {ui}
-          </DemoProvider>
-        </ConfirmProvider>
+        <ConfirmProvider>{ui}</ConfirmProvider>
       </MemoryRouter>
     </QueryClientProvider>,
     options?.renderOptions,

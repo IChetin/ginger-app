@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, type InputHTMLAttributes, type ReactNode } from "react";
 
-import { useIsDesktop } from "@/components/filters/useIsDesktop";
+import { useIsDesktop } from "@/hooks/useIsDesktop";
 import {
   canLadderDecrement,
   canLadderIncrement,

@@ -10,40 +10,13 @@ import type {
   UpdateMePayload,
   UserMe,
 } from "@/api/types/auth";
-import type { EventUpdatePayload, FlightUpsert, SeriesUpdatePayload } from "@/api/types/admin";
-import type {
-  Bookmark,
-  BookmarkCreatePayload,
-  BookmarkMigratePayload,
-  BookmarkMigrateResponse,
-  BookmarkOverviewItem,
-  BookmarkTargetResolvePayload,
-  BookmarkTargetResolveResponse,
-  BookmarkUpdatePayload,
-} from "@/api/types/bookmarks";
-import type {
-  NotificationHistoryItem,
-  NotificationPreviewResponse,
-} from "@/api/types/notifications";
+import type { ApiErrorBody } from "@/api/types/common";
 import type {
   PushSubscribePayload,
   PushSubscription,
   PushUnsubscribePayload,
   VapidPublicKeyResponse,
 } from "@/api/types/push";
-import type {
-  ApiErrorBody,
-  CalendarParams,
-  CalendarResponse,
-  CurrencyBrief,
-  EventDetail,
-  ScheduleFilterCountsResponse,
-  ScheduleFiltersResponse,
-  SeriesDetail,
-  SeriesListParams,
-  SeriesListResponse,
-  SeriesScheduleResponse,
-} from "@/api/types/schedule";
 import type { Tournament, TournamentsParams } from "@/api/types/tournaments";
 
 export type ApiRequestHeaders = HeadersInit;
@@ -176,21 +149,6 @@ async function apiRequest<T>(
   return JSON.parse(text) as T;
 }
 
-function withPreviewToken(
-  headers?: ApiRequestHeaders,
-  previewToken?: string,
-  notify?: boolean,
-): Headers {
-  const next = new Headers(headers);
-  if (previewToken) {
-    next.set("X-Preview-Token", previewToken);
-  }
-  if (notify !== undefined) {
-    next.set("X-Notify", notify ? "1" : "0");
-  }
-  return next;
-}
-
 async function apiGet<T>(
   path: string,
   headers?: ApiRequestHeaders,
@@ -252,76 +210,12 @@ async function apiDelete<T = void>(
   return apiRequest<T>(path, { method: "DELETE" }, { allowEmpty: options.allowEmpty ?? true });
 }
 
-export function fetchSeriesList(params: SeriesListParams = {}): Promise<SeriesListResponse> {
-  return apiGet(`/api/v1/series${buildQuery(params)}`);
-}
-
-export function fetchSeriesDetail(seriesId: string): Promise<SeriesDetail> {
-  return apiGet(`/api/v1/series/${seriesId}`);
-}
-
-export function fetchSeriesSchedule(
-  seriesId: string,
-  options: { includeBlinds?: boolean } = {},
-): Promise<SeriesScheduleResponse> {
-  return apiGet(
-    `/api/v1/series/${seriesId}/schedule${buildQuery({
-      include_blinds: options.includeBlinds ? "true" : undefined,
-    })}`,
-  );
-}
-
-export async function fetchSeriesSchedulePdf(
-  seriesId: string,
-  options: { signal?: AbortSignal } = {},
-): Promise<{
-  blob: Blob;
-  filename: string;
-}> {
-  const response = await fetch(`/api/v1/series/${seriesId}/schedule.pdf`, {
-    credentials: "include",
-    headers: { Accept: "application/pdf" },
-    signal: options.signal,
-  });
-  if (!response.ok) {
-    throw await parseError(response);
-  }
-  const disposition = response.headers.get("Content-Disposition") ?? "";
-  const match = /filename="([^"]+)"/.exec(disposition);
-  const filename = match?.[1] ?? `Day2_series_${seriesId}.pdf`;
-  const blob = await response.blob();
-  return { blob, filename };
-}
-
-/** Справочник валют. Раньше жил в трекере (/results/currencies), нужен профилю для базовой валюты. */
-export function fetchCurrencies(): Promise<CurrencyBrief[]> {
-  return apiGet("/api/v1/currencies");
-}
-
 /** Ginger APP: расписание турниров клубов. Без from/to — ближайшие сутки. */
 export function fetchTournaments(
   params: TournamentsParams,
   signal?: AbortSignal,
 ): Promise<Tournament[]> {
   return apiGet(`/api/v1/tournaments${buildQuery(params)}`, undefined, signal);
-}
-
-export function fetchEventDetail(eventId: string): Promise<EventDetail> {
-  return apiGet(`/api/v1/events/${eventId}`);
-}
-
-export function fetchCalendar(params: CalendarParams): Promise<CalendarResponse> {
-  return apiGet(`/api/v1/calendar${buildQuery(params)}`);
-}
-
-export function fetchScheduleFilters(): Promise<ScheduleFiltersResponse> {
-  return apiGet("/api/v1/series/filters");
-}
-
-export function fetchSeriesFilterCounts(
-  params: SeriesListParams = {},
-): Promise<ScheduleFilterCountsResponse> {
-  return apiGet(`/api/v1/series/filter-counts${buildQuery(params)}`);
 }
 
 export function requestAuthCode(
@@ -385,61 +279,6 @@ export function logoutAuth(): Promise<{ ok: boolean }> {
   return apiPost("/api/v1/auth/logout");
 }
 
-export function fetchBookmarks(): Promise<Bookmark[]> {
-  return apiGet("/api/v1/bookmarks");
-}
-
-export function fetchBookmarksOverview(): Promise<BookmarkOverviewItem[]> {
-  return apiGet("/api/v1/bookmarks/overview");
-}
-
-export function resolveBookmarkTargets(
-  body: BookmarkTargetResolvePayload,
-): Promise<BookmarkTargetResolveResponse> {
-  return apiPost("/api/v1/bookmarks/resolve-targets", body);
-}
-
-export function createBookmark(body: BookmarkCreatePayload): Promise<Bookmark> {
-  return apiPost("/api/v1/bookmarks", body);
-}
-
-export function updateBookmark(bookmarkId: string, body: BookmarkUpdatePayload): Promise<Bookmark> {
-  return apiPatch(`/api/v1/bookmarks/${bookmarkId}`, body);
-}
-
-export function deleteBookmark(bookmarkId: string): Promise<void> {
-  return apiDelete(`/api/v1/bookmarks/${bookmarkId}`);
-}
-
-export function migrateBookmarks(body: BookmarkMigratePayload): Promise<BookmarkMigrateResponse> {
-  return apiPost("/api/v1/bookmarks/migrate", body);
-}
-
-export function fetchNotificationHistory(days = 30): Promise<NotificationHistoryItem[]> {
-  return apiGet(`/api/v1/notifications/history${buildQuery({ days })}`);
-}
-
-export function previewAdminSeries(
-  seriesId: string,
-  body: SeriesUpdatePayload,
-): Promise<NotificationPreviewResponse> {
-  return apiPost(`/api/v1/admin/series/${seriesId}/preview`, body);
-}
-
-export function previewAdminEvent(
-  eventId: string,
-  body: EventUpdatePayload,
-): Promise<NotificationPreviewResponse> {
-  return apiPost(`/api/v1/admin/events/${eventId}/preview`, body);
-}
-
-export function previewAdminFlights(
-  eventId: string,
-  items: FlightUpsert[],
-): Promise<NotificationPreviewResponse> {
-  return apiPost(`/api/v1/admin/events/${eventId}/flights/preview`, items);
-}
-
 export function fetchVapidPublicKey(): Promise<VapidPublicKeyResponse> {
   return apiGet("/api/v1/push/vapid-public-key");
 }
@@ -459,4 +298,4 @@ export function unsubscribePush(body: PushUnsubscribePayload): Promise<void> {
   );
 }
 
-export { apiDelete, apiGet, apiPatch, apiPost, apiPostForm, apiPut, buildQuery, withPreviewToken };
+export { apiDelete, apiGet, apiPatch, apiPost, apiPostForm, apiPut, buildQuery };

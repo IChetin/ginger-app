@@ -16,8 +16,8 @@ import { cn } from "@/lib/utils";
 const ROLE_OPTIONS: UserRole[] = ["user", "editor", "admin"];
 
 const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
-  user: "Обычный доступ: расписание, закладки",
-  editor: "+ админка: серии, турниры, импорт расписаний, справочники",
+  user: "Обычный доступ: приложение игрока",
+  editor: "+ админка: касса, диалоги, сетки клубов, организаторы",
   admin: "+ управление пользователями и ролями",
 };
 

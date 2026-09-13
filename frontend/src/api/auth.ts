@@ -25,29 +25,13 @@ import type {
   UserMe,
 } from "@/api/types/auth";
 import { authKeys } from "@/features/auth/queryKeys";
-import { useMigrateGuestBookmarks } from "@/features/bookmarks/hooks/useMigrateGuestBookmarks";
 
 export { authKeys };
-export {
-  fetchCurrentUser,
-  requestAuthCode,
-  verifyAuthCode,
-  logoutAuth,
-  loginWithPassword,
-};
+export { fetchCurrentUser, requestAuthCode, verifyAuthCode, logoutAuth, loginWithPassword };
 
-async function afterAuthSuccess(
-  queryClient: ReturnType<typeof useQueryClient>,
-  migrateGuestBookmarks: ReturnType<typeof useMigrateGuestBookmarks>,
-  user: UserMe,
-) {
+async function afterAuthSuccess(queryClient: ReturnType<typeof useQueryClient>, user: UserMe) {
   queryClient.setQueryData(authKeys.me(), user);
   await queryClient.invalidateQueries({ queryKey: authKeys.me() });
-  try {
-    await migrateGuestBookmarks.mutateAsync();
-  } catch {
-    // Guest bookmark migration must not break login.
-  }
 }
 
 function isUnauthorized(error: unknown): boolean {
@@ -104,24 +88,22 @@ export function useRequestCode() {
 
 export function useLogin() {
   const queryClient = useQueryClient();
-  const migrateGuestBookmarks = useMigrateGuestBookmarks();
 
   return useMutation({
     mutationFn: ({ email, code }: { email: string; code: string }) => verifyAuthCode(email, code),
     onSuccess: async (user) => {
-      await afterAuthSuccess(queryClient, migrateGuestBookmarks, user);
+      await afterAuthSuccess(queryClient, user);
     },
   });
 }
 
 export function usePasswordLogin() {
   const queryClient = useQueryClient();
-  const migrateGuestBookmarks = useMigrateGuestBookmarks();
 
   return useMutation({
     mutationFn: (body: LoginPasswordPayload) => loginWithPassword(body),
     onSuccess: async (user) => {
-      await afterAuthSuccess(queryClient, migrateGuestBookmarks, user);
+      await afterAuthSuccess(queryClient, user);
     },
   });
 }
@@ -140,12 +122,11 @@ export function useRegisterVerify() {
 
 export function useRegisterComplete() {
   const queryClient = useQueryClient();
-  const migrateGuestBookmarks = useMigrateGuestBookmarks();
 
   return useMutation({
     mutationFn: (body: RegisterCompletePayload) => registerComplete(body),
     onSuccess: async (user) => {
-      await afterAuthSuccess(queryClient, migrateGuestBookmarks, user);
+      await afterAuthSuccess(queryClient, user);
     },
   });
 }
@@ -184,10 +165,8 @@ export function useUpdateProfile() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: UpdateMePayload) => updateCurrentUser(body),
-    onSuccess: async (user, body) => {
+    onSuccess: (user) => {
       queryClient.setQueryData(authKeys.me(), user);
-      if (body.base_currency) {
-      }
     },
   });
 }

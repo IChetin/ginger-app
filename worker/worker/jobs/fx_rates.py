@@ -5,12 +5,11 @@ from collections.abc import Callable
 from datetime import UTC, date, datetime
 from typing import Any
 
-from sqlalchemy import distinct, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from worker.config import Settings, get_settings
-from worker.db.models import FxRate, User
+from worker.db.models import FxRate
 from worker.db.session import session_scope
 from worker.fx.cbr import (
     RUB,
@@ -22,13 +21,13 @@ from worker.fx.cbr import (
 
 FetchRatesFn = Callable[..., dict[str, CbrRate]]
 
-logger = logging.getLogger("day2.worker.fx")
+logger = logging.getLogger("ginger.worker.fx")
 
 
 def _needed_currencies(session: Session) -> set[str]:
-    user_codes = set(session.scalars(select(distinct(User.base_currency))))
-    codes = (user_codes | set(SUPPORTED_CURRENCIES)) - {RUB}
-    return {code.upper() for code in codes if code.upper() in SUPPORTED_CURRENCIES}
+    """Курсы ЦБ к рублю для клубов с фишкой не в рублях (USDT задаётся вручную)."""
+    del session
+    return {code.upper() for code in SUPPORTED_CURRENCIES} - {RUB}
 
 
 def select_backfill_dates(

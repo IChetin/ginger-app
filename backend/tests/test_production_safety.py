@@ -6,7 +6,6 @@ from app.services.captcha import CaptchaUnavailableError, verify_captcha_token
 SAFE = {
     "app_env": "production",
     "otp_hmac_secret": "a" * 64,
-    "preview_hmac_secret": "b" * 64,
     "session_cookie_secure": True,
     "cors_origins": "https://lisa52.com",
     "frontend_base_url": "https://lisa52.com",
@@ -19,7 +18,6 @@ def test_dev_defaults_are_rejected_for_production() -> None:
     text = "; ".join(problems)
     for expected in (
         "OTP_HMAC_SECRET",
-        "PREVIEW_HMAC_SECRET",
         "SESSION_COOKIE_SECURE",
         "CORS_ORIGINS",
         "FRONTEND_BASE_URL",
