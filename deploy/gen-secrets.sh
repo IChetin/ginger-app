@@ -45,9 +45,11 @@ SESSION_COOKIE_NAME=ginger_session
 SESSION_COOKIE_SECURE=true
 SESSION_COOKIE_SAMESITE=lax
 
-# Почта: Brevo. Логин и SMTP-ключ вписывает владелец аккаунта Brevo.
+# Почта: Yandex Cloud Postbox (Brevo, SMTP2GO и ZeptoMail не регистрируют из РФ).
+# SMTP_USER — ID API-ключа сервисного аккаунта (scope yc.postbox.send), SMTP_PASSWORD — его
+# секрет. Вписывает владелец облака, в чат не пересылает.
 EMAIL_PROVIDER=smtp
-SMTP_HOST=smtp-relay.brevo.com
+SMTP_HOST=postbox.cloud.yandex.net
 SMTP_PORT=587
 SMTP_USE_TLS=true
 SMTP_USE_SSL=false
