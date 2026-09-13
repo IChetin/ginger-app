@@ -54,7 +54,7 @@ services:
       context: ./backend
     environment:
       APP_ENV: ${APP_ENV:-development}
-      APP_NAME: ${APP_NAME:-Day2}
+      APP_NAME: ${APP_NAME:-Ginger}
       API_V1_PREFIX: ${API_V1_PREFIX:-/api/v1}
       DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://day2:day2@postgres:5432/day2}
       DATABASE_ECHO: ${DATABASE_ECHO:-false}
@@ -78,14 +78,14 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-}
-      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Day2}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Ginger}
       SMTP_USE_SSL: ${SMTP_USE_SSL:-false}
       SMTP_USE_TLS: ${SMTP_USE_TLS:-true}
       CAPTCHA_PROVIDER: ${CAPTCHA_PROVIDER:-mock}
       CAPTCHA_MOCK_TOKEN: ${CAPTCHA_MOCK_TOKEN:-ok}
       SMARTCAPTCHA_SERVER_KEY: ${SMARTCAPTCHA_SERVER_KEY:-}
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
-      VAPID_SUBJECT: ${VAPID_SUBJECT:-https://day2.n8nginger.ru}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-https://lisa.club}
       PREVIEW_HMAC_SECRET: ${PREVIEW_HMAC_SECRET:-dev-preview-hmac-secret-change-me}
       PREVIEW_TOKEN_TTL_SECONDS: ${PREVIEW_TOKEN_TTL_SECONDS:-600}
       IMPORT_MAX_FILE_BYTES: ${IMPORT_MAX_FILE_BYTES:-20971520}
@@ -116,7 +116,7 @@ services:
       DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://day2:day2@postgres:5432/day2}
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
-      VAPID_SUBJECT: ${VAPID_SUBJECT:-https://day2.n8nginger.ru}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-https://lisa.club}
       NOTIFICATION_BATCH_SIZE: ${NOTIFICATION_BATCH_SIZE:-50}
       NOTIFICATION_JOB_INTERVAL_SECONDS: ${NOTIFICATION_JOB_INTERVAL_SECONDS:-60}
       FX_JOB_CRON: ${FX_JOB_CRON:-15 1 * * *}

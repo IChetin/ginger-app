@@ -151,7 +151,7 @@ export function ProfilePage() {
         Выйти
       </button>
       <p className="num text-ink-3 mt-4 text-center text-[12px]">
-        Day2 · версия {packageJson.version}
+        Ginger · версия {packageJson.version}
       </p>
 
       <NicknameSheet

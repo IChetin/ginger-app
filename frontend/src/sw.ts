@@ -91,7 +91,7 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     (async () => {
       let payload: PushPayload = {
-        title: "Day2",
+        title: "Ginger",
         body: "Напоминание о турнире",
         url: "/",
       };
@@ -104,7 +104,7 @@ self.addEventListener("push", (event) => {
         }
       }
 
-      await self.registration.showNotification(payload.title ?? "Day2", {
+      await self.registration.showNotification(payload.title ?? "Ginger", {
         body: payload.body,
         data: { url: payload.url ?? "/" },
       });

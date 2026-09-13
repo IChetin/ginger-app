@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     )
 
     app_env: str = "development"
-    app_name: str = "Day2"
+    app_name: str = "Ginger"
     api_v1_prefix: str = "/api/v1"
     database_url: str = "postgresql+asyncpg://day2:day2@localhost:5432/day2"
     test_database_url: str = "postgresql+asyncpg://day2:day2@localhost:5433/day2_test"
@@ -59,7 +59,7 @@ class Settings(BaseSettings):
     smtp_user: str = ""
     smtp_password: str = ""
     smtp_from: str = ""
-    smtp_from_name: str = "Day2"
+    smtp_from_name: str = "Ginger"
     # Port 465 → SMTP_SSL; port 587 → STARTTLS (smtp_use_tls).
     smtp_use_ssl: bool = False
     smtp_use_tls: bool = True
@@ -72,7 +72,7 @@ class Settings(BaseSettings):
     # Web Push (VAPID). Private key is used by worker only.
     vapid_public_key: str = ""
     vapid_private_key: str = ""
-    vapid_subject: str = "https://day2.n8nginger.ru"
+    vapid_subject: str = "https://lisa.club"
 
     # Admin change-notification preview tokens (HMAC).
     preview_hmac_secret: str = Field(default="dev-preview-hmac-secret-change-me")

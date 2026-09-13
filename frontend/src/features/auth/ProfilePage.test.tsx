@@ -78,7 +78,7 @@ describe("ProfilePage", () => {
     expect(await screen.findByText("player")).toBeInTheDocument();
     expect(screen.getByText(/Вы вошли как/i)).toBeInTheDocument();
     expect(screen.getByText("player@example.com")).toBeInTheDocument();
-    expect(screen.getByText("Day2 · версия 0.1.0")).toBeInTheDocument();
+    expect(screen.getByText("Ginger · версия 0.1.0")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Редактировать профиль" }));
     await user.clear(screen.getByLabelText("Никнейм"));
@@ -249,7 +249,7 @@ describe("ProfilePage", () => {
     await screen.findByText("player");
     await user.click(screen.getByRole("checkbox", { name: "Push-уведомления" }));
 
-    expect(await screen.findByRole("status")).toHaveTextContent(/добавьте Day2 на экран/i);
+    expect(await screen.findByRole("status")).toHaveTextContent(/добавьте Ginger на экран/i);
     vi.unstubAllGlobals();
   });
 

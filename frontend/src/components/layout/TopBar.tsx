@@ -5,7 +5,6 @@ import { HeaderProfileButton } from "@/components/layout/HeaderProfileButton";
 import { useMe } from "@/features/auth/hooks";
 import { buildLoginLocation } from "@/features/auth/lib/redirect";
 import { useUnreadNotificationCount } from "@/features/notifications/hooks";
-import { cn } from "@/lib/utils";
 
 function IconSearch({ className }: { className?: string }) {
   return (
@@ -43,16 +42,13 @@ export function TopBar({ filters }: { filters?: ReactNode }) {
     <div className="border-line bg-bg/88 sticky top-0 z-20 border-b backdrop-blur-[14px]">
       <div className="flex items-center justify-between px-4 pt-3.5 pb-2.5">
         <div className="inline-flex items-center gap-1.5 text-[19px] font-extrabold tracking-tight">
-          Day
-          <span
-            className={cn(
-              "inline-flex h-[26px] w-[26px] -rotate-[4deg] items-center justify-center rounded-[8px]",
-              "bg-gold-grad text-ink-ongold text-[15px] font-extrabold",
-              "shadow-sheen",
-            )}
-          >
-            2
-          </span>
+          <img
+            src="/icons/ginger-mark-96.png"
+            alt=""
+            aria-hidden="true"
+            className="h-7 w-7 rounded-full"
+          />
+          Ginger
         </div>
         <div className="flex gap-2">
           <Link to="/search" className={iconBtnClass} aria-label="Поиск">

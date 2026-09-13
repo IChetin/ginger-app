@@ -70,12 +70,24 @@ export default defineConfig({
       registerType: "autoUpdate",
       injectRegister: false,
       manifest: {
-        name: "Day2",
-        short_name: "Day2",
+        name: "Ginger",
+        short_name: "Ginger",
+        description: "Фишки, турниры и связь с клубом Ginger",
+        lang: "ru",
         start_url: "/",
         display: "standalone",
         background_color: "#0B0A09",
         theme_color: "#0B0A09",
+        icons: [
+          { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+          { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+          {
+            src: "/icons/icon-maskable-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
+        ],
       },
       devOptions: {
         enabled: false,
@@ -90,7 +102,7 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     port: 5173,
-    allowedHosts: ["day2.n8nginger.ru", "localhost", "frontend"],
+    allowedHosts: ["lisa.club", "localhost", "frontend"],
     watch: {
       usePolling: true,
     },
@@ -103,7 +115,7 @@ export default defineConfig({
     host: "0.0.0.0",
     port: 5173,
     // "frontend" — hostname внутри docker-сети (Caddy → frontend:5173).
-    allowedHosts: ["day2.n8nginger.ru", "localhost", "frontend"],
+    allowedHosts: ["lisa.club", "localhost", "frontend"],
   },
   test: {
     environment: "jsdom",

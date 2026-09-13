@@ -50,10 +50,13 @@ export function AuthShell({ children, onBack, toast }: Props) {
         </div>
 
         <div className="mt-7 mb-1.5 inline-flex items-center gap-1.5 text-[26px] font-extrabold tracking-[-0.02em]">
-          Day
-          <span className="bg-gold-grad text-ink-ongold shadow-sheen inline-flex h-[34px] w-[34px] -rotate-[4deg] items-center justify-center rounded-[10px] text-xl font-extrabold">
-            2
-          </span>
+          <img
+            src="/icons/ginger-mark-96.png"
+            alt=""
+            aria-hidden="true"
+            className="h-10 w-10 rounded-full"
+          />
+          Ginger
         </div>
 
         {children}

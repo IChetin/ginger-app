@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://day2:day2@localhost:5432/day2"
     vapid_public_key: str = ""
     vapid_private_key: str = ""
-    vapid_subject: str = "https://day2.n8nginger.ru"
+    vapid_subject: str = "https://lisa.club"
     notification_batch_size: int = Field(default=50, ge=1, le=500)
     notification_job_interval_seconds: int = Field(default=60, ge=10, le=3600)
 

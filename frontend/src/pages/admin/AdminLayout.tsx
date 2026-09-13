@@ -65,10 +65,13 @@ function SidebarNav({ showUsers, onNavigate }: { showUsers: boolean; onNavigate?
         onClick={onNavigate}
         className="text-ink hover:bg-surface-2 mb-[18px] flex cursor-pointer items-center gap-[7px] rounded-[10px] px-2 pt-1.5 text-[17px] font-extrabold"
       >
-        Day
-        <span className="bg-gold-grad text-ink-ongold inline-flex size-6 -rotate-[4deg] items-center justify-center rounded-[7px] text-sm font-extrabold">
-          2
-        </span>
+        <img
+          src="/icons/ginger-mark-96.png"
+          alt=""
+          aria-hidden="true"
+          className="h-6 w-6 rounded-full"
+        />
+        Ginger
         <small className="text-ink-3 ml-0.5 text-[11px] font-bold tracking-[0.08em] uppercase">
           админка
         </small>

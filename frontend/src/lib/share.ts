@@ -46,7 +46,7 @@ export async function shareOrCopyUrl(input: {
   url: string;
   text?: string;
 }): Promise<ShareUrlOutcome> {
-  const text = input.text ?? `${input.title} · Day2`;
+  const text = input.text ?? `${input.title} · Ginger`;
   if (isTouchShareDevice() && typeof navigator.share === "function") {
     try {
       await navigator.share({ title: input.title, url: input.url, text });

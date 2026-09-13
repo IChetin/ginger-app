@@ -20,7 +20,7 @@ router = APIRouter(tags=["spa-redirects"])
 # Показывается, пока frontend пересобирается (npm ci/build). Без meta-refresh
 # hard refresh на /series|/events даёт «белый экран» (пустой #root без JS).
 _SPA_STUB = """<!doctype html>
-<html lang="ru"><head><meta charset="utf-8"/><title>Day2</title>
+<html lang="ru"><head><meta charset="utf-8"/><title>Ginger</title>
 <meta http-equiv="refresh" content="2">
 <style>
 body{margin:0;min-height:100vh;display:grid;place-items:center;

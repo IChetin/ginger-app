@@ -10,7 +10,7 @@ export function InstallPage() {
         <div className="bg-gold-grad text-ink-ongold mx-auto flex h-16 w-16 -rotate-3 items-center justify-center rounded-lg text-[24px] font-extrabold">
           2
         </div>
-        <h1 className="mt-5 text-[23px] font-extrabold">Установите Day2</h1>
+        <h1 className="mt-5 text-[23px] font-extrabold">Установите Ginger</h1>
         <p className="text-ink-2 mt-2 text-[14px]">
           На iPhone push-уведомления работают только для приложения на домашнем экране.
         </p>
@@ -31,7 +31,7 @@ export function InstallPage() {
           </span>
           <span>
             <b className="block text-[15px]">Выберите «На экран „Домой“»</b>
-            <span className="text-ink-2 text-[13px]">Подтвердите добавление приложения Day2.</span>
+            <span className="text-ink-2 text-[13px]">Подтвердите добавление приложения Ginger.</span>
           </span>
         </li>
       </ol>

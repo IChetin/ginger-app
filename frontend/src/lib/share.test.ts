@@ -64,7 +64,7 @@ describe("shareOrCopyUrl", () => {
     expect(share).toHaveBeenCalledWith({
       title: "Турнир",
       url: "https://day2.pro/events/abc",
-      text: "Турнир · Day2",
+      text: "Турнир · Ginger",
     });
     expect(writeText).not.toHaveBeenCalled();
   });

@@ -17,7 +17,7 @@ export function InstallBanner() {
         2
       </span>
       <span className="min-w-0 flex-1">
-        <span className="text-ink block text-[14px] font-bold">Установите Day2 на экран</span>
+        <span className="text-ink block text-[14px] font-bold">Установите Ginger на экран</span>
         <span className="text-ink-2 block text-[12px]">
           Иначе push-напоминания на iPhone не работают
         </span>
