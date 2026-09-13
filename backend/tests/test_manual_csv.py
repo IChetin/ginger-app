@@ -10,6 +10,7 @@ from app.services.tournaments.manual_csv import (
     looks_like_manual_csv,
     parse_days,
     parse_manual_csv,
+    parse_monthly,
 )
 
 POKER21 = (Path(__file__).parent / "fixtures" / "poker21-2026-09-14.csv").read_bytes()
@@ -137,3 +138,34 @@ def test_date_without_year_rolls_to_next_year() -> None:
     data = b"date,time,name,buyin\n15.01,18:00,NEW YEAR,100\n"
     (template,) = parse_manual_csv(data, today=date(2026, 12, 20)).templates
     assert template.valid_from == date(2027, 1, 15)
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("2-е вс", (7, 2)),
+        ("второе воскресенье", (7, 2)),
+        ("последнее вс", (7, -1)),
+        ("Последнее воскресенье", (7, -1)),
+        ("1-й пн", (1, 1)),
+        ("ежедневно", None),
+        ("пн, ср", None),
+        ("7-е вс", None),
+    ],
+)
+def test_parse_monthly(raw: str, expected: tuple[int, int] | None) -> None:
+    assert parse_monthly(raw) == expected
+
+
+def test_month_events_in_grid() -> None:
+    data = "\n".join(
+        [
+            "days,time,name,bounty,buyin,guarantee",
+            "второе вс,18:00,MAIN EVENT PKO,PKO,10000,800000",
+            "последнее вс,18:00,MAIN EVENT NLH,,3000,1000000",
+        ]
+    ).encode()
+    result = parse_manual_csv(data)
+    assert result.issues == []
+    by_name = {t.name: (t.weekdays, t.month_week) for t in result.templates}
+    assert by_name == {"MAIN EVENT PKO": ([7], 2), "MAIN EVENT NLH": ([7], -1)}

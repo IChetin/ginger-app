@@ -62,6 +62,7 @@ _SIGNATURE_FIELDS: tuple[str, ...] = (
     "late_reg_close_offset_min",
     "valid_from",
     "valid_until",
+    "month_week",
 )
 
 
@@ -131,6 +132,7 @@ async def sync_club_templates(
                     late_reg_close_offset_min=draft.late_reg_close_offset_min,
                     valid_from=draft.valid_from,
                     valid_until=draft.valid_until,
+                    month_week=draft.month_week,
                     **{name: getattr(draft, name) for name in draft_fields},
                 )
             )
@@ -149,8 +151,17 @@ async def sync_club_templates(
     return summary
 
 
+def matches_month_week(day: date, month_week: int) -> bool:
+    """Второе воскресенье месяца — month_week=2, последнее — -1."""
+    if month_week == -1:
+        return (day + timedelta(days=7)).month != day.month
+    return (day.day - 1) // 7 + 1 == month_week
+
+
 def _occurs_on(template: TournamentTemplate, day: date) -> bool:
     if day.isoweekday() not in template.weekdays:
+        return False
+    if template.month_week is not None and not matches_month_week(day, template.month_week):
         return False
     if template.valid_from is not None and day < template.valid_from:
         return False

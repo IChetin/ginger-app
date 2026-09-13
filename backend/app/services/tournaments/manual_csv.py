@@ -6,7 +6,8 @@
 
 Колонки (порядок любой, лишние игнорируются; обязательны time, name, buyin и days или date):
 
-    days      пн,ср,пт · ежедневно · будни · выходные
+    days      пн,ср,пт · ежедневно · будни · выходные ·
+              турнир месяца: «2-е вс», «второе воскресенье», «последнее вс»
     date      разовое событие: 2026-09-15 · 15.09.2026 · 15.09 (год — ближайший);
               если заполнена, days не нужны
     time      18:00 — по МСК
@@ -101,6 +102,27 @@ def parse_days(value: str) -> list[int] | None:
     return sorted(days) or None
 
 
+_ORDINALS = {"перв": 1, "втор": 2, "трет": 3, "четв": 4, "пят": 5, "посл": -1}
+
+
+def parse_monthly(value: str) -> tuple[int, int] | None:
+    """«2-е вс» / «второе воскресенье» / «последнее вс» → (день недели ISO, неделя месяца)."""
+    words = value.strip().lower().replace("ё", "е").split()
+    if len(words) != 2:
+        return None
+    first, day_word = words
+    week: int | None = None
+    digits = "".join(ch for ch in first if ch.isdigit())
+    if digits:
+        week = int(digits)
+    else:
+        week = next((n for prefix, n in _ORDINALS.items() if first.startswith(prefix)), None)
+    day = _DAY_TOKENS.get(day_word[:2]) or _FULL_DAY_PREFIXES.get(day_word[:3])
+    if week is None or day is None or week not in (-1, 1, 2, 3, 4, 5):
+        return None
+    return day, week
+
+
 def parse_date(value: str, today: date) -> date | None:
     """«2026-09-15», «15.09.2026» или «15.09». Без года — ближайшая такая дата не старше недели
     назад: сетку заводят заранее, и «15.01» в декабре — это январь следующего года."""
@@ -142,6 +164,7 @@ def parse_manual_csv(data: bytes, *, today: date | None = None) -> TemplateParse
             continue
         rows_total += 1
         one_off: date | None = None
+        month_week: int | None = None
         days: list[int] | None
         if row.get("date"):
             one_off = parse_date(row["date"], today)
@@ -156,6 +179,9 @@ def parse_manual_csv(data: bytes, *, today: date | None = None) -> TemplateParse
                 )
                 continue
             days = [one_off.isoweekday()]
+        elif monthly := parse_monthly(row.get("days", "")):
+            days = [monthly[0]]
+            month_week = monthly[1]
         else:
             days = parse_days(row.get("days", ""))
         minutes = _minutes(row.get("time", ""))
@@ -207,6 +233,7 @@ def parse_manual_csv(data: bytes, *, today: date | None = None) -> TemplateParse
             late_reg_close_offset_min=offset,
             valid_from=one_off,
             valid_until=one_off,
+            month_week=month_week,
         )
         key = tuple(value for field, value in draft.model_dump().items() if field != "weekdays")
         existing = groups.get(key)

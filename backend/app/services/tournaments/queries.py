@@ -10,6 +10,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.config import get_settings
 from app.models.clubs import Club
 from app.models.enums import ClubBlock, PokerApp, TournamentStatus
 from app.models.tournaments import Tournament
@@ -37,6 +38,27 @@ _PERIOD_BOUNDS = {
 }
 
 
+_DOLLAR_CODES = frozenset({"USD", "USDT"})
+
+
+def is_minor_satellite(tournament: Tournament, rub_per_chip: Decimal | None) -> bool:
+    """Сателлит на турнир дешевле $100 / 5 000 ₽.
+
+    Цена целевого турнира — номинал билета (`ticket_value`) в деньгах клуба. Долларовые клубы
+    сравниваются с порогом в долларах, остальные — в рублях. Без номинала или курса судить
+    не о чем — сателлит показываем.
+    """
+    if tournament.ticket_value is None:
+        return False
+    club = tournament.club
+    settings = get_settings()
+    if club.chip_value is not None and club.chip_currency_code in _DOLLAR_CODES:
+        return tournament.ticket_value * club.chip_value < settings.minor_satellite_below_usd
+    if rub_per_chip is None:
+        return False
+    return tournament.ticket_value * rub_per_chip < settings.minor_satellite_below_rub
+
+
 def _to_rub(chips: Decimal | None, rate: Decimal | None) -> Decimal | None:
     if chips is None or rate is None:
         return None
@@ -62,6 +84,7 @@ async def list_tournaments(
     buyin_rub_min: Decimal | None = None,
     buyin_rub_max: Decimal | None = None,
     include_cancelled: bool = False,
+    include_minor_satellites: bool = False,
 ) -> list[TournamentRead]:
     statement = (
         select(Tournament)
@@ -97,6 +120,8 @@ async def list_tournaments(
         if periods and period_of(item.starts_at) not in periods:
             continue
         rate = rates.get(item.club_id)
+        if not include_minor_satellites and is_minor_satellite(item, rate):
+            continue
         buyin_rub = _to_rub(item.buyin, rate)
         if by_rub:
             # Без курса бай-ин в рублях неизвестен — при фильтре по деньгам такой турнир

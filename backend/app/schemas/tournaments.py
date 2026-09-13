@@ -40,6 +40,8 @@ class TemplateDraft(TournamentFields):
     # Разовое событие (турнир месяца, серия): valid_from = valid_until = дата.
     valid_from: date | None = None
     valid_until: date | None = None
+    # Турнир месяца: номер недели месяца (1–5) или -1 — последняя.
+    month_week: int | None = Field(default=None, ge=-1, le=5)
     late_reg_close_offset_min: int | None = Field(default=None, ge=0)
 
 

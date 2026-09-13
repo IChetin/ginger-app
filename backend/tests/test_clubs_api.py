@@ -263,3 +263,32 @@ async def test_manual_grid_import_for_poker21(
     assert body["issues"] == []
     assert body["rows_total"] == 20
     assert body["tournaments_created"] > 100
+
+
+async def test_minor_satellites_hidden_from_players(
+    user_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    ginger = await _club_id(db_session, "ginger")  # 1 фишка = 1 USDT
+    ginger21 = await _club_id(db_session, "ginger21")  # 1 фишка = 1 ₽
+    start = datetime.now(UTC) + timedelta(hours=1)
+    rows = [
+        (ginger, "SAT 24", Decimal("24")),  # $24 < $100 — скрыт
+        (ginger, "SAT 200", Decimal("200")),
+        (ginger21, "SAT 1000", Decimal("1000")),  # 1 000 ₽ < 5 000 ₽ — скрыт
+        (ginger21, "SAT 5000", Decimal("5000")),
+        (ginger21, "REGULAR", None),
+    ]
+    for index, (club_id, name, ticket) in enumerate(rows):
+        db_session.add(
+            Tournament(
+                club_id=club_id,
+                name=name,
+                buyin=Decimal("10"),
+                ticket_value=ticket,
+                starts_at=start + timedelta(minutes=index),
+            )
+        )
+    await db_session.flush()
+
+    response = await user_client.get("/api/v1/tournaments")
+    assert [item["name"] for item in response.json()] == ["SAT 200", "SAT 5000", "REGULAR"]

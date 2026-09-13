@@ -180,3 +180,19 @@ async def test_one_off_template_expands_only_on_its_date(db_session: AsyncSessio
 
     tournaments = await _tournaments(db_session, club_id)
     assert [item.starts_at.astimezone(MSK).date() for item in tournaments] == [wednesday]
+
+
+@pytest.mark.parametrize(("month_week", "expected_day"), [(-1, 27), (3, 20)])
+async def test_month_week_templates(
+    db_session: AsyncSession, month_week: int, expected_day: int
+) -> None:
+    club_id = await _club(db_session)
+    draft = _draft([7], "800000", name="MAIN EVENT")
+    draft.month_week = month_week
+    # Горизонт захватывает воскресенья 20.09 (третье) и 27.09 (последнее в сентябре).
+    await apply_templates_import(
+        db_session, club_id, [draft], source=SOURCE, now=NOW, horizon_days=20
+    )
+
+    tournaments = await _tournaments(db_session, club_id)
+    assert [item.starts_at.astimezone(MSK).day for item in tournaments] == [expected_day]

@@ -85,6 +85,9 @@ class TournamentTemplate(UUIDPrimaryKeyMixin, TimestampMixin, TournamentFieldsMi
         ),
         CheckConstraint("buyin >= 0", name="buyin_non_negative"),
         CheckConstraint(
+            "month_week IS NULL OR month_week IN (-1, 1, 2, 3, 4, 5)", name="month_week_range"
+        ),
+        CheckConstraint(
             "valid_until IS NULL OR valid_from IS NULL OR valid_until >= valid_from",
             name="validity_range",
         ),
@@ -98,6 +101,9 @@ class TournamentTemplate(UUIDPrimaryKeyMixin, TimestampMixin, TournamentFieldsMi
     # ISO: 1 = понедельник … 7 = воскресенье, по московскому времени.
     weekdays: Mapped[list[int]] = mapped_column(ARRAY(SmallInteger), nullable=False)
     start_time: Mapped[time] = mapped_column(Time, nullable=False)
+    # Турнир месяца: 2 — второе такое-то число недели месяца, -1 — последнее. NULL — каждую
+    # неделю. «Середина месяца» у Poker21 — второе воскресенье, «конец» — последнее.
+    month_week: Mapped[int | None] = mapped_column(SmallInteger)
     # Минуты от старта до закрытия поздней регистрации (= аддона, где он есть). Считает
     # калькулятор, подтверждает человек — поэтому хранится, а не вычисляется (ТЗ §8а.3.1).
     late_reg_close_offset_min: Mapped[int | None] = mapped_column(Integer)

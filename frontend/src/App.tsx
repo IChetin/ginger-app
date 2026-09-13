@@ -16,6 +16,7 @@ import { ProfilePage } from "@/features/auth/ProfilePage";
 import { AdminChangeLogPage } from "@/pages/admin/AdminChangeLogPage";
 import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
 import { AdminEventDetailPage } from "@/pages/admin/AdminEventDetailPage";
+import { AdminGridImportPage } from "@/pages/admin/AdminGridImportPage";
 import { AdminLayout } from "@/pages/admin/AdminLayout";
 import { AdminOrganizersPage } from "@/pages/admin/AdminOrganizersPage";
 import { AdminParsersPage } from "@/pages/admin/AdminParsersPage";
@@ -77,6 +78,7 @@ export function AppRoutes() {
           <Route path="series" element={<AdminSeriesPage />} />
           <Route path="series/:id" element={<AdminSeriesDetailPage />} />
           <Route path="events/:id" element={<AdminEventDetailPage />} />
+          <Route path="grids" element={<AdminGridImportPage />} />
           <Route path="import" element={<ImportListPage />} />
           <Route path="import/bulk" element={<BulkImportPage />} />
           <Route path="import/bulk/:jobId" element={<BulkImportReviewPage />} />

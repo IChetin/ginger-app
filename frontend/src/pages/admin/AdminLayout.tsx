@@ -86,6 +86,13 @@ function SidebarNav({ showUsers, onNavigate }: { showUsers: boolean; onNavigate?
         </NavIcon>
         Панель
       </NavLink>
+      <NavLink to="/admin/grids" className={navClass} onClick={onNavigate}>
+        <NavIcon>
+          <rect x="3" y="4" width="18" height="16" rx="2" />
+          <path d="M3 9h18M8 4v16M13 13h5M13 17h3" />
+        </NavIcon>
+        Сетки клубов
+      </NavLink>
       <NavLink to="/admin/series" className={navClass} onClick={onNavigate}>
         <NavIcon>
           <rect x="4" y="5" width="16" height="15" rx="3" />
