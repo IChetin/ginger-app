@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -40,6 +40,9 @@ class ClubAdminRead(ClubBrief):
     is_visible: bool
     sort_order: int
     templates_count: int = 0
+    schedule_source_url: str | None = None
+    schedule_fetched_at: datetime | None = None
+    schedule_fetch_error: str | None = None
 
 
 class ClubAdminUpdate(BaseModel):
@@ -62,6 +65,7 @@ class ClubAdminUpdate(BaseModel):
     is_visible: bool | None = None
     is_promoted: bool | None = None
     sort_order: int | None = None
+    schedule_source_url: str | None = Field(default=None, pattern=r"^https://")
 
 
 class ManualRateUpdate(BaseModel):

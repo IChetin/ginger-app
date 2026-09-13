@@ -1,4 +1,4 @@
-import { apiDelete, apiGet, apiPostForm } from "@/api/client";
+import { apiDelete, apiGet, apiPost, apiPostForm } from "@/api/client";
 import type { BountyKind, PokerApp } from "@/api/types/tournaments";
 
 const ADMIN = "/api/v1/admin";
@@ -13,6 +13,9 @@ export interface AdminClub {
   chip_currency_code: string | null;
   is_visible: boolean;
   templates_count: number;
+  schedule_source_url: string | null;
+  schedule_fetched_at: string | null;
+  schedule_fetch_error: string | null;
 }
 
 export interface TemplateAdmin {
@@ -69,6 +72,10 @@ export function importClubTemplates(
   form.append("file", file);
   form.append("dry_run", dryRun ? "true" : "false");
   return apiPostForm(`${ADMIN}/clubs/${clubId}/templates/import`, form);
+}
+
+export function fetchClubTemplatesNow(clubId: string): Promise<TemplatesImportResult> {
+  return apiPost(`${ADMIN}/clubs/${clubId}/templates/fetch`);
 }
 
 export interface TemplateDeleteResult {

@@ -7,12 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import require_admin
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import AppError, NotFoundError
 from app.models.auth import User
 from app.models.tournaments import TournamentTemplate
 from app.schemas.clubs import ClubAdminRead, ClubAdminUpdate, ManualRateRead, ManualRateUpdate
 from app.schemas.tournaments import TemplateDeleteResult, TemplateRead, TemplatesImportResult
 from app.services import clubs as clubs_service
+from app.services.tournaments.auto_fetch import fetch_club_schedule
 from app.services.tournaments.imports import import_club_templates
 from app.services.tournaments.schedule_sync import delete_template
 
@@ -70,6 +71,21 @@ async def import_templates(
 ) -> TemplatesImportResult:
     """Сетка клуба из файла союза. По умолчанию — предпросмотр: изменения посчитаны и откатаны."""
     return await import_club_templates(db, club_id, await file.read(), dry_run=dry_run)
+
+
+@router.post("/clubs/{club_id}/templates/fetch", response_model=TemplatesImportResult)
+async def fetch_templates(
+    club_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> TemplatesImportResult:
+    """Забрать сетку по ссылке клуба сейчас, не дожидаясь ежедневной автозагрузки."""
+    club = await clubs_service.get_club(db, club_id)
+    try:
+        return await fetch_club_schedule(db, club)
+    except AppError:
+        # Текст ошибки остаётся в клубе — его видно в админке и после перезагрузки.
+        await db.commit()
+        raise
 
 
 @router.put("/rates/{currency_code}", response_model=ManualRateRead)

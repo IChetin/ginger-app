@@ -4,6 +4,7 @@ import {
   deleteClubTemplate,
   fetchAdminClubs,
   fetchClubTemplates,
+  fetchClubTemplatesNow,
   importClubTemplates,
 } from "@/features/admin/clubs/api";
 
@@ -34,6 +35,19 @@ export function useImportClubTemplates() {
         await queryClient.invalidateQueries({ queryKey: keys.clubs });
         await queryClient.invalidateQueries({ queryKey: ["tournaments"] });
       }
+    },
+  });
+}
+
+export function useFetchClubTemplatesNow() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (clubId: string) => fetchClubTemplatesNow(clubId),
+    onSettled: async (_result, _error, clubId) => {
+      // Ошибка тоже пишется в клуб — перечитываем в любом случае.
+      await queryClient.invalidateQueries({ queryKey: keys.clubs });
+      await queryClient.invalidateQueries({ queryKey: keys.templates(clubId) });
+      await queryClient.invalidateQueries({ queryKey: ["tournaments"] });
     },
   });
 }

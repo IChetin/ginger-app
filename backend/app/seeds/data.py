@@ -36,6 +36,7 @@ class ClubSeed(TypedDict):
     rakeback_note: str | None
     is_visible: bool
     sort_order: int
+    schedule_source_url: str | None
 
 
 class VenueSeed(TypedDict):
@@ -178,6 +179,7 @@ def _club(
     active_players: str | None = None,
     rakeback_note: str | None = None,
     is_visible: bool = True,
+    schedule_source_url: str | None = None,
 ) -> ClubSeed:
     organizer_ids = {item["slug"]: item["id"] for item in ORGANIZERS}
     return {
@@ -196,7 +198,19 @@ def _club(
         "rakeback_note": rakeback_note,
         "is_visible": is_visible,
         "sort_order": number * 10,
+        "schedule_source_url": schedule_source_url,
     }
+
+
+# Опубликованные листы союзов: сетка забирается раз в день (ответ 11.31).
+NUTS_SHEET_CSV: Final = (
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vS7-OC6PxF1wSXigQM9SMGZDgafNeY4uZzV2DUob"
+    "c8789xWwg5s-NDhLJXuXPIiKxIUrF8Q5vu3knQS/pub?gid=683108560&single=true&output=csv"
+)
+PRIVATE_G_SHEET_CSV: Final = (
+    "https://docs.google.com/spreadsheets/d/1YTeS47T9eISDV5CxgSNGGLxyUtEBNViTs4iC06u3qRE"
+    "/export?format=csv"
+)
 
 
 # Стартовый справочник клубов Ginger APP (ТЗ §10.2, форма ginger-app-clubs-form.html).
@@ -216,6 +230,7 @@ CLUBS: Final[list[ClubSeed]] = [
         limits="Low to High",
         peak_hours="17:00–07:00",
         active_players="200+",
+        schedule_source_url=NUTS_SHEET_CSV,
     ),
     _club(
         2,
@@ -256,5 +271,6 @@ CLUBS: Final[list[ClubSeed]] = [
         app_club_id="4207878",
         chip_value="100",
         chip_currency_code="RUB",
+        schedule_source_url=PRIVATE_G_SHEET_CSV,
     ),
 ]

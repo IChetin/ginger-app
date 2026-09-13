@@ -91,6 +91,8 @@ class Settings(BaseSettings):
     # бэкенда докручивает горизонт с этим интервалом. 0 — выключено.
     schedule_horizon_days: int = Field(default=14, ge=1, le=60)
     schedule_rollforward_interval_seconds: int = Field(default=6 * 3600, ge=0)
+    # Автозагрузка сеток по ссылкам на листы союзов; 0 — выключена.
+    schedule_fetch_interval_seconds: int = Field(default=24 * 3600, ge=0)
     # Сателлиты на турниры дешевле порога игрокам не показываем — это спам для нашей ЦА
     # с высоким чеком (решение Ивана 2026-09-13). В базе они остаются.
     minor_satellite_below_usd: int = Field(default=100, ge=0)

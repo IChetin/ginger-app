@@ -1,10 +1,12 @@
 import uuid
+from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
+    DateTime,
     ForeignKey,
     Index,
     Integer,
@@ -70,6 +72,12 @@ class Club(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     rakeback_note: Mapped[str | None] = mapped_column(Text)
     manager_note: Mapped[str | None] = mapped_column(String(128))
     notes: Mapped[str | None] = mapped_column(Text)
+
+    # Автозагрузка сетки раз в день: ссылка на CSV опубликованного листа союза (NUTS, ProSto).
+    schedule_source_url: Mapped[str | None] = mapped_column(Text)
+    schedule_fetched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Последняя неудача; при успешной загрузке очищается.
+    schedule_fetch_error: Mapped[str | None] = mapped_column(Text)
 
     is_visible: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     # «Продвигается сейчас» поднимает клуб на главную (ТЗ §8а.6).

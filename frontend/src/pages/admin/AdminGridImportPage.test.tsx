@@ -37,6 +37,9 @@ const club: AdminClub = {
   chip_currency_code: "RUB",
   is_visible: true,
   templates_count: 20,
+  schedule_source_url: null,
+  schedule_fetched_at: null,
+  schedule_fetch_error: null,
 };
 
 function result(overrides: Partial<TemplatesImportResult>): TemplatesImportResult {

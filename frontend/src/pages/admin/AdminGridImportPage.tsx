@@ -8,8 +8,10 @@ import {
   useAdminClubs,
   useClubTemplates,
   useDeleteClubTemplate,
+  useFetchClubTemplatesNow,
   useImportClubTemplates,
 } from "@/features/admin/clubs/hooks";
+import { formatDateMsk } from "@/features/chips/lib/format";
 import { APP_ICONS, APP_LABELS } from "@/features/tournaments/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -161,6 +163,7 @@ export function AdminGridImportPage() {
   const templates = useClubTemplates(showTemplates ? clubId : null);
   const confirm = useConfirm();
   const deleteTemplate = useDeleteClubTemplate();
+  const fetchNow = useFetchClubTemplatesNow();
   const [deletedNote, setDeletedNote] = useState<string | null>(null);
 
   const removeTemplate = async (template: TemplateAdmin) => {
@@ -256,6 +259,46 @@ export function AdminGridImportPage() {
               : " — курс не задан"}
             .
           </span>
+        </div>
+      ) : null}
+
+      {club?.schedule_source_url ? (
+        <div
+          data-testid="grid-auto-fetch"
+          className={cn(
+            "mt-2 rounded-md border px-2.5 py-2 text-[12px]",
+            club.schedule_fetch_error
+              ? "border-danger/35 bg-danger-soft"
+              : "border-line bg-surface",
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <span className="min-w-0 flex-1">
+              <b>Автозагрузка раз в день</b> из листа союза.{" "}
+              {club.schedule_fetched_at
+                ? `Обновлено ${formatDateMsk(club.schedule_fetched_at)} МСК.`
+                : "Ещё не загружалась."}
+            </span>
+            <button
+              type="button"
+              disabled={fetchNow.isPending}
+              onClick={() => fetchNow.mutate(club.id)}
+              className="border-line-strong bg-surface-2 h-8 shrink-0 rounded-md border px-2.5 font-bold disabled:opacity-45"
+            >
+              {fetchNow.isPending ? "Загружаем…" : "Загрузить сейчас"}
+            </button>
+          </div>
+          {club.schedule_fetch_error ? (
+            <p role="alert" className="text-danger mt-1 font-semibold">
+              {club.schedule_fetch_error}
+            </p>
+          ) : null}
+          {fetchNow.data && !club.schedule_fetch_error ? (
+            <p role="status" className="text-ink-2 mt-1">
+              Турниров в сетке: {fetchNow.data.templates_parsed} · новых{" "}
+              {fetchNow.data.templates_created} · убрано {fetchNow.data.templates_removed}
+            </p>
+          ) : null}
         </div>
       ) : null}
 
