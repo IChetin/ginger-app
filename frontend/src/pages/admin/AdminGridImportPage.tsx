@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 
 import { ApiError } from "@/api/client";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
 import type { TemplateAdmin, TemplatesImportResult } from "@/features/admin/clubs/api";
 import { formatTemplateDays } from "@/features/admin/clubs/format";
 import {
   useAdminClubs,
   useClubTemplates,
+  useDeleteClubTemplate,
   useImportClubTemplates,
 } from "@/features/admin/clubs/hooks";
 import { APP_ICONS, APP_LABELS } from "@/features/tournaments/lib/format";
@@ -84,7 +86,15 @@ function ResultPanel({ result }: { result: TemplatesImportResult }) {
   );
 }
 
-function TemplatesTable({ templates }: { templates: TemplateAdmin[] }) {
+function TemplatesTable({
+  templates,
+  pendingId,
+  onDelete,
+}: {
+  templates: TemplateAdmin[];
+  pendingId: string | null;
+  onDelete: (template: TemplateAdmin) => void;
+}) {
   if (templates.length === 0) {
     return <p className="text-ink-3 mt-2 text-[13px]">Сетка клуба пуста</p>;
   }
@@ -98,6 +108,9 @@ function TemplatesTable({ templates }: { templates: TemplateAdmin[] }) {
             <th className="py-1 pr-2 text-left">Турнир</th>
             <th className="py-1 pr-2 text-right">Бай-ин</th>
             <th className="py-1 text-right">GTD</th>
+            <th className="w-8 py-1">
+              <span className="sr-only">Удалить</span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -113,6 +126,17 @@ function TemplatesTable({ templates }: { templates: TemplateAdmin[] }) {
               </td>
               <td className="num text-ink-2 py-1 text-right">
                 {template.guarantee ? numberFormat.format(Number(template.guarantee)) : "—"}
+              </td>
+              <td className="py-0.5 pl-1 text-right">
+                <button
+                  type="button"
+                  aria-label={`Удалить ${template.name}`}
+                  disabled={pendingId === template.id}
+                  onClick={() => onDelete(template)}
+                  className="text-danger hover:bg-danger-soft h-7 w-7 rounded-md text-[14px] font-bold disabled:opacity-40"
+                >
+                  ✕
+                </button>
               </td>
             </tr>
           ))}
@@ -135,6 +159,29 @@ export function AdminGridImportPage() {
   const fileInput = useRef<HTMLInputElement>(null);
   const importMutation = useImportClubTemplates();
   const templates = useClubTemplates(showTemplates ? clubId : null);
+  const confirm = useConfirm();
+  const deleteTemplate = useDeleteClubTemplate();
+  const [deletedNote, setDeletedNote] = useState<string | null>(null);
+
+  const removeTemplate = async (template: TemplateAdmin) => {
+    if (!clubId) return;
+    const title = template.satellite_target ? `Sat → ${template.satellite_target}` : template.name;
+    const ok = await confirm({
+      title: "Удалить турнир из сетки?",
+      description: `${title} · ${formatTemplateDays(template)} ${template.start_time.slice(0, 5)}. Будущие старты пропадут из расписания, прошедшие останутся.`,
+      confirmLabel: "Удалить",
+      cancelLabel: "Отмена",
+      variant: "danger",
+    });
+    if (!ok) return;
+    deleteTemplate.mutate(
+      { clubId, templateId: template.id },
+      {
+        onSuccess: (result) =>
+          setDeletedNote(`«${title}» удалён, стартов убрано: ${result.tournaments_deleted}`),
+      },
+    );
+  };
 
   useEffect(() => {
     if (!clubId && clubs.data?.length) {
@@ -285,7 +332,25 @@ export function AdminGridImportPage() {
           ? "Скрыть текущую сетку"
           : `Текущая сетка клуба (${club?.templates_count ?? 0})`}
       </button>
-      {showTemplates && templates.data ? <TemplatesTable templates={templates.data} /> : null}
+      {deletedNote ? (
+        <p role="status" className="text-ink-2 mt-2 text-[12px] font-semibold">
+          {deletedNote}
+        </p>
+      ) : null}
+      {deleteTemplate.isError ? (
+        <p role="alert" className="text-danger mt-2 text-[12px] font-semibold">
+          {errorText(deleteTemplate.error)}
+        </p>
+      ) : null}
+      {showTemplates && templates.data ? (
+        <TemplatesTable
+          templates={templates.data}
+          pendingId={
+            deleteTemplate.isPending ? (deleteTemplate.variables?.templateId ?? null) : null
+          }
+          onDelete={(template) => void removeTemplate(template)}
+        />
+      ) : null}
     </div>
   );
 }

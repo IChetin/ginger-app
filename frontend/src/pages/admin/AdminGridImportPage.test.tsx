@@ -10,6 +10,7 @@ import { renderWithProviders } from "@/test/render";
 const fetchAdminClubs = vi.fn();
 const fetchClubTemplates = vi.fn();
 const importClubTemplates = vi.fn();
+const deleteClubTemplate = vi.fn();
 
 vi.mock("@/features/admin/clubs/api", async () => {
   const actual = await vi.importActual<typeof import("@/features/admin/clubs/api")>(
@@ -21,6 +22,8 @@ vi.mock("@/features/admin/clubs/api", async () => {
     fetchClubTemplates: (id: string) => fetchClubTemplates(id),
     importClubTemplates: (id: string, file: File, dryRun: boolean) =>
       importClubTemplates(id, file, dryRun),
+    deleteClubTemplate: (clubId: string, templateId: string) =>
+      deleteClubTemplate(clubId, templateId),
   };
 });
 
@@ -111,5 +114,20 @@ describe("AdminGridImportPage", () => {
     expect(
       formatTemplateDays(template({ valid_from: "2026-09-25", valid_until: "2026-09-25" })),
     ).toBe("25.09");
+  });
+  it("удаление турнира из сетки с подтверждением", async () => {
+    fetchClubTemplates.mockResolvedValue([
+      template({ id: "t-nlh", name: "MAIN EVENT NLH", weekdays: [7], month_week: -1 }),
+    ]);
+    deleteClubTemplate.mockResolvedValue({ tournaments_deleted: 1 });
+    renderWithProviders(<AdminGridImportPage />);
+
+    await userEvent.click(await screen.findByRole("button", { name: /Текущая сетка клуба/ }));
+    await userEvent.click(await screen.findByRole("button", { name: "Удалить MAIN EVENT NLH" }));
+    expect(await screen.findByText(/последнее вс 18:00/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Удалить" }));
+
+    await waitFor(() => expect(deleteClubTemplate).toHaveBeenCalledWith("c21", "t-nlh"));
+    expect(await screen.findByText(/стартов убрано: 1/)).toBeInTheDocument();
   });
 });

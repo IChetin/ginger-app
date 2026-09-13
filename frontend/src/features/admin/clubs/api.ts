@@ -1,4 +1,4 @@
-import { apiGet, apiPostForm } from "@/api/client";
+import { apiDelete, apiGet, apiPostForm } from "@/api/client";
 import type { BountyKind, PokerApp } from "@/api/types/tournaments";
 
 const ADMIN = "/api/v1/admin";
@@ -69,4 +69,15 @@ export function importClubTemplates(
   form.append("file", file);
   form.append("dry_run", dryRun ? "true" : "false");
   return apiPostForm(`${ADMIN}/clubs/${clubId}/templates/import`, form);
+}
+
+export interface TemplateDeleteResult {
+  tournaments_deleted: number;
+}
+
+export function deleteClubTemplate(
+  clubId: string,
+  templateId: string,
+): Promise<TemplateDeleteResult> {
+  return apiDelete(`${ADMIN}/clubs/${clubId}/templates/${templateId}`, { allowEmpty: false });
 }

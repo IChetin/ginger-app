@@ -307,3 +307,49 @@ async def test_admin_lists_clubs_with_template_counts(
     assert by_slug["ginger"]["organizer_name"] == "NUTS"
     assert by_slug["ginger21"]["templates_count"] == 0
     assert by_slug["godaddy"]["is_visible"] is False
+
+
+async def test_delete_template_removes_future_starts(
+    editor_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    ginger21 = await _club_id(db_session, "ginger21")
+    ginger = await _club_id(db_session, "ginger")
+    data = (Path(__file__).parent / "fixtures" / "poker21-2026-09-14.csv").read_bytes()
+    imported = await editor_client.post(
+        f"/api/v1/admin/clubs/{ginger21}/templates/import",
+        files={"file": ("p21.csv", data, "text/csv")},
+        data={"dry_run": "false"},
+    )
+    assert imported.status_code == 200, imported.text
+
+    templates = (await editor_client.get(f"/api/v1/admin/clubs/{ginger21}/templates")).json()
+    (super_sat,) = [item for item in templates if item["name"] == "SUPER SAT"]
+
+    # Чужой клуб — 404, ничего не удалено.
+    wrong = await editor_client.delete(f"/api/v1/admin/clubs/{ginger}/templates/{super_sat['id']}")
+    assert wrong.status_code == 404
+
+    response = await editor_client.delete(
+        f"/api/v1/admin/clubs/{ginger21}/templates/{super_sat['id']}"
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["tournaments_deleted"] >= 1
+
+    templates = (await editor_client.get(f"/api/v1/admin/clubs/{ginger21}/templates")).json()
+    assert "SUPER SAT" not in {item["name"] for item in templates}
+    left = await db_session.scalar(
+        select(func.count())
+        .select_from(Tournament)
+        .where(Tournament.name == "SUPER SAT", Tournament.starts_at >= datetime.now(UTC))
+    )
+    assert left == 0
+
+
+async def test_player_cannot_delete_template(
+    user_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    club_id = await _club_id(db_session, "ginger21")
+    response = await user_client.delete(
+        f"/api/v1/admin/clubs/{club_id}/templates/00000000-0000-4000-8000-000000000000"
+    )
+    assert response.status_code == 403

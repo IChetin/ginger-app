@@ -308,3 +308,35 @@ async def apply_templates_import(
         await session.execute(delete(TournamentTemplate).where(TournamentTemplate.id.in_(stale)))
         await session.flush()
     return templates_summary, expansion_summary
+
+
+async def delete_template(
+    session: AsyncSession,
+    club_id: uuid.UUID,
+    template_id: uuid.UUID,
+    *,
+    now: datetime | None = None,
+) -> int | None:
+    """Убрать турнир из сетки клуба. None — такого турнира в сетке клуба нет.
+
+    Будущие старты удаляются вместе с ним, кроме правленных руками (is_detached). Прошедшие и
+    уже идущие остаются как история — у них просто обнуляется ссылка на шаблон.
+    """
+    template = await session.get(TournamentTemplate, template_id)
+    if template is None or template.club_id != club_id:
+        return None
+    moment = (now or datetime.now(UTC)).astimezone(UTC)
+    future_ids = list(
+        await session.scalars(
+            select(Tournament.id).where(
+                Tournament.template_id == template_id,
+                Tournament.starts_at >= moment,
+                Tournament.is_detached.is_(False),
+            )
+        )
+    )
+    if future_ids:
+        await session.execute(delete(Tournament).where(Tournament.id.in_(future_ids)))
+    await session.delete(template)
+    await session.flush()
+    return len(future_ids)

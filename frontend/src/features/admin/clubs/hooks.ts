@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
+  deleteClubTemplate,
   fetchAdminClubs,
   fetchClubTemplates,
   importClubTemplates,
@@ -33,6 +34,19 @@ export function useImportClubTemplates() {
         await queryClient.invalidateQueries({ queryKey: keys.clubs });
         await queryClient.invalidateQueries({ queryKey: ["tournaments"] });
       }
+    },
+  });
+}
+
+export function useDeleteClubTemplate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { clubId: string; templateId: string }) =>
+      deleteClubTemplate(vars.clubId, vars.templateId),
+    onSuccess: async (_result, vars) => {
+      await queryClient.invalidateQueries({ queryKey: keys.templates(vars.clubId) });
+      await queryClient.invalidateQueries({ queryKey: keys.clubs });
+      await queryClient.invalidateQueries({ queryKey: ["tournaments"] });
     },
   });
 }

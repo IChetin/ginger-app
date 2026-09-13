@@ -107,3 +107,9 @@ class TournamentRead(TournamentFields):
     buyin_rub: Decimal | None
     guarantee_rub: Decimal | None
     has_addon: bool
+
+
+class TemplateDeleteResult(BaseModel):
+    """Турнир убран из сетки: сколько будущих стартов пропало из расписания."""
+
+    tournaments_deleted: int

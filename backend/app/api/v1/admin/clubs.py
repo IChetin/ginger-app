@@ -7,12 +7,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import require_admin
+from app.core.exceptions import NotFoundError
 from app.models.auth import User
 from app.models.tournaments import TournamentTemplate
 from app.schemas.clubs import ClubAdminRead, ClubAdminUpdate, ManualRateRead, ManualRateUpdate
-from app.schemas.tournaments import TemplateRead, TemplatesImportResult
+from app.schemas.tournaments import TemplateDeleteResult, TemplateRead, TemplatesImportResult
 from app.services import clubs as clubs_service
 from app.services.tournaments.imports import import_club_templates
+from app.services.tournaments.schedule_sync import delete_template
 
 router = APIRouter()
 
@@ -44,6 +46,19 @@ async def list_templates(
         .order_by(TournamentTemplate.start_time, TournamentTemplate.name)
     )
     return [TemplateRead.model_validate(item) for item in templates]
+
+
+@router.delete("/clubs/{club_id}/templates/{template_id}", response_model=TemplateDeleteResult)
+async def remove_template(
+    club_id: UUID,
+    template_id: UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> TemplateDeleteResult:
+    """Убрать турнир из сетки — например, отменённый турнир месяца, которого нет в новом файле."""
+    deleted = await delete_template(db, club_id, template_id)
+    if deleted is None:
+        raise NotFoundError("Турнир в сетке клуба не найден")
+    return TemplateDeleteResult(tournaments_deleted=deleted)
 
 
 @router.post("/clubs/{club_id}/templates/import", response_model=TemplatesImportResult)
