@@ -36,7 +36,7 @@ def test_parse_days(raw: str, expected: list[int] | None) -> None:
 def test_poker21_week() -> None:
     result = parse_manual_csv(POKER21)
     assert result.issues == []
-    assert result.rows_total == 20
+    assert result.rows_total == 22
 
     # «Турнир дня MKO» по 18:00 — три разных бай-ина, значит три шаблона.
     mko = [t for t in result.templates if t.name == "Турнир дня MKO"]
@@ -62,8 +62,8 @@ def test_poker21_week() -> None:
     (plo6,) = [t for t in result.templates if t.name == "PLO 6"]
     assert plo6.game_type is GameType.OTHER
 
-    # Стартов в неделю: 7 турниров дня + 8×7 ежедневных + 4×7 сателлитов + Super Sat.
-    assert sum(len(t.weekdays) for t in result.templates) == 7 + 56 + 28 + 1
+    # Дней в сетке: 7 турниров дня + 8×7 ежедневных + 4×7 сателлитов + Super Sat + 2 турнира месяца.
+    assert sum(len(t.weekdays) for t in result.templates) == 7 + 56 + 28 + 1 + 2
 
 
 def test_same_tournament_on_several_rows_merges_days() -> None:
@@ -169,3 +169,15 @@ def test_month_events_in_grid() -> None:
     assert result.issues == []
     by_name = {t.name: (t.weekdays, t.month_week) for t in result.templates}
     assert by_name == {"MAIN EVENT PKO": ([7], 2), "MAIN EVENT NLH": ([7], -1)}
+
+
+def test_poker21_month_events() -> None:
+    by_name = {t.name: t for t in parse_manual_csv(POKER21).templates}
+    pko, nlh = by_name["MAIN EVENT PKO"], by_name["MAIN EVENT NLH"]
+    assert (pko.weekdays, pko.month_week, pko.start_time, pko.guarantee) == (
+        [7],
+        2,
+        time(18, 0),
+        Decimal("800000"),
+    )
+    assert (nlh.weekdays, nlh.month_week, nlh.buyin) == ([7], -1, Decimal("3000"))

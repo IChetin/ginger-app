@@ -261,7 +261,7 @@ async def test_manual_grid_import_for_poker21(
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["issues"] == []
-    assert body["rows_total"] == 20
+    assert body["rows_total"] == 22
     assert body["tournaments_created"] > 100
 
 
