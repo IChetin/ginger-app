@@ -246,3 +246,20 @@ async def test_highlights_are_top_guarantees_per_day_without_login(
     items = response.json()
     assert [item["name"] for item in items] == ["USDT 1000", "RUB 50000"]
     assert items[0]["guarantee_rub"] == "88000"
+
+
+async def test_manual_grid_import_for_poker21(
+    editor_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    club_id = await _club_id(db_session, "ginger21")
+    data = (Path(__file__).parent / "fixtures" / "poker21-2026-09-14.csv").read_bytes()
+    response = await editor_client.post(
+        f"/api/v1/admin/clubs/{club_id}/templates/import",
+        files={"file": ("p21.csv", data, "text/csv")},
+        data={"dry_run": "false"},
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["issues"] == []
+    assert body["rows_total"] == 23
+    assert body["tournaments_created"] > 100

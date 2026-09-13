@@ -16,7 +16,7 @@ from app.core.config import get_settings
 from app.core.exceptions import AppError
 from app.schemas.tournaments import TemplateParseResult, TemplatesImportResult
 from app.services.clubs import get_club
-from app.services.tournaments import nuts_csv
+from app.services.tournaments import manual_csv, nuts_csv
 from app.services.tournaments.schedule_sync import apply_templates_import
 
 # Союз → (источник шаблонов, парсер).
@@ -38,16 +38,23 @@ async def import_club_templates(
         raise AppError("file_too_large", "Файл слишком большой", 413)
     club = await get_club(session, club_id)
     union = club.organizer.slug if club.organizer else None
-    if union not in _PARSERS:
+    # Ручная сетка (наш CSV) подходит любому клубу; иначе — парсер формата союза.
+    source: str
+    parse: Callable[[bytes], TemplateParseResult]
+    if manual_csv.looks_like_manual_csv(data):
+        source, parse = manual_csv.SOURCE, manual_csv.parse_manual_csv
+    elif union in _PARSERS:
+        source, parse = _PARSERS[union]
+    else:
         raise AppError(
             "no_template_parser",
-            "Для союза этого клуба импорт сетки из файла пока не сделан",
+            "Формат не распознан: для этого клуба загрузите ручную сетку "
+            f"(колонки {', '.join(manual_csv.REQUIRED_COLUMNS)})",
             422,
         )
-    source, parse = _PARSERS[union]
     try:
         parsed = parse(data)
-    except (nuts_csv.NutsCsvError, UnicodeDecodeError) as error:
+    except (nuts_csv.NutsCsvError, manual_csv.ManualCsvError, UnicodeDecodeError) as error:
         raise AppError("unrecognized_file", f"Файл не распознан: {error}", 422) from error
 
     # Предпросмотр — тот же импорт внутри savepoint, который затем откатывается: счётчики

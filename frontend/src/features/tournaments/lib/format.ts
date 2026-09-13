@@ -10,6 +10,13 @@ export const APP_LABELS: Record<PokerApp, string> = {
   other: "Другое",
 };
 
+/** Официальные иконки приложений из App Store, лежат в public/apps. */
+export const APP_ICONS: Partial<Record<PokerApp, string>> = {
+  pppoker: "/apps/pppoker.png",
+  xpoker: "/apps/xpoker.png",
+  poker21: "/apps/poker21.png",
+};
+
 const amountFormat = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 });
 
 /**

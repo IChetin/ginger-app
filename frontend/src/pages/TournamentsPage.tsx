@@ -11,6 +11,7 @@ import {
   type RangeKey,
 } from "@/features/tournaments/hooks";
 import {
+  APP_ICONS,
   APP_LABELS,
   formatCountdown,
   formatDayLabel,
@@ -40,6 +41,13 @@ const PERIOD_OPTIONS: { value: DayPeriod; label: string }[] = [
 
 const rubFormat = new Intl.NumberFormat("ru-RU");
 
+function AppIcon({ app, className }: { app: PokerApp; className: string }) {
+  const src = APP_ICONS[app];
+  return src ? (
+    <img src={src} alt="" aria-hidden="true" className={cn("rounded-[22%]", className)} />
+  ) : null;
+}
+
 function toggle<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
 }
@@ -59,7 +67,7 @@ function Chip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "h-9 shrink-0 rounded-full border px-3.5 text-[13px] font-bold whitespace-nowrap",
+        "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[13px] font-bold whitespace-nowrap",
         active ? "border-line-gold bg-gold-soft text-gold" : "border-line bg-surface text-ink-2",
       )}
     >
@@ -137,6 +145,7 @@ function TournamentCard({ tournament, now }: { tournament: Tournament; now: Date
             {tournament.name}
           </h3>
           <p className="text-ink-3 mt-0.5 text-[12px]">
+            <AppIcon app={tournament.club.app} className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />
             {tournament.club.name} · {APP_LABELS[tournament.club.app]}
           </p>
         </div>
@@ -237,6 +246,7 @@ function TableView({ groups, now }: { groups: [string, Tournament[]][]; now: Dat
                         {item.name}
                       </span>
                       <span className="text-ink-3 ml-1.5 text-[11px] font-normal">
+                        <AppIcon app={item.club.app} className="mr-1 inline h-3 w-3 align-[-1px]" />
                         {item.club.name}
                       </span>
                     </div>
@@ -294,6 +304,7 @@ export function TournamentsPage() {
               active={filters.apps.includes(app)}
               onClick={() => update({ apps: toggle(filters.apps, app) })}
             >
+              <AppIcon app={app} className="h-5 w-5" />
               {APP_LABELS[app]}
             </Chip>
           ))}
