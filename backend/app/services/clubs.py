@@ -30,15 +30,11 @@ async def list_public_clubs(session: AsyncSession) -> list[ClubBrief]:
 
 
 async def list_admin_clubs(session: AsyncSession) -> list[ClubAdminRead]:
-    counts = dict(
-        (
-            await session.execute(
-                select(TournamentTemplate.club_id, func.count()).group_by(
-                    TournamentTemplate.club_id
-                )
-            )
-        ).tuples()
+    # Не dict(result): у Result есть .keys(), и dict() принимает его за словарь.
+    rows = await session.execute(
+        select(TournamentTemplate.club_id, func.count()).group_by(TournamentTemplate.club_id)
     )
+    counts = {club_id: count for club_id, count in rows.tuples()}
     clubs = await session.scalars(
         select(Club).options(selectinload(Club.organizer)).order_by(Club.sort_order, Club.name)
     )

@@ -292,3 +292,18 @@ async def test_minor_satellites_hidden_from_players(
 
     response = await user_client.get("/api/v1/tournaments")
     assert [item["name"] for item in response.json()] == ["SAT 200", "SAT 5000", "REGULAR"]
+
+
+async def test_admin_lists_clubs_with_template_counts(
+    editor_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    club_id = await _club_id(db_session, "ginger")
+    await _import(editor_client, club_id, dry_run=False)
+
+    response = await editor_client.get("/api/v1/admin/clubs")
+    assert response.status_code == 200, response.text
+    by_slug = {item["slug"]: item for item in response.json()}
+    assert by_slug["ginger"]["templates_count"] > 100
+    assert by_slug["ginger"]["organizer_name"] == "NUTS"
+    assert by_slug["ginger21"]["templates_count"] == 0
+    assert by_slug["godaddy"]["is_visible"] is False
