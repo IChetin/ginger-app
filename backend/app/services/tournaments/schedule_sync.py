@@ -82,6 +82,20 @@ class ExpansionSummary:
     detached_kept: int = 0
 
 
+def template_kind(item: TemplateDraft | TournamentTemplate) -> str:
+    """Часть сетки: еженедельная, турниры месяца или разовые даты.
+
+    Файл заменяет только те части, строки которых в нём есть. Недельная сетка Poker21 без
+    турниров месяца не удаляет турниры месяца, а файл с одними турнирами месяца не трогает
+    недельную сетку.
+    """
+    if item.month_week is not None:
+        return "monthly"
+    if item.valid_from is not None and item.valid_from == item.valid_until:
+        return "dated"
+    return "weekly"
+
+
 def _signature(item: TemplateDraft | TournamentTemplate) -> tuple[object, ...]:
     return tuple(getattr(item, name) for name in _SIGNATURE_FIELDS)
 
@@ -95,7 +109,8 @@ async def sync_club_templates(
 ) -> TemplateSyncSummary:
     """Шаблоны клуба с этим `source` приводятся к `drafts`.
 
-    Шаблоны, заведённые руками (source IS NULL) или другим источником, не трогаются.
+    Шаблоны, заведённые руками (source IS NULL) или другим источником, не трогаются. Из шаблонов
+    источника устаревшими считаются только части сетки, которые есть в файле (template_kind).
     Устаревшие не удаляются здесь, а возвращаются в `stale_template_ids` — удалить их нужно
     после `expand_templates` (см. `apply_templates_import`).
     """
@@ -145,7 +160,10 @@ async def sync_club_templates(
         else:
             summary.unchanged += 1
 
-    stale.extend(by_signature.values())
+    kinds_in_file = {template_kind(draft) for draft in drafts}
+    stale.extend(
+        template for template in by_signature.values() if template_kind(template) in kinds_in_file
+    )
     summary.stale_template_ids = [template.id for template in stale]
     await session.flush()
     return summary

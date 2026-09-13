@@ -144,18 +144,18 @@ async def test_past_starts_are_not_touched(db_session: AsyncSession) -> None:
     sunday_before = (await _tournaments(db_session, club_id))[0]
     assert sunday_before.starts_at.astimezone(MSK).isoweekday() == 7
 
-    await _import(db_session, club_id, [])
+    # Следующая недельная сетка — без этого турнира.
+    await _import(db_session, club_id, [_draft([1], "1000", name="OTHER")])
 
     tournaments = await _tournaments(db_session, club_id)
-    assert [item.id for item in tournaments] == [sunday_before.id]
-    assert (
-        await db_session.scalar(
-            select(func.count())
-            .select_from(TournamentTemplate)
-            .where(TournamentTemplate.club_id == club_id)
-        )
-        == 0
+    assert tournaments[0].id == sunday_before.id
+    assert [item.name for item in tournaments] == ["MAIN", "OTHER"]
+    templates = await db_session.scalar(
+        select(func.count())
+        .select_from(TournamentTemplate)
+        .where(TournamentTemplate.club_id == club_id)
     )
+    assert templates == 1
 
 
 async def test_rollforward_extends_horizon(db_session: AsyncSession) -> None:
@@ -196,3 +196,38 @@ async def test_month_week_templates(
 
     tournaments = await _tournaments(db_session, club_id)
     assert [item.starts_at.astimezone(MSK).day for item in tournaments] == [expected_day]
+
+
+async def test_upload_replaces_only_parts_present_in_file(db_session: AsyncSession) -> None:
+    club_id = await _club(db_session)
+    weekly = _draft([1, 2, 3, 4, 5, 6, 7], "30000", name="DAILY")
+    month_event = _draft([7], "800000", name="MAIN EVENT")
+    month_event.month_week = -1
+
+    await _import(db_session, club_id, [weekly, month_event])
+    # Неделя без турниров месяца: турнир месяца остаётся.
+    await _import(db_session, club_id, [_draft([1, 2, 3, 4, 5, 6, 7], "25000", name="DAILY")])
+    names = set(
+        await db_session.scalars(
+            select(TournamentTemplate.name).where(TournamentTemplate.club_id == club_id)
+        )
+    )
+    assert names == {"DAILY", "MAIN EVENT"}
+
+    # Файл с турнирами месяца заменяет турниры месяца, недельную сетку не трогает.
+    other_month_event = _draft([7], "1000000", name="MAIN EVENT NLH")
+    other_month_event.month_week = 2
+    await _import(db_session, club_id, [other_month_event])
+    names = set(
+        await db_session.scalars(
+            select(TournamentTemplate.name).where(TournamentTemplate.club_id == club_id)
+        )
+    )
+    assert names == {"DAILY", "MAIN EVENT NLH"}
+
+
+async def test_empty_file_removes_nothing(db_session: AsyncSession) -> None:
+    club_id = await _club(db_session)
+    await _import(db_session, club_id, [_draft([1, 2, 3, 4, 5], "1000")])
+    await _import(db_session, club_id, [])
+    assert len(await _tournaments(db_session, club_id)) == 5

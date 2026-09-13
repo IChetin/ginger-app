@@ -168,7 +168,8 @@ export function AdminGridImportPage() {
     <div className="mx-auto w-full max-w-[720px] px-3 py-4" data-testid="admin-grid-import">
       <h1 className="text-[20px] font-extrabold">Сетки клубов</h1>
       <p className="text-ink-2 mt-0.5 text-[13px]">
-        Загрузите файл → проверьте, что изменится → примените. Новая сетка заменяет прежнюю.
+        Загрузите файл → проверьте, что изменится → примените. Файл заменяет только те части сетки,
+        что в нём есть: недельную сетку, турниры месяца, разовые даты.
       </p>
 
       <label className="mt-3 block text-[12px] font-bold">
