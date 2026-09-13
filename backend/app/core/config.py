@@ -163,6 +163,27 @@ class Settings(BaseSettings):
     def allows_mock_email(self) -> bool:
         return self.is_development or self.is_test
 
+    def production_problems(self) -> list[str]:
+        """Что в настройках недопустимо для боевого сервера — с этим бэкенд не стартует.
+
+        Секреты по умолчанию лежат в открытом репозитории, cookie без Secure уйдёт по http,
+        localhost в CORS и пароль базы из примера — следы dev-конфига.
+        """
+        problems: list[str] = []
+        for name in ("otp_hmac_secret", "preview_hmac_secret"):
+            value: str = getattr(self, name)
+            if "change-me" in value or len(value) < 32:
+                problems.append(f"{name.upper()}: нужен случайный секрет от 32 символов")
+        if not self.session_cookie_secure:
+            problems.append("SESSION_COOKIE_SECURE=true")
+        if any("localhost" in origin for origin in self.cors_origins_list):
+            problems.append("CORS_ORIGINS без localhost")
+        if not self.frontend_base_url.startswith("https://"):
+            problems.append("FRONTEND_BASE_URL на https")
+        if ":day2@" in self.database_url:
+            problems.append("DATABASE_URL: пароль базы по умолчанию")
+        return problems
+
 
 @lru_cache
 def get_settings() -> Settings:

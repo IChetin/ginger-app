@@ -37,6 +37,9 @@ async def verify_captcha_token(
 
     provider = settings.captcha_provider.strip().lower()
     if provider == "mock":
+        # Токен заглушки лежит в репозитории: на боевом сервере он капчу не проходит.
+        if settings.is_production:
+            raise CaptchaUnavailableError("Captcha is not configured")
         if token == settings.captcha_mock_token:
             return
         raise CaptchaInvalidError()

@@ -21,6 +21,10 @@ from app.schemas.errors import ErrorBody, ErrorResponse
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    boot_settings = get_settings()
+    if boot_settings.is_production and (problems := boot_settings.production_problems()):
+        raise RuntimeError("Небезопасные настройки production: " + "; ".join(problems))
+
     from app.core.database import async_session_factory
     from app.services.parser_profiles import (
         apply_default_organizer_bindings,

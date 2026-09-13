@@ -1,0 +1,84 @@
+# Боевой стенд Ginger APP на одном VPS (deploy/README.md).
+#
+# Отличия от docker-compose.yml для разработки:
+# - наружу открыт только Caddy (80/443, HTTPS сам); база и бэкенд — внутри сети compose;
+# - все настройки и секреты — в .env рядом с этим файлом (создаёт deploy/gen-secrets.sh);
+# - фронт не собирается на сервере (2 ГБ памяти): готовая сборка лежит в ./frontend-dist.
+name: ginger
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    env_file: .env
+    # Сервер маленький: скромные буферы и мало соединений.
+    command: ["postgres", "-c", "shared_buffers=128MB", "-c", "max_connections=40"]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  db-init:
+    build:
+      context: ./backend
+    env_file: .env
+    command: sh -c "alembic upgrade head && python -m app.seeds"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  backend:
+    build:
+      context: ./backend
+    env_file: .env
+    environment:
+      # Канонические страницы серий Day2 не отдаём.
+      SPA_INTERNAL_URL: ""
+    volumes:
+      - uploads:/data/uploads
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./worker
+    env_file: .env
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2.9-alpine
+    env_file: .env
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - ./frontend-dist:/srv/frontend:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  uploads:
+  caddy_data:
+  caddy_config:

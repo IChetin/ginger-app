@@ -1,0 +1,41 @@
+# Боевой Caddy: HTTPS от Let's Encrypt сам, API — в бэкенд, остальное — собранный фронт.
+# DOMAIN приходит из .env (например, lisa52.com).
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Frame-Options "DENY"
+		-Server
+	}
+
+	handle /api/* {
+		# Скриншоты и картинки в тредах — до 10 МБ, с запасом на multipart.
+		request_body {
+			max_size 12MB
+		}
+		reverse_proxy backend:8000
+	}
+
+	handle {
+		root * /srv/frontend
+
+		# Файлы сборки с хешем в имени не меняются — кэшируем надолго.
+		@assets path /assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+
+		# Service worker, манифест и index.html — всегда свежие, иначе обновление не доедет.
+		@fresh path /sw.js /manifest.webmanifest /index.html /
+		header @fresh Cache-Control "no-cache"
+
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}
