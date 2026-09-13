@@ -5,6 +5,15 @@ import { cn } from "@/lib/utils";
 const iconClass =
   "h-[22px] w-[22px] stroke-current fill-none [stroke-width:1.8] [stroke-linecap:round] [stroke-linejoin:round]";
 
+function IconTournaments() {
+  return (
+    <svg className={iconClass} viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M8 4h8v5a4 4 0 0 1-8 0z" />
+      <path d="M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M9 20h6M10 17h4" />
+    </svg>
+  );
+}
+
 function IconSeries() {
   return (
     <svg className={iconClass} viewBox="0 0 24 24" aria-hidden="true">
@@ -40,6 +49,7 @@ type NavItem = {
 };
 
 const items: NavItem[] = [
+  { to: "/tournaments", label: "Турниры", icon: IconTournaments, match: "exact" },
   { to: "/", label: "Серии", icon: IconSeries, match: "series" },
   { to: "/calendar", label: "Календарь", icon: IconCalendar, match: "exact" },
   { to: "/bookmarks", label: "Закладки", icon: IconBookmarks, match: "exact" },

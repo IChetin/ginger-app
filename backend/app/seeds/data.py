@@ -60,8 +60,8 @@ CURRENCIES: Final[list[CurrencySeed]] = [
     {"code": "USD", "symbol": "$"},
     {"code": "EUR", "symbol": "€"},
     # Ginger APP: курс фишки в долларовых клубах. ЦБ USDT не публикует — курс к рублю
-    # задаётся вручную (ТЗ §8а.3).
-    {"code": "USDT", "symbol": "₮"},
+    # задаётся вручную (ТЗ §8а.3). Игроку USDT показываем как «$» — для него это тот же доллар.
+    {"code": "USDT", "symbol": "$"},
 ]
 
 ORGANIZERS: Final[list[OrganizerSeed]] = [
@@ -221,9 +221,17 @@ CLUBS: Final[list[ClubSeed]] = [
         chip_value="1",
         chip_currency_code="RUB",
     ),
-    _club(3, "Ginger+", "ginger-plus", "xpoker", organizer_slug="black-sea"),
-    _club(4, "G.Psy", "g-psy", "pppoker"),
-    _club(5, "Синий Апельсин", "siniy-apelsin", "pppoker"),
+    _club(
+        3,
+        "Ginger+",
+        "ginger-plus",
+        "xpoker",
+        organizer_slug="black-sea",
+        chip_value="100",
+        chip_currency_code="RUB",
+    ),
+    _club(4, "G.Psy", "g-psy", "pppoker", chip_value="100", chip_currency_code="RUB"),
+    # 5 — «Синий Апельсин», убран 2026-09-13: клуб неактивен.
     _club(
         6,
         "GoDaddy!",
@@ -233,6 +241,13 @@ CLUBS: Final[list[ClubSeed]] = [
         rakeback_note="Рейкбек со всего фи, MTT не вычитаем",
         is_visible=False,
     ),
-    # Ответ Ивана 5.6: Private.G пока игнорируем — в справочнике есть, игрокам не виден.
-    _club(7, "Private.G", "private-g", "pppoker", is_visible=False),
+    _club(
+        7,
+        "Private.G",
+        "private-g",
+        "pppoker",
+        app_club_id="4207878",
+        chip_value="100",
+        chip_currency_code="RUB",
+    ),
 ]

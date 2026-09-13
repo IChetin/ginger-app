@@ -50,9 +50,7 @@ logger = logging.getLogger(__name__)
 
 _ACCOUNT_NOT_FOUND_MSG = "Аккаунт с таким email не найден. Зарегистрируйтесь"
 _ACCOUNT_EXISTS_MSG = "Аккаунт с таким email уже есть. Войдите"
-_LOGIN_LOCKOUT_MSG = (
-    "Слишком много неудачных попыток входа. Попробуйте снова через 15 минут"
-)
+_LOGIN_LOCKOUT_MSG = "Слишком много неудачных попыток входа. Попробуйте снова через 15 минут"
 
 
 @dataclass(frozen=True, slots=True)
@@ -465,9 +463,7 @@ async def request_otp(
 
     user = _visible_user(await session.scalar(select(User).where(User.email == email)))
     if user is None:
-        await _record_account_lookup(
-            session, email=email, ip_hash=ip_hash, settings=settings
-        )
+        await _record_account_lookup(session, email=email, ip_hash=ip_hash, settings=settings)
         raise AccountNotFoundError(_ACCOUNT_NOT_FOUND_MSG)
 
     return await _issue_otp(
@@ -532,12 +528,8 @@ async def register_start(
         settings=settings,
     )
 
-    if is_system_user_email(email) or await session.scalar(
-        select(User).where(User.email == email)
-    ):
-        await _record_account_lookup(
-            session, email=email, ip_hash=ip_hash, settings=settings
-        )
+    if is_system_user_email(email) or await session.scalar(select(User).where(User.email == email)):
+        await _record_account_lookup(session, email=email, ip_hash=ip_hash, settings=settings)
         raise AccountExistsError(_ACCOUNT_EXISTS_MSG)
 
     return await _issue_otp(
@@ -805,12 +797,8 @@ async def update_profile(
     body: UpdateMeBody,
 ) -> User:
     if body.nickname is not None and body.nickname != user.nickname:
-        key_changed = normalize_nickname_key(body.nickname) != normalize_nickname_key(
-            user.nickname
-        )
-        if key_changed and await _nickname_taken(
-            session, body.nickname, exclude_user_id=user.id
-        ):
+        key_changed = normalize_nickname_key(body.nickname) != normalize_nickname_key(user.nickname)
+        if key_changed and await _nickname_taken(session, body.nickname, exclude_user_id=user.id):
             raise ConflictError(NICKNAME_TAKEN_MSG)
         user.nickname = body.nickname
 
@@ -828,6 +816,9 @@ async def update_profile(
     if "timezone" in body.model_fields_set:
         user.timezone = body.timezone
 
+    if body.schedule_view is not None:
+        user.schedule_view = body.schedule_view
+
     await session.flush()
     await session.refresh(user)
     return user
@@ -841,6 +832,7 @@ def user_to_me(user: User) -> UserMe:
         nickname=user.nickname,
         base_currency=user.base_currency,
         timezone=user.timezone,
+        schedule_view="table" if user.schedule_view == "table" else "cards",
         role=user.role,
         default_reminder_offsets=list(user.default_reminder_offsets),
         email_verified=user.email_verified_at is not None,

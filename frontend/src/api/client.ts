@@ -44,6 +44,7 @@ import type {
   SeriesListResponse,
   SeriesScheduleResponse,
 } from "@/api/types/schedule";
+import type { Tournament, TournamentsParams } from "@/api/types/tournaments";
 
 export type ApiRequestHeaders = HeadersInit;
 
@@ -295,6 +296,14 @@ export async function fetchSeriesSchedulePdf(
 /** Справочник валют. Раньше жил в трекере (/results/currencies), нужен профилю для базовой валюты. */
 export function fetchCurrencies(): Promise<CurrencyBrief[]> {
   return apiGet("/api/v1/currencies");
+}
+
+/** Ginger APP: расписание турниров клубов. Без from/to — ближайшие сутки. */
+export function fetchTournaments(
+  params: TournamentsParams,
+  signal?: AbortSignal,
+): Promise<Tournament[]> {
+  return apiGet(`/api/v1/tournaments${buildQuery(params)}`, undefined, signal);
 }
 
 export function fetchEventDetail(eventId: string): Promise<EventDetail> {

@@ -36,6 +36,7 @@ const adminMe: UserMe = {
   nickname: "admin",
   base_currency: "RUB",
   timezone: null,
+  schedule_view: "cards",
   role: "admin",
   default_reminder_offsets: [1440, 120],
   email_verified: true,

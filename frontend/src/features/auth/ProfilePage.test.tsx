@@ -34,6 +34,7 @@ const userFixture: UserMe = {
   nickname: "player",
   base_currency: "RUB",
   timezone: null,
+  schedule_view: "cards",
   role: "user",
   default_reminder_offsets: [1440, 120],
   email_verified: true,

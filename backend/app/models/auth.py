@@ -53,6 +53,12 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         String(64),
         comment="IANA timezone; NULL = detect from browser",
     )
+    # Ginger APP: вид расписания турниров — карточки или плотная таблица (как лобби Покерка).
+    schedule_view: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+        server_default=text("'cards'"),
+    )
     role: Mapped[UserRole] = mapped_column(
         pg_enum(UserRole, "user_role"),
         nullable=False,
@@ -64,9 +70,7 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         server_default=text("'{1440,120}'::integer[]"),
     )
 
-    __table_args__ = (
-        Index("uq_users_nickname_lower", func.lower(nickname), unique=True),
-    )
+    __table_args__ = (Index("uq_users_nickname_lower", func.lower(nickname), unique=True),)
 
     currency: Mapped["Currency"] = relationship(back_populates="users")
     sessions: Mapped[list["Session"]] = relationship(

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
@@ -118,6 +119,7 @@ class UpdateMeBody(BaseModel):
     # None clears to auto (browser); omit field to leave unchanged.
     timezone: str | None = None
     default_reminder_offsets: list[int] | None = None
+    schedule_view: Literal["cards", "table"] | None = None
 
     @field_validator("nickname")
     @classmethod
@@ -160,6 +162,7 @@ class UserMe(BaseModel):
     nickname: str
     base_currency: str
     timezone: str | None
+    schedule_view: Literal["cards", "table"]
     role: UserRole
     default_reminder_offsets: list[int]
     email_verified: bool

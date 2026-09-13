@@ -196,7 +196,6 @@ def parse_nuts_csv(data: bytes) -> TemplateParseResult:
             if late_reg_levels
             else None
         )
-        early_bird = _text(cell("EB"))
 
         draft = TemplateDraft(
             name=name,
@@ -214,8 +213,7 @@ def parse_nuts_csv(data: bytes) -> TemplateParseResult:
             level_minutes=level_minutes,
             structure=_structure(cell("Structure")),
             ticket_value=_decimal(cell("Ticket")),
-            # Что значит EB в листе NUTS — уточнить у Ивана; пока храним как есть.
-            notes=f"EB: {early_bird}" if early_bird else None,
+            early_bird_players=_int(cell("EB")),
             weekdays=[msk_weekday],
             start_time=start_time,
             late_reg_close_offset_min=offset,

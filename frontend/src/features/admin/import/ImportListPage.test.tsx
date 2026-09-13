@@ -49,6 +49,7 @@ const userFixture: UserMe = {
   nickname: "editor",
   base_currency: "RUB",
   timezone: null,
+  schedule_view: "cards",
   role: "editor",
   default_reminder_offsets: [1440, 120],
   email_verified: true,

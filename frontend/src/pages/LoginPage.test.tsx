@@ -39,6 +39,7 @@ const userFixture: UserMe = {
   nickname: "player",
   base_currency: "RUB",
   timezone: null,
+  schedule_view: "cards",
   role: "user",
   default_reminder_offsets: [1440, 120],
   email_verified: true,
@@ -122,9 +123,7 @@ describe("LoginPage", () => {
     renderWithProviders(<AppRoutes />, { route: "/login" });
     await fillCredentials(user);
     await user.click(screen.getByRole("button", { name: "Войти" }));
-    expect(await screen.findByTestId("login-error")).toHaveTextContent(
-      "Неверный email или пароль",
-    );
+    expect(await screen.findByTestId("login-error")).toHaveTextContent("Неверный email или пароль");
   });
 
   it("starts OTP flow and verifies code", async () => {
@@ -161,9 +160,9 @@ describe("LoginPage", () => {
     await user.type(await screen.findByLabelText("Email"), "nobody@example.com");
     await user.click(screen.getByRole("button", { name: "Войти по коду из письма" }));
     expect(await screen.findByTestId("login-error")).toHaveTextContent(/не найден/i);
-    expect(screen.getAllByRole("link", { name: "Зарегистрироваться" }).length).toBeGreaterThanOrEqual(
-      1,
-    );
+    expect(
+      screen.getAllByRole("link", { name: "Зарегистрироваться" }).length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it("keeps OTP cells shrinkable without a width cap", async () => {
@@ -173,7 +172,9 @@ describe("LoginPage", () => {
     await user.click(screen.getByRole("button", { name: "Войти по коду из письма" }));
     await screen.findByTestId("code-step");
 
-    const cells = screen.getAllByRole("textbox").filter((el) => el.getAttribute("inputmode") === "numeric");
+    const cells = screen
+      .getAllByRole("textbox")
+      .filter((el) => el.getAttribute("inputmode") === "numeric");
     expect(cells).toHaveLength(6);
     for (const cell of cells) {
       expect(cell.className).toMatch(/(^|\s)min-w-0(\s|$)/);

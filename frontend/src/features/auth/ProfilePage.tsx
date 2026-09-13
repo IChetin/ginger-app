@@ -11,6 +11,8 @@ import {
   TimezoneSheet,
 } from "@/components/profile/ProfileEditSheets";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
+import { ScheduleViewSheet } from "@/components/profile/ScheduleViewSheet";
+import { SCHEDULE_VIEW_LABELS } from "@/features/tournaments/lib/scheduleView";
 import { SettingsList } from "@/components/profile/SettingsList";
 import { ThemeSheet } from "@/components/profile/ThemeSheet";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
@@ -51,6 +53,7 @@ export function ProfilePage() {
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [timezoneOpen, setTimezoneOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
+  const [scheduleViewOpen, setScheduleViewOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -89,6 +92,7 @@ export function ProfilePage() {
         currencyLabel={`${currency?.symbol ?? ""} ${user.base_currency}`.trim()}
         timezoneLabel={timezoneLabel}
         themeLabel={THEME_LABELS[theme.choice]}
+        scheduleViewLabel={SCHEDULE_VIEW_LABELS[user.schedule_view]}
         pushEnabled={Boolean(pushSubscription.data)}
         pushPending={pushPending}
         hasPassword={user.has_password}
@@ -106,6 +110,7 @@ export function ProfilePage() {
           setTimezoneOpen(true);
         }}
         onTheme={() => setThemeOpen(true)}
+        onScheduleView={() => setScheduleViewOpen(true)}
         onPassword={() => {
           setPassword.reset();
           changePassword.reset();
@@ -198,6 +203,18 @@ export function ProfilePage() {
         onSelect={(next) => {
           theme.setTheme(next);
           setThemeOpen(false);
+        }}
+      />
+      <ScheduleViewSheet
+        open={scheduleViewOpen}
+        onOpenChange={setScheduleViewOpen}
+        choice={user.schedule_view}
+        isPending={updateProfile.isPending}
+        onSelect={(schedule_view) => {
+          void updateProfile
+            .mutateAsync({ schedule_view })
+            .then(() => setScheduleViewOpen(false))
+            .catch(() => showToast("Не удалось сохранить вид расписания"));
         }}
       />
       <PasswordSheet

@@ -6,7 +6,7 @@ from datetime import datetime, time
 from decimal import Decimal
 from enum import StrEnum
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -60,9 +60,14 @@ async def list_tournaments(
     statement = (
         select(Tournament)
         .join(Club, Club.id == Tournament.club_id)
-        .options(selectinload(Tournament.club))
+        .options(selectinload(Tournament.club).selectinload(Club.chip_currency))
         .where(
-            Tournament.starts_at >= starts_from,
+            # Уже идущий турнир показываем, пока открыта поздняя регистрация: «ещё 47 минут»
+            # — главный повод открыть расписание прямо сейчас (ТЗ §8а.3.1).
+            or_(
+                Tournament.starts_at >= starts_from,
+                Tournament.late_reg_closes_at > starts_from,
+            ),
             Tournament.starts_at < starts_to,
             Club.is_visible.is_(True),
             Club.block == ClubBlock.ONLINE,
@@ -106,6 +111,9 @@ async def list_tournaments(
                     app=item.club.app,
                     chip_value=item.club.chip_value,
                     chip_currency_code=item.club.chip_currency_code,
+                    currency_symbol=(
+                        item.club.chip_currency.symbol if item.club.chip_currency else None
+                    ),
                 ),
                 buyin_rub=buyin_rub,
                 has_addon=item.addon_cost is not None,

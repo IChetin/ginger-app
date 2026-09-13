@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 
-type IconName =
-  "bell" | "mail" | "currency" | "telegram" | "shield" | "theme" | "clock";
+type IconName = "bell" | "mail" | "currency" | "telegram" | "shield" | "theme" | "clock" | "list";
 
 function Icon({ name }: { name: IconName }) {
   const paths: Record<IconName, React.ReactNode> = {
@@ -37,6 +36,7 @@ function Icon({ name }: { name: IconName }) {
         <path d="M12 8v4l3 2" />
       </>
     ),
+    list: <path d="M4 6h16M4 12h16M4 18h16" />,
   };
   return (
     <span className="bg-surface-3 text-gold flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px]">
@@ -80,6 +80,7 @@ export function SettingsList({
   currencyLabel,
   timezoneLabel,
   themeLabel,
+  scheduleViewLabel,
   pushEnabled,
   pushPending,
   hasPassword,
@@ -87,6 +88,7 @@ export function SettingsList({
   onCurrency,
   onTimezone,
   onTheme,
+  onScheduleView,
   onPassword,
   onPushChange,
   supportUrl,
@@ -96,6 +98,7 @@ export function SettingsList({
   currencyLabel: string;
   timezoneLabel: string;
   themeLabel: string;
+  scheduleViewLabel: string;
   pushEnabled: boolean;
   pushPending: boolean;
   hasPassword: boolean;
@@ -105,6 +108,7 @@ export function SettingsList({
   onCurrency: () => void;
   onTimezone: () => void;
   onTheme: () => void;
+  onScheduleView: () => void;
   onPassword: () => void;
   onPushChange: (enabled: boolean) => void;
 }) {
@@ -172,6 +176,17 @@ export function SettingsList({
             </span>
           </span>
           <span className="text-ink-2 text-[13px] font-semibold">{themeLabel}</span>
+          <Chevron />
+        </button>
+        <button type="button" className={rowClass} onClick={onScheduleView}>
+          <Icon name="list" />
+          <span className="text-ink min-w-0 flex-1 text-[14px] leading-[1.35] font-semibold">
+            Вид расписания
+            <span className="text-ink-3 mt-px block text-[12px] font-normal">
+              Карточки или таблица турниров
+            </span>
+          </span>
+          <span className="text-ink-2 text-[13px] font-semibold">{scheduleViewLabel}</span>
           <Chevron />
         </button>
       </Group>

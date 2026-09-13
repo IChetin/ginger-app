@@ -1,6 +1,6 @@
+import type { ScheduleView } from "@/api/types/tournaments";
+
 export type UserRole = "user" | "editor" | "admin";
-
-
 
 export interface UserMe {
   id: string;
@@ -10,10 +10,8 @@ export interface UserMe {
   base_currency: string;
   /** IANA timezone; null = detect from browser. */
   timezone: string | null;
-  /** Replayer stacks: raw chips or big blinds. */
-  /** Replayer: hide opponent holes until showdown. */
-  /** Hand input shell: wizard or table. */
-  /** Playing-card suit colors: two-color or four-color. */
+  /** Вид расписания турниров: карточки или плотная таблица (как лобби Покерка). */
+  schedule_view: ScheduleView;
   role: UserRole;
   default_reminder_offsets: number[];
   email_verified: boolean;
@@ -76,4 +74,5 @@ export interface UpdateMePayload {
   /** IANA string, or null to reset to browser auto-detect. */
   timezone?: string | null;
   default_reminder_offsets?: number[];
+  schedule_view?: ScheduleView;
 }

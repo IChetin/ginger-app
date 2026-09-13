@@ -40,7 +40,8 @@ async def test_public_clubs_hide_invisible_and_admin_fields(user_client: AsyncCl
     slugs = [item["slug"] for item in clubs]
     assert "ginger" in slugs
     assert "godaddy" not in slugs
-    assert "private-g" not in slugs
+    assert "private-g" in slugs
+    assert "siniy-apelsin" not in slugs
     assert all("rakeback_note" not in item and "notes" not in item for item in clubs)
 
 
@@ -61,9 +62,12 @@ async def test_player_cannot_touch_admin_clubs(
 async def test_admin_updates_club_and_rate_must_be_complete(
     admin_client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    club_id = await _club_id(db_session, "ginger-plus")
+    club_id = await _club_id(db_session, "godaddy")
 
-    half = await admin_client.patch(f"/api/v1/admin/clubs/{club_id}", json={"chip_value": "1"})
+    # У GoDaddy! курса нет: валюта без значения — половинка курса.
+    half = await admin_client.patch(
+        f"/api/v1/admin/clubs/{club_id}", json={"chip_currency_code": "RUB"}
+    )
     assert half.status_code == 422
 
     full = await admin_client.patch(
@@ -74,7 +78,7 @@ async def test_admin_updates_club_and_rate_must_be_complete(
     body = full.json()
     assert body["chip_currency_code"] == "USDT"
     assert body["app_club_id"] == "777"
-    assert body["organizer_name"] == "Black Sea"
+    assert body["organizer_name"] is None
 
 
 async def test_import_dry_run_changes_nothing(
@@ -168,3 +172,44 @@ async def test_currencies_for_profile_exclude_usdt(user_client: AsyncClient) -> 
     codes = [item["code"] for item in response.json()]
     assert "RUB" in codes
     assert "USDT" not in codes
+
+
+async def test_running_tournament_shown_while_late_reg_open(
+    user_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    club_id = await _club_id(db_session, "ginger")
+    now = datetime.now(UTC)
+    common = {"club_id": club_id, "buyin": Decimal("8")}
+    db_session.add_all(
+        [
+            Tournament(
+                name="OPEN",
+                starts_at=now - timedelta(minutes=30),
+                late_reg_closes_at=now + timedelta(minutes=47),
+                **common,
+            ),
+            Tournament(
+                name="CLOSED",
+                starts_at=now - timedelta(hours=3),
+                late_reg_closes_at=now - timedelta(minutes=5),
+                **common,
+            ),
+            Tournament(name="NO LATE REG", starts_at=now - timedelta(minutes=10), **common),
+        ]
+    )
+    await db_session.flush()
+
+    response = await user_client.get("/api/v1/tournaments")
+    names = [item["name"] for item in response.json()]
+    assert names == ["OPEN"]
+    (item,) = response.json()
+    assert item["club"]["currency_symbol"] == "$"
+
+
+async def test_profile_schedule_view(user_client: AsyncClient) -> None:
+    assert (await user_client.get("/api/v1/auth/me")).json()["schedule_view"] == "cards"
+    updated = await user_client.patch("/api/v1/auth/me", json={"schedule_view": "table"})
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["schedule_view"] == "table"
+    wrong = await user_client.patch("/api/v1/auth/me", json={"schedule_view": "grid"})
+    assert wrong.status_code == 422

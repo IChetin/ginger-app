@@ -27,6 +27,7 @@ class TournamentFields(BaseModel):
     level_minutes: str | None = Field(default=None, max_length=16)
     structure: str | None = Field(default=None, max_length=32)
     ticket_value: Decimal | None = Field(default=None, ge=0)
+    early_bird_players: int | None = Field(default=None, ge=0)
     notes: str | None = None
 
 
@@ -84,6 +85,8 @@ class TournamentClub(BaseModel):
     app: PokerApp
     chip_value: Decimal | None
     chip_currency_code: str | None
+    # Символ перед суммой: USDT показываем как «$» (решение Ивана 2026-09-13).
+    currency_symbol: str | None
 
 
 class TournamentRead(TournamentFields):

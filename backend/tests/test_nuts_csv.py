@@ -71,7 +71,8 @@ def test_fields_and_late_reg(templates: list[TemplateDraft]) -> None:
     assert weekday_river.late_reg_levels == 14
     assert weekday_river.level_minutes == "12/10/10"
     assert weekday_river.structure == "Deepstack"
-    assert weekday_river.notes == "EB: 10"
+    assert weekday_river.early_bird_players == 10
+    assert weekday_river.notes is None
     # 14 × 12 = 168 минут игры от 09:00: 55+5+55+5+55+5+3 = 183.
     assert weekday_river.late_reg_close_offset_min == 183
 

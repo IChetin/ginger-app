@@ -24,6 +24,7 @@ import { AdminSeriesPage } from "@/pages/admin/AdminSeriesPage";
 import { AdminUsersPage } from "@/pages/admin/AdminUsersPage";
 import { AdminVenuesPage } from "@/pages/admin/AdminVenuesPage";
 import { CalendarPage } from "@/pages/CalendarPage";
+import { TournamentsPage } from "@/pages/TournamentsPage";
 import { EventPage } from "@/pages/EventPage";
 import { ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from "@/pages/AuthLegacyRedirect";
 import { HomePage } from "@/pages/HomePage";
@@ -49,6 +50,7 @@ export function AppRoutes() {
         <Route path="/bookmarks" element={<BookmarksPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route element={<AuthGuard />}>
+          <Route path="/tournaments" element={<TournamentsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>

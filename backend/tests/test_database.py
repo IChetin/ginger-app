@@ -52,7 +52,7 @@ async def test_reference_seeds_are_idempotent(db_session: AsyncSession) -> None:
     # Организаторы Day2 (RPT, EAPT, APC, RPF, BPT) и союзы Ginger APP (NUTS, Black Sea, Poker21).
     assert await db_session.scalar(select(func.count()).select_from(Organizer)) == 8
     assert await db_session.scalar(select(func.count()).select_from(Venue)) == 4
-    assert await db_session.scalar(select(func.count()).select_from(Club)) == 7
+    assert await db_session.scalar(select(func.count()).select_from(Club)) == 6
 
 
 async def test_club_seed_does_not_resurrect_deleted_clubs(db_session: AsyncSession) -> None:
@@ -69,7 +69,7 @@ async def test_club_seed_does_not_resurrect_deleted_clubs(db_session: AsyncSessi
     await db_session.flush()
 
     await seed_reference_data(db_session)
-    assert await db_session.scalar(select(func.count()).select_from(Club)) == 6
+    assert await db_session.scalar(select(func.count()).select_from(Club)) == 5
 
 
 async def test_schedule_factory_persists_decimal_and_aware_time(
