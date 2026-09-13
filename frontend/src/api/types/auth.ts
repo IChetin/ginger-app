@@ -34,6 +34,7 @@ export interface RegisterStartPayload {
   email: string;
   privacy_consent: boolean;
   captcha_token?: string;
+  invite_token?: string;
 }
 
 export interface RegisterVerifyPayload {
@@ -50,6 +51,7 @@ export interface RegisterCompletePayload {
   registration_token: string;
   password: string;
   nickname: string;
+  invite_token?: string;
 }
 
 export interface LoginPasswordPayload {

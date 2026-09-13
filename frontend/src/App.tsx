@@ -25,6 +25,10 @@ import { AdminSeriesPage } from "@/pages/admin/AdminSeriesPage";
 import { AdminUsersPage } from "@/pages/admin/AdminUsersPage";
 import { AdminVenuesPage } from "@/pages/admin/AdminVenuesPage";
 import { CalendarPage } from "@/pages/CalendarPage";
+import { ChipAccountsPage } from "@/pages/ChipAccountsPage";
+import { ChipRequestPage } from "@/pages/ChipRequestPage";
+import { ChipsPage } from "@/pages/ChipsPage";
+import { InvitePage } from "@/pages/InvitePage";
 import { TournamentsPage } from "@/pages/TournamentsPage";
 import { EventPage } from "@/pages/EventPage";
 import { ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from "@/pages/AuthLegacyRedirect";
@@ -52,6 +56,9 @@ export function AppRoutes() {
         <Route path="/search" element={<SearchPage />} />
         <Route element={<AuthGuard />}>
           <Route path="/tournaments" element={<TournamentsPage />} />
+          <Route path="/chips" element={<ChipsPage />} />
+          <Route path="/chips/accounts" element={<ChipAccountsPage />} />
+          <Route path="/chips/:requestId" element={<ChipRequestPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
@@ -59,6 +66,7 @@ export function AppRoutes() {
 
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/invite/:token" element={<InvitePage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />

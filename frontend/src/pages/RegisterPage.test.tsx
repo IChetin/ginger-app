@@ -62,7 +62,7 @@ describe("RegisterPage", () => {
     registerStart.mockRejectedValue(
       new ApiError(409, "account_exists", "Аккаунт с таким email уже есть. Войдите"),
     );
-    renderWithProviders(<AppRoutes />, { route: "/register" });
+    renderWithProviders(<AppRoutes />, { route: "/register?invite=inv-token" });
     await user.type(await screen.findByLabelText("Email"), "exists@example.com");
     await user.click(screen.getByRole("button", { name: "Продолжить" }));
     expect(await screen.findByTestId("register-error")).toHaveTextContent(/уже есть/i);
@@ -71,7 +71,7 @@ describe("RegisterPage", () => {
 
   it("completes email → code → password flow", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<AppRoutes />, { route: "/register" });
+    renderWithProviders(<AppRoutes />, { route: "/register?invite=inv-token" });
 
     await user.type(await screen.findByLabelText("Email"), "new@example.com");
     await user.click(screen.getByRole("button", { name: "Продолжить" }));
@@ -80,6 +80,7 @@ describe("RegisterPage", () => {
         email: "new@example.com",
         privacy_consent: true,
         captcha_token: undefined,
+        invite_token: "inv-token",
       });
     });
 
@@ -105,7 +106,14 @@ describe("RegisterPage", () => {
         registration_token: "reg-token-aaaaaaaaaaaaaaaa",
         password: "CorrectHorse1",
         nickname: "newbie",
+        invite_token: "inv-token",
       });
     });
+  });
+  it("без приглашения регистрации нет", async () => {
+    window.sessionStorage.clear();
+    renderWithProviders(<AppRoutes />, { route: "/register" });
+    expect(await screen.findByTestId("register-invite-required")).toBeInTheDocument();
+    expect(registerStart).not.toHaveBeenCalled();
   });
 });

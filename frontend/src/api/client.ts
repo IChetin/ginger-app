@@ -351,6 +351,9 @@ export function registerStart(body: RegisterStartPayload): Promise<RequestCodeRe
   if (body.captcha_token) {
     payload.captcha_token = body.captcha_token;
   }
+  if (body.invite_token) {
+    payload.invite_token = body.invite_token;
+  }
   return apiPost("/api/v1/auth/register/start", payload);
 }
 

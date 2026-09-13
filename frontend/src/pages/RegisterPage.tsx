@@ -1,20 +1,16 @@
 import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 
 import { ApiError } from "@/api/client";
-import {
-  useMe,
-  useRegisterComplete,
-  useRegisterStart,
-  useRegisterVerify,
-} from "@/api/auth";
+import { useMe, useRegisterComplete, useRegisterStart, useRegisterVerify } from "@/api/auth";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { CodeStep } from "@/components/auth/CodeStep";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { MOCK_CAPTCHA_TOKEN, SmartCaptcha } from "@/features/auth/components/SmartCaptcha";
+import { forgetInvite, readInvite } from "@/features/chips/lib/invite";
 import { authErrorMessage } from "@/features/auth/lib/authErrors";
 import { registerCompleteSchema } from "@/features/auth/lib/password";
 import { isValidEmail, normalizeEmail } from "@/lib/email";
@@ -24,6 +20,9 @@ type Step = "email" | "code" | "profile";
 
 export function RegisterPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Ginger — закрытый клуб: регистрация только по приглашению (ТЗ §5, ответ 11.8).
+  const [inviteToken] = useState(() => readInvite(searchParams.get("invite")));
   const { data: user } = useMe();
   const registerStart = useRegisterStart();
   const registerVerify = useRegisterVerify();
@@ -50,6 +49,24 @@ export function RegisterPage() {
     return <Navigate to="/" replace />;
   }
 
+  if (!inviteToken) {
+    return (
+      <AuthShell toast={null} onBack={() => navigate("/login", { replace: true })}>
+        <div data-testid="register-invite-required">
+          <h1 className="mt-[18px] text-[23px] font-extrabold tracking-[-0.02em]">
+            Регистрация по приглашению
+          </h1>
+          <p className="text-ink-2 mt-2 text-[14px]">
+            Ginger — закрытый клуб. Попросите у менеджера ссылку-приглашение и откройте её.
+          </p>
+          <Link to="/login" className="text-gold mt-4 inline-block text-[14px] font-bold">
+            Уже есть аккаунт — войти
+          </Link>
+        </div>
+      </AuthShell>
+    );
+  }
+
   const showToast = (message: string) => {
     setToast(message);
     window.setTimeout(() => setToast(null), 3500);
@@ -62,6 +79,7 @@ export function RegisterPage() {
       const result = await registerStart.mutateAsync({
         email: nextEmail,
         privacy_consent: true,
+        invite_token: inviteToken ?? undefined,
         captcha_token: token ?? captchaToken ?? undefined,
       });
       setEmail(nextEmail);
@@ -244,6 +262,7 @@ export function RegisterPage() {
             const result = await registerStart.mutateAsync({
               email,
               privacy_consent: true,
+              invite_token: inviteToken ?? undefined,
               captcha_token: captchaTokenArg,
             });
             return { retry_after: result.retry_after ?? 60 };
@@ -274,7 +293,9 @@ export function RegisterPage() {
                   registration_token: registrationToken,
                   password: values.password,
                   nickname: values.nickname,
+                  invite_token: inviteToken ?? undefined,
                 });
+                forgetInvite();
                 navigate("/", { replace: true });
               } catch (error) {
                 if (!(error instanceof ApiError)) {
@@ -298,7 +319,10 @@ export function RegisterPage() {
               <p className="text-danger text-[12px]">{form.formState.errors.nickname.message}</p>
             ) : null}
 
-            <label className="text-ink-2 mt-2 text-[13px] font-semibold" htmlFor="register-password">
+            <label
+              className="text-ink-2 mt-2 text-[13px] font-semibold"
+              htmlFor="register-password"
+            >
               Пароль
             </label>
             <PasswordInput

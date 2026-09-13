@@ -14,20 +14,20 @@ function IconTournaments() {
   );
 }
 
+function IconChips() {
+  return (
+    <svg className={iconClass} viewBox="0 0 24 24" aria-hidden="true">
+      <ellipse cx="12" cy="6.5" rx="7" ry="3" />
+      <path d="M5 6.5v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5M5 11.5v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5" />
+    </svg>
+  );
+}
+
 function IconSeries() {
   return (
     <svg className={iconClass} viewBox="0 0 24 24" aria-hidden="true">
       <rect x="4" y="5" width="16" height="15" rx="3" />
       <path d="M8 3v4M16 3v4M4 10h16" />
-    </svg>
-  );
-}
-
-function IconCalendar() {
-  return (
-    <svg className={iconClass} viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="3" y="4" width="18" height="17" rx="3" />
-      <path d="M3 9h18M8 13h3M8 17h6" />
     </svg>
   );
 }
@@ -51,7 +51,7 @@ type NavItem = {
 const items: NavItem[] = [
   { to: "/tournaments", label: "Турниры", icon: IconTournaments, match: "exact" },
   { to: "/", label: "Серии", icon: IconSeries, match: "series" },
-  { to: "/calendar", label: "Календарь", icon: IconCalendar, match: "exact" },
+  { to: "/chips", label: "Фишки", icon: IconChips, match: "prefix" },
   { to: "/bookmarks", label: "Закладки", icon: IconBookmarks, match: "exact" },
 ];
 
