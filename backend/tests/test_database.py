@@ -50,7 +50,7 @@ async def test_reference_seeds_are_idempotent(db_session: AsyncSession) -> None:
     assert await db_session.scalar(select(func.count()).select_from(Country)) == 3
     assert await db_session.scalar(select(func.count()).select_from(Currency)) == 5
     # Организаторы Day2 (RPT, EAPT, APC, RPF, BPT) и союзы Ginger APP (NUTS, Black Sea, Poker21).
-    assert await db_session.scalar(select(func.count()).select_from(Organizer)) == 8
+    assert await db_session.scalar(select(func.count()).select_from(Organizer)) == 9
     assert await db_session.scalar(select(func.count()).select_from(Venue)) == 4
     assert await db_session.scalar(select(func.count()).select_from(Club)) == 6
 

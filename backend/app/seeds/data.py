@@ -114,6 +114,12 @@ ORGANIZERS: Final[list[OrganizerSeed]] = [
         "slug": "poker21",
         "links": {},
     },
+    {
+        "id": uuid.UUID("10000000-0000-4000-8000-000000000104"),
+        "name": "Просторы Покера",
+        "slug": "prosto",
+        "links": {},
+    },
 ]
 
 VENUES: Final[list[VenueSeed]] = [
@@ -246,6 +252,7 @@ CLUBS: Final[list[ClubSeed]] = [
         "Private.G",
         "private-g",
         "pppoker",
+        organizer_slug="prosto",
         app_club_id="4207878",
         chip_value="100",
         chip_currency_code="RUB",

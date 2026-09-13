@@ -63,7 +63,6 @@ class TemplateRead(TemplateDraft):
     club_id: UUID
     is_active: bool
     source: str | None
-    password: str | None
     is_promoted: bool
 
 

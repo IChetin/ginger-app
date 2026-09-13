@@ -65,7 +65,6 @@ class TournamentFieldsMixin:
     satellite_target: Mapped[str | None] = mapped_column(String(160))
     # Early Bird: сколько первых зарегистрировавшихся получают бонус (больше стек, скидку).
     early_bird_players: Mapped[int | None] = mapped_column(SmallInteger)
-    password: Mapped[str | None] = mapped_column(String(64))
     is_promoted: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
     notes: Mapped[str | None] = mapped_column(Text)
 

@@ -16,12 +16,13 @@ from app.core.config import get_settings
 from app.core.exceptions import AppError
 from app.schemas.tournaments import TemplateParseResult, TemplatesImportResult
 from app.services.clubs import get_club
-from app.services.tournaments import manual_csv, nuts_csv
+from app.services.tournaments import manual_csv, nuts_csv, prosto_sheet
 from app.services.tournaments.schedule_sync import apply_templates_import
 
 # Союз → (источник шаблонов, парсер).
 _PARSERS: dict[str, tuple[str, Callable[[bytes], TemplateParseResult]]] = {
     "nuts": (nuts_csv.SOURCE, nuts_csv.parse_nuts_csv),
+    "prosto": (prosto_sheet.SOURCE, prosto_sheet.parse_prosto_sheet),
 }
 
 
@@ -54,7 +55,12 @@ async def import_club_templates(
         )
     try:
         parsed = parse(data)
-    except (nuts_csv.NutsCsvError, manual_csv.ManualCsvError, UnicodeDecodeError) as error:
+    except (
+        nuts_csv.NutsCsvError,
+        manual_csv.ManualCsvError,
+        prosto_sheet.ProstoSheetError,
+        UnicodeDecodeError,
+    ) as error:
         raise AppError("unrecognized_file", f"Файл не распознан: {error}", 422) from error
 
     # Предпросмотр — тот же импорт внутри savepoint, который затем откатывается: счётчики

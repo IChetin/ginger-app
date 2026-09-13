@@ -148,7 +148,7 @@ async def list_tournaments(
                 ),
                 buyin_rub=buyin_rub,
                 guarantee_rub=_to_rub(item.guarantee, rate),
-                has_addon=item.addon_cost is not None,
+                has_addon=item.addon_cost is not None or item.addon_terms is not None,
             )
         )
     return result

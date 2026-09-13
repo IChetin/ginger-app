@@ -30,7 +30,7 @@ from app.schemas.tournaments import TemplateDraft
 MSK = ZoneInfo("Europe/Moscow")
 DEFAULT_HORIZON_DAYS = 14
 
-# Поля, которые старт копирует из шаблона. Пароль и «продвигается» — тоже: их задают на шаблоне,
+# Поля, которые старт копирует из шаблона. «Продвигается» — тоже: его задают на шаблоне,
 # а точечно правят на старте с пометкой is_detached.
 COPIED_FIELDS: tuple[str, ...] = (
     "name",
@@ -50,14 +50,13 @@ COPIED_FIELDS: tuple[str, ...] = (
     "ticket_value",
     "satellite_target",
     "early_bird_players",
-    "password",
     "is_promoted",
     "notes",
 )
 
 # Поля, по которым черновик сопоставляется с шаблоном при повторном импорте: всё, кроме дней.
 _SIGNATURE_FIELDS: tuple[str, ...] = (
-    *(name for name in COPIED_FIELDS if name not in {"password", "is_promoted"}),
+    *(name for name in COPIED_FIELDS if name != "is_promoted"),
     "start_time",
     "late_reg_close_offset_min",
     "valid_from",

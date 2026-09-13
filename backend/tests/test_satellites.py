@@ -18,6 +18,10 @@ from app.services.tournaments.satellites import satellite_target
         ("MEGA SAT", None),
         ("DREAM RIVER", None),
         ("SATURDAY SPECIAL", None),
+        ("Sat ProSto HR", "ProSto HR"),
+        ("FREE Sat MAIN", "MAIN"),
+        ("Sat", None),
+        ("MAIN SAT", "MAIN"),
     ],
 )
 def test_satellite_target(name: str, expected: str | None) -> None:
