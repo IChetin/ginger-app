@@ -4,6 +4,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-do
 import type { UserRole } from "@/api/types/auth";
 import { useAdminDesktop } from "@/components/admin/useAdminDesktop";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
+import { useAdminChipRequests, usePendingAccounts } from "@/features/admin/chips/hooks";
 import { isAdminUser, useAdminDashboard, useLogout, useMe } from "@/features/admin/hooks";
 import { cn } from "@/lib/utils";
 
@@ -56,6 +57,8 @@ function SidebarNav({ showUsers, onNavigate }: { showUsers: boolean; onNavigate?
   const dashboardQuery = useAdminDashboard();
   const importsReview = dashboardQuery.data?.nav.imports_review_count ?? 0;
   const isBulkImport = useLocation().pathname.startsWith("/admin/import/bulk");
+  const openRequests = useAdminChipRequests("open").data?.length ?? 0;
+  const pendingAccounts = usePendingAccounts().data?.length ?? 0;
 
   return (
     <>
@@ -76,6 +79,49 @@ function SidebarNav({ showUsers, onNavigate }: { showUsers: boolean; onNavigate?
           админка
         </small>
       </Link>
+
+      <div className="text-ink-3 px-2 pt-3 pb-1.5 text-[10px] font-bold tracking-[0.1em] uppercase">
+        Касса
+      </div>
+      <NavLink to="/admin/chips" className={navClass} onClick={onNavigate}>
+        <NavIcon>
+          <circle cx="12" cy="12" r="8" />
+          <circle cx="12" cy="12" r="3.5" />
+          <path d="M12 4v3M12 17v3M4 12h3M17 12h3" />
+        </NavIcon>
+        Заявки
+        {openRequests > 0 ? (
+          <span className="bg-warn text-ink-ongold ml-auto flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[10px] font-extrabold">
+            {openRequests}
+          </span>
+        ) : null}
+      </NavLink>
+      <NavLink to="/admin/players" className={navClass} onClick={onNavigate}>
+        <NavIcon>
+          <circle cx="9" cy="8" r="4" />
+          <path d="M2 21c1.2-3.5 4-5 7-5s5.8 1.5 7 5" />
+        </NavIcon>
+        Игроки
+        {pendingAccounts > 0 ? (
+          <span className="bg-warn text-ink-ongold ml-auto flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[10px] font-extrabold">
+            {pendingAccounts}
+          </span>
+        ) : null}
+      </NavLink>
+      <NavLink to="/admin/invites" className={navClass} onClick={onNavigate}>
+        <NavIcon>
+          <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
+          <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
+        </NavIcon>
+        Инвайты
+      </NavLink>
+      <NavLink to="/admin/requisites" className={navClass} onClick={onNavigate}>
+        <NavIcon>
+          <rect x="3" y="6" width="18" height="13" rx="2" />
+          <path d="M3 10h18M7 15h4" />
+        </NavIcon>
+        Реквизиты
+      </NavLink>
 
       <div className="text-ink-3 px-2 pt-3 pb-1.5 text-[10px] font-bold tracking-[0.1em] uppercase">
         Контент

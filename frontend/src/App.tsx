@@ -14,12 +14,17 @@ import { BookmarksPage } from "@/features/bookmarks/BookmarksPage";
 import { AuthGuard } from "@/features/auth/AuthGuard";
 import { ProfilePage } from "@/features/auth/ProfilePage";
 import { AdminChangeLogPage } from "@/pages/admin/AdminChangeLogPage";
+import { AdminChipRequestPage } from "@/pages/admin/AdminChipRequestPage";
+import { AdminChipRequestsPage } from "@/pages/admin/AdminChipRequestsPage";
 import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
 import { AdminEventDetailPage } from "@/pages/admin/AdminEventDetailPage";
 import { AdminGridImportPage } from "@/pages/admin/AdminGridImportPage";
+import { AdminInvitesPage } from "@/pages/admin/AdminInvitesPage";
 import { AdminLayout } from "@/pages/admin/AdminLayout";
 import { AdminOrganizersPage } from "@/pages/admin/AdminOrganizersPage";
 import { AdminParsersPage } from "@/pages/admin/AdminParsersPage";
+import { AdminPlayersPage } from "@/pages/admin/AdminPlayersPage";
+import { AdminRequisitesPage } from "@/pages/admin/AdminRequisitesPage";
 import { AdminSeriesDetailPage } from "@/pages/admin/AdminSeriesDetailPage";
 import { AdminSeriesPage } from "@/pages/admin/AdminSeriesPage";
 import { AdminUsersPage } from "@/pages/admin/AdminUsersPage";
@@ -87,6 +92,11 @@ export function AppRoutes() {
           <Route path="series/:id" element={<AdminSeriesDetailPage />} />
           <Route path="events/:id" element={<AdminEventDetailPage />} />
           <Route path="grids" element={<AdminGridImportPage />} />
+          <Route path="chips" element={<AdminChipRequestsPage />} />
+          <Route path="chips/:requestId" element={<AdminChipRequestPage />} />
+          <Route path="players" element={<AdminPlayersPage />} />
+          <Route path="invites" element={<AdminInvitesPage />} />
+          <Route path="requisites" element={<AdminRequisitesPage />} />
           <Route path="import" element={<ImportListPage />} />
           <Route path="import/bulk" element={<BulkImportPage />} />
           <Route path="import/bulk/:jobId" element={<BulkImportReviewPage />} />
