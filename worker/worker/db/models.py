@@ -28,6 +28,12 @@ class NotificationType(StrEnum):
     GUARANTEE_CHANGED = "guarantee_changed"
     SERIES_STARTING = "series_starting"
     SERIES_CANCELLED = "series_cancelled"
+    # Ginger APP: заявки на фишки (пушим только итог — ТЗ §4.2а).
+    CHIPS_ISSUED = "chips_issued"
+    REQUISITES_READY = "requisites_ready"
+    REQUEST_REJECTED = "request_rejected"
+    WITHDRAWAL_SENT = "withdrawal_sent"
+    NEW_CHIP_REQUEST = "new_chip_request"
 
 
 _notification_status = Enum(

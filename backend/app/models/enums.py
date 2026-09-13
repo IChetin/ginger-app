@@ -68,6 +68,12 @@ class NotificationType(str, Enum):
     GUARANTEE_CHANGED = "guarantee_changed"
     SERIES_STARTING = "series_starting"
     SERIES_CANCELLED = "series_cancelled"
+    # Ginger APP: заявки на фишки (пушим только итог — ТЗ §4.2а).
+    CHIPS_ISSUED = "chips_issued"
+    REQUISITES_READY = "requisites_ready"
+    REQUEST_REJECTED = "request_rejected"
+    WITHDRAWAL_SENT = "withdrawal_sent"
+    NEW_CHIP_REQUEST = "new_chip_request"
 
 
 class ChangeType(str, Enum):
@@ -134,3 +140,40 @@ class BountyKind(str, Enum):
 class TournamentStatus(str, Enum):
     SCHEDULED = "scheduled"
     CANCELLED = "cancelled"
+
+
+# --- Ginger APP: игроки и заявки на фишки ---
+
+
+class PlayerKind(str, Enum):
+    """Кредитный — запросил и получил, расчёт раз в неделю; депозитный — оплатил и получил."""
+
+    CREDIT = "credit"
+    DEPOSIT = "deposit"
+
+
+class PlayerStatus(str, Enum):
+    ACTIVE = "active"
+    BLOCKED = "blocked"
+    ARCHIVED = "archived"
+
+
+class PlayerAccountStatus(str, Enum):
+    PENDING = "pending"
+    CONFIRMED = "confirmed"
+    REJECTED = "rejected"
+
+
+class ChipRequestKind(str, Enum):
+    TOPUP = "topup"
+    WITHDRAWAL = "withdrawal"
+
+
+class ChipRequestStatus(str, Enum):
+    SENT = "sent"
+    ACCEPTED = "accepted"
+    AWAITING_PAYMENT = "awaiting_payment"
+    PAID = "paid"
+    COMPLETED = "completed"
+    REJECTED = "rejected"
+    EXPIRED = "expired"

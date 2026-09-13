@@ -4,6 +4,8 @@ from app.models.enums import (
     BookmarkTarget,
     BountyKind,
     ChangeType,
+    ChipRequestKind,
+    ChipRequestStatus,
     ClubBlock,
     EntryType,
     EventStatus,
@@ -13,6 +15,9 @@ from app.models.enums import (
     NotificationStatus,
     NotificationType,
     ParsePath,
+    PlayerAccountStatus,
+    PlayerKind,
+    PlayerStatus,
     PokerApp,
     SeriesStatus,
     TournamentStatus,
@@ -26,6 +31,10 @@ EXPECTED_TABLES = {
     "blind_levels",
     "bookmarks",
     "change_log",
+    "chip_request_events",
+    "chip_request_items",
+    "chip_requests",
+    "attachments",
     "clubs",
     "countries",
     "currencies",
@@ -33,11 +42,15 @@ EXPECTED_TABLES = {
     "flights",
     "fx_rates",
     "import_jobs",
+    "invites",
     "notification_queue",
     "organizers",
     "otp_codes",
     "parser_profiles",
+    "player_accounts",
+    "players",
     "push_subscriptions",
+    "requisite_templates",
     "series",
     "sessions",
     "slug_redirects",
@@ -65,6 +78,11 @@ EXPECTED_ENUMS = {
     ClubBlock,
     BountyKind,
     TournamentStatus,
+    PlayerKind,
+    PlayerStatus,
+    PlayerAccountStatus,
+    ChipRequestKind,
+    ChipRequestStatus,
 }
 
 
@@ -73,6 +91,6 @@ def test_all_models_registered() -> None:
 
 
 def test_all_enums_have_string_values() -> None:
-    assert len(EXPECTED_ENUMS) == 17
+    assert len(EXPECTED_ENUMS) == 22
     for enum_class in EXPECTED_ENUMS:
         assert all(isinstance(member.value, str) for member in enum_class)

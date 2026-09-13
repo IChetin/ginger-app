@@ -49,6 +49,8 @@ class RequestCodeResponse(BaseModel):
 class RegisterStartBody(BaseModel):
     email: EmailStr
     captcha_token: str | None = None
+    # Ginger APP: регистрация только по приглашению (ТЗ §5, вопрос 11.8).
+    invite_token: str | None = Field(default=None, max_length=128)
     privacy_consent: bool = False
 
     @model_validator(mode="after")
@@ -72,6 +74,7 @@ class RegisterCompleteBody(BaseModel):
     registration_token: str = Field(min_length=16, max_length=256)
     password: str = Field(min_length=1, max_length=128)
     nickname: str = Field(min_length=2, max_length=32)
+    invite_token: str | None = Field(default=None, max_length=128)
 
     @field_validator("password")
     @classmethod

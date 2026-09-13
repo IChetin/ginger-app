@@ -82,6 +82,7 @@ async def register_start(
         email=body.email,
         client_ip=_client_ip(request),
         captcha_token=body.captcha_token,
+        invite_token=body.invite_token,
     )
     return RequestCodeResponse(
         expires_in_seconds=result.expires_in_seconds,
@@ -120,6 +121,7 @@ async def register_complete(
         password=body.password,
         nickname=body.nickname,
         user_agent=request.headers.get("user-agent"),
+        invite_token=body.invite_token,
     )
     set_session_cookie(response, str(auth_session.id))
     return auth_service.user_to_me(user)

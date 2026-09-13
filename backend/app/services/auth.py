@@ -44,6 +44,7 @@ from app.models.enums import AuthTokenPurpose, UserRole
 from app.models.references import Currency
 from app.schemas.auth import UpdateMeBody, UserMe
 from app.services import captcha as captcha_service
+from app.services import invites as invites_service
 from app.services.email import EmailProvider, get_email_provider
 
 logger = logging.getLogger(__name__)
@@ -513,9 +514,12 @@ async def register_start(
     captcha_token: str | None = None,
     settings: Settings | None = None,
     email_provider: EmailProvider | None = None,
+    invite_token: str | None = None,
 ) -> RequestOtpResult:
     """Start registration: send OTP only when the account does not exist."""
     settings = settings or get_settings()
+    if settings.registration_requires_invite:
+        await invites_service.require_active_invite(session, invite_token)
     email = normalize_email(email)
     ip_hash = hash_ip(client_ip, secret=settings.otp_hmac_secret)
     await _acquire_otp_locks(session, email=email, ip_hash=ip_hash)
@@ -600,6 +604,7 @@ async def register_complete(
     nickname: str,
     user_agent: str | None,
     settings: Settings | None = None,
+    invite_token: str | None = None,
 ) -> tuple[Session, User]:
     """Create account after email proof + password + nickname."""
     settings = settings or get_settings()
@@ -635,6 +640,10 @@ async def register_complete(
     if await _nickname_taken(session, nickname):
         raise ConflictError(NICKNAME_TAKEN_MSG)
 
+    invite = None
+    if settings.registration_requires_invite or invite_token:
+        invite = await invites_service.require_active_invite(session, invite_token, lock=True)
+
     auth_token.used_at = now
     user = await _create_user(
         session,
@@ -643,6 +652,8 @@ async def register_complete(
         password_hash=hash_password(password),
         settings=settings,
     )
+    if invite is not None:
+        await invites_service.consume_invite(session, invite, user)
     auth_session = await _create_auth_session(
         session, user, user_agent=user_agent, settings=settings
     )

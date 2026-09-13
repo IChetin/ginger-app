@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends
 from app.api.v1.admin import (
     bulk_import,
     change_log,
+    chips,
     clubs,
     dashboard,
     events,
@@ -21,6 +22,7 @@ router = APIRouter(
 router.include_router(dashboard.router)
 router.include_router(references.router)
 router.include_router(clubs.router)
+router.include_router(chips.router)
 router.include_router(series.router)
 router.include_router(events.router)
 # До imports: иначе «/import/bulk» съест маршрут «/import/{job_id}».

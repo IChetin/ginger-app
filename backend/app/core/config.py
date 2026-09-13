@@ -96,6 +96,22 @@ class Settings(BaseSettings):
     minor_satellite_below_usd: int = Field(default=100, ge=0)
     minor_satellite_below_rub: int = Field(default=5000, ge=0)
 
+    # Ginger APP: заявки на фишки и игроки.
+    # Регистрация только по инвайту — клуб закрытый (ТЗ §5, вопрос 11.8).
+    registration_requires_invite: bool = True
+    invite_ttl_days: int = Field(default=7, ge=1)
+    # Депозитный: без скриншота оплаты заявка сгорает (ТЗ §3.3).
+    chip_payment_timeout_minutes: int = Field(default=20, ge=1)
+    # Часы кассы по Москве: 12:00–03:00 (ТЗ §3.2). Заявка принимается всегда.
+    cashdesk_open_hour: int = Field(default=12, ge=0, le=23)
+    cashdesk_close_hour: int = Field(default=3, ge=0, le=23)
+    # Файлы (скриншоты оплаты) — на диске рядом с бэкендом, не в базе (вопрос 11.11).
+    upload_dir: str = "/data/uploads"
+    upload_max_bytes: int = Field(default=10 * 1024 * 1024, ge=1)
+    screenshot_retention_days: int = Field(default=90, ge=1)
+    # Проход «сгорание заявок + удаление просроченных скриншотов». 0 — выключено.
+    chips_housekeeping_interval_seconds: int = Field(default=60, ge=0)
+
     # Schedule import pipeline.
     import_max_file_bytes: int = Field(default=20 * 1024 * 1024, ge=1)
     import_confidence_threshold: float = Field(default=0.8, ge=0.0, le=1.0)

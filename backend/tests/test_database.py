@@ -39,8 +39,8 @@ async def test_migration_created_tables_and_native_enums(db_session: AsyncSessio
 
     # Сверено с базой после миграции 2a7c9e41b3d0. В исходнике Day2 стояли 19 и 14,
     # что не совпадало с его же схемой (25 таблиц, 20 типов) — тест был устаревшим.
-    assert table_count == 23
-    assert enum_count == 17
+    assert table_count == 31
+    assert enum_count == 22
 
 
 async def test_reference_seeds_are_idempotent(db_session: AsyncSession) -> None:

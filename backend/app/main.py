@@ -43,11 +43,19 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         from app.services.tournaments.rollforward import run_periodically
 
         rollforward = asyncio.create_task(run_periodically(interval))
+    housekeeping: asyncio.Task[None] | None = None
+    housekeeping_interval = get_settings().chips_housekeeping_interval_seconds
+    if housekeeping_interval > 0:
+        from app.services.chips import run_housekeeping_periodically
+
+        housekeeping = asyncio.create_task(run_housekeeping_periodically(housekeeping_interval))
     yield
-    if rollforward is not None:
-        rollforward.cancel()
+    for task in (rollforward, housekeeping):
+        if task is None:
+            continue
+        task.cancel()
         with suppress(asyncio.CancelledError):
-            await rollforward
+            await task
     await engine.dispose()
 
 

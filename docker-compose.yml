@@ -44,6 +44,7 @@ services:
     volumes:
       # sample_schedules: Path(__file__).parents[3]/docs/rasp_samples → /docs/...
       - ./docs:/docs:ro
+      - uploads:/data/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -164,5 +165,6 @@ services:
     restart: unless-stopped
 
 volumes:
+  uploads:
   postgres_data:
   frontend_node_modules:

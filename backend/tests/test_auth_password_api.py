@@ -16,6 +16,15 @@ from app.models.enums import UserRole
 from app.seeds import seed_reference_data
 from app.services.email.mock import MockEmailProvider
 
+
+@pytest.fixture(autouse=True)
+def _registration_without_invite(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Тесты регистрации Day2 — без инвайта; регистрация по инвайту — в test_chips_api.
+    from app.core.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "registration_requires_invite", False)
+
+
 pytestmark = pytest.mark.integration
 
 PASSWORD = "CorrectHorseBattery1"
