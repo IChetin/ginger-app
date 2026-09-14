@@ -131,7 +131,7 @@ export function LoginPage() {
         <div data-testid="login-credentials">
           <h1 className="mt-[18px] text-[23px] font-extrabold tracking-[-0.02em]">Вход</h1>
           <p className="text-ink-2 mt-1.5 max-w-[300px] text-sm">
-            Закладки, напоминания и статистика будут доступны на всех устройствах.
+            Фишки, диалоги с менеджером и напоминания о турнирах — на всех устройствах.
           </p>
 
           <form
