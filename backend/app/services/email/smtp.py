@@ -2,9 +2,11 @@ import asyncio
 import logging
 import smtplib
 import ssl
+from collections.abc import Callable
 from email.message import EmailMessage
 
 from app.core.config import Settings
+from app.core.exceptions import AppError
 from app.services.email.base import EmailSendResult
 from app.services.email.templates import (
     build_otp_email,
@@ -13,6 +15,9 @@ from app.services.email.templates import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Без таймаута недоступный SMTP (хостер режет порты) вешает запрос кода навсегда.
+SMTP_TIMEOUT_SECONDS = 15
 
 
 class SmtpEmailProvider:
@@ -49,13 +54,16 @@ class SmtpEmailProvider:
                 self._settings.smtp_host,
                 self._settings.smtp_port,
                 context=context,
+                timeout=SMTP_TIMEOUT_SECONDS,
             ) as smtp:
                 if self._settings.smtp_user:
                     smtp.login(self._settings.smtp_user, self._settings.smtp_password)
                 smtp.send_message(message)
             return
 
-        with smtplib.SMTP(self._settings.smtp_host, self._settings.smtp_port) as smtp:
+        with smtplib.SMTP(
+            self._settings.smtp_host, self._settings.smtp_port, timeout=SMTP_TIMEOUT_SECONDS
+        ) as smtp:
             if self._use_starttls():
                 smtp.starttls(context=context)
             if self._settings.smtp_user:
@@ -74,17 +82,25 @@ class SmtpEmailProvider:
         subject, plain, html = build_password_reset_email(url=url, settings=self._settings)
         self._send_message(email, subject, plain, html)
 
-    async def send_code(self, email: str, code: str) -> EmailSendResult:
-        await asyncio.to_thread(self._send_otp_sync, email, code)
-        logger.info("smtp otp delivered via %s", self.name)
+    async def _deliver(self, send: Callable[[], None], kind: str) -> EmailSendResult:
+        try:
+            await asyncio.to_thread(send)
+        except (OSError, smtplib.SMTPException) as error:
+            # Почтовик недоступен или отказал: игрок должен сразу увидеть ошибку, а не ждать.
+            logger.error("smtp %s failed via %s: %s", kind, self._settings.smtp_host, error)
+            raise AppError(
+                code="email_unavailable",
+                message="Не удалось отправить письмо. Попробуйте позже",
+                status_code=503,
+            ) from error
+        logger.info("smtp %s delivered via %s", kind, self.name)
         return EmailSendResult(ok=True, provider=self.name)
+
+    async def send_code(self, email: str, code: str) -> EmailSendResult:
+        return await self._deliver(lambda: self._send_otp_sync(email, code), "otp")
 
     async def send_verification_link(self, email: str, url: str) -> EmailSendResult:
-        await asyncio.to_thread(self._send_verification_sync, email, url)
-        logger.info("smtp verification delivered via %s", self.name)
-        return EmailSendResult(ok=True, provider=self.name)
+        return await self._deliver(lambda: self._send_verification_sync(email, url), "verification")
 
     async def send_password_reset_link(self, email: str, url: str) -> EmailSendResult:
-        await asyncio.to_thread(self._send_reset_sync, email, url)
-        logger.info("smtp password reset delivered via %s", self.name)
-        return EmailSendResult(ok=True, provider=self.name)
+        return await self._deliver(lambda: self._send_reset_sync(email, url), "password reset")
