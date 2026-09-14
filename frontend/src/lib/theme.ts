@@ -25,10 +25,12 @@ export const THEME_LABELS: Record<ThemeChoice, string> = {
   light: "Светлая",
 };
 
-export const THEME_COOKIE_NAME = "day2_theme";
+export const THEME_COOKIE_NAME = "ginger_theme";
+/** Имя cookie до переименования: читаем, чтобы у старых установок не слетел выбор темы. */
+const LEGACY_THEME_COOKIE_NAME = "day2_theme";
 const THEME_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
-const DB_NAME = "day2-preferences";
+const DB_NAME = "ginger-preferences";
 const DB_VERSION = 1;
 const STORE_NAME = "settings";
 const THEME_KEY = "theme";
@@ -40,9 +42,14 @@ export function isThemeChoice(value: unknown): value is ThemeChoice {
 }
 
 export function readThemeCookie(): ThemeChoice | null {
-  const match = document.cookie.match(new RegExp(`(?:^|; )${THEME_COOKIE_NAME}=([^;]*)`));
-  const value = match ? decodeURIComponent(match[1]) : null;
-  return isThemeChoice(value) ? value : null;
+  for (const name of [THEME_COOKIE_NAME, LEGACY_THEME_COOKIE_NAME]) {
+    const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+    const value = match ? decodeURIComponent(match[1]) : null;
+    if (isThemeChoice(value)) {
+      return value;
+    }
+  }
+  return null;
 }
 
 function writeThemeCookie(choice: ThemeChoice): void {

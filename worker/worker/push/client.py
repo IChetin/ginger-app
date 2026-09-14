@@ -10,7 +10,7 @@ from pywebpush import WebPushException, webpush
 
 from worker.config import Settings
 
-logger = logging.getLogger("day2.worker.push")
+logger = logging.getLogger("ginger.worker.push")
 
 
 class PushOutcome(StrEnum):

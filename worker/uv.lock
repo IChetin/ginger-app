@@ -414,7 +414,7 @@ wheels = [
 ]
 
 [[package]]
-name = "day2-worker"
+name = "ginger-worker"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

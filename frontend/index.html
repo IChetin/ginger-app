@@ -8,7 +8,9 @@
       // Применяем тему до первого рендера, чтобы не было вспышки чужой темы.
       // Источник — cookie-зеркало выбора (в IndexedDB тот же выбор, но он асинхронный).
       (function () {
-        var match = document.cookie.match(/(?:^|; )day2_theme=([^;]*)/);
+        var match =
+          document.cookie.match(/(?:^|; )ginger_theme=([^;]*)/) ||
+          document.cookie.match(/(?:^|; )day2_theme=([^;]*)/);
         var choice = match ? decodeURIComponent(match[1]) : "system";
         if (choice !== "light" && choice !== "dark") choice = "system";
         var resolved =

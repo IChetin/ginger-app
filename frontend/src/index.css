@@ -21,8 +21,8 @@
   }
 }
 
-/* ============ DAY2 · ТЁМНАЯ ТЕМА (по умолчанию) ============
-   Источник значений: docs/design/styleguide_themes.html.
+/* ============ GINGER · ТЁМНАЯ ТЕМА (по умолчанию) ============
+   Палитра унаследована от стайлгайда Day2; фирменный стиль Ginger — золото на тёмном.
    Обе темы используют одинаковые имена переменных — компоненты о теме не знают. */
 :root,
 [data-theme="dark"] {
@@ -70,7 +70,7 @@
   --poster-eapt: linear-gradient(135deg, #1d2026 0%, #131518 55%, #0a0b0c 100%);
 }
 
-/* ============ DAY2 · СВЕТЛАЯ ТЕМА (кремовый люкс) ============ */
+/* ============ GINGER · СВЕТЛАЯ ТЕМА (кремовый люкс) ============ */
 [data-theme="light"] {
   color-scheme: light;
   --bg: #f4eee2;
@@ -177,7 +177,7 @@
   --knob-shadow: 0 1px 2px rgb(0 0 0 / 30%);
 }
 
-/* Day2 design tokens (styleguide v2) → Tailwind v4 @theme.
+/* Токены дизайна → Tailwind v4 @theme.
    `inline` обязателен: утилиты должны подставлять var(--token), а не копию значения. */
 @theme inline {
   --color-bg: var(--bg);
@@ -265,7 +265,7 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* shadcn-переменные — производные от токенов Day2, поэтому тоже переключаются */
+/* shadcn-переменные — производные от токенов темы, поэтому тоже переключаются */
 :root {
   --background: var(--bg);
   --foreground: var(--text);
@@ -355,16 +355,16 @@
 }
 
 /* Phone with broken layout viewport (desktop site mode, etc.): use full layout width. */
-html.day2-layout-wide [data-mobile-shell-outer] {
+html.ginger-layout-wide [data-mobile-shell-outer] {
   background-color: var(--bg) !important;
 }
 
-html.day2-layout-wide [data-mobile-shell] {
+html.ginger-layout-wide [data-mobile-shell] {
   width: 100% !important;
   max-width: none !important;
 }
 
-html.day2-layout-wide [data-mobile-nav] {
+html.ginger-layout-wide [data-mobile-nav] {
   max-width: none !important;
 }
 
@@ -377,7 +377,7 @@ html.day2-layout-wide [data-mobile-nav] {
   }
 }
 
-@keyframes day2-pulse {
+@keyframes ginger-pulse {
   0% {
     box-shadow: 0 0 0 0 color-mix(in srgb, var(--live) 50%, transparent);
   }
@@ -425,8 +425,8 @@ html.day2-layout-wide [data-mobile-nav] {
   }
 }
 
-@utility animate-day2-pulse {
-  animation: day2-pulse 1.6s ease-out infinite;
+@utility animate-ginger-pulse {
+  animation: ginger-pulse 1.6s ease-out infinite;
 }
 
 @utility animate-seatpulse {

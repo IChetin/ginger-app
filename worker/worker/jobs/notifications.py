@@ -14,7 +14,7 @@ from worker.db.session import session_scope
 from worker.push.client import PushOutcome, send_web_push
 from worker.push.schemas import PushPayload
 
-logger = logging.getLogger("day2.worker.notifications")
+logger = logging.getLogger("ginger.worker.notifications")
 
 MAX_ATTEMPTS = 3
 

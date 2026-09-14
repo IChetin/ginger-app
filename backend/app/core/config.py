@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     otp_min_interval_seconds: int = 60
     otp_daily_limit: int = 5
     otp_ip_hourly_limit: int = 20
-    session_cookie_name: str = "day2_session"
+    session_cookie_name: str = "ginger_session"
     session_ttl_days: int = 30
     session_cookie_secure: bool = False
     session_cookie_samesite: str = "lax"

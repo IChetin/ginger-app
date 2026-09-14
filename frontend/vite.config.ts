@@ -25,7 +25,7 @@ function viewportFirstPlugin(): Plugin {
     "var vv=(window.visualViewport&&window.visualViewport.width)||cw;",
     "var broken=(mobile&&coarse&&cw>=600)||(sw>0&&sw<=520&&cw>sw+80)||(mobile&&vv>0&&cw>vv+80);",
     "if(broken){",
-    "d.documentElement.classList.add('day2-layout-wide');",
+    "d.documentElement.classList.add('ginger-layout-wide');",
     "m.setAttribute('content','width='+Math.round(vv||sw||360)+', initial-scale=1, viewport-fit=cover');",
     "}",
     "})();",
@@ -33,7 +33,7 @@ function viewportFirstPlugin(): Plugin {
   ].join("");
 
   return {
-    name: "day2-viewport-first",
+    name: "ginger-viewport-first",
     transformIndexHtml: {
       order: "post",
       handler(html) {

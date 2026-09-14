@@ -1,1 +1,1 @@
-"""Day2 backend application package."""
+"""Ginger APP backend."""

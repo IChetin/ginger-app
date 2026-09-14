@@ -53,7 +53,7 @@ function clearThemeCookie(): void {
 
 function deletePreferencesDb(): Promise<void> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.deleteDatabase("day2-preferences");
+    const request = indexedDB.deleteDatabase("ginger-preferences");
     request.onsuccess = () => resolve();
     request.onblocked = () => resolve();
     request.onerror = () => reject(request.error);

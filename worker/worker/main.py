@@ -1,4 +1,4 @@
-"""Day2 worker: Web Push notification dispatch + CBR FX sync."""
+"""Ginger APP worker: Web Push notification dispatch + CBR FX sync."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
 )
-logger = logging.getLogger("day2.worker")
+logger = logging.getLogger("ginger.worker")
 
 
 def _cron_trigger(expr: str) -> CronTrigger:
@@ -39,7 +39,7 @@ def _cron_trigger(expr: str) -> CronTrigger:
 
 def main() -> None:
     settings = get_settings()
-    logger.info("starting day2 worker env=%s", settings.app_env)
+    logger.info("starting ginger worker env=%s", settings.app_env)
 
     scheduler = BackgroundScheduler(timezone="UTC")
     scheduler.add_job(

@@ -9,7 +9,7 @@ from datetime import date
 from decimal import Decimal, InvalidOperation
 from xml.etree import ElementTree
 
-logger = logging.getLogger("day2.worker.fx.cbr")
+logger = logging.getLogger("ginger.worker.fx.cbr")
 
 SUPPORTED_CURRENCIES = frozenset({"BYN", "USD", "EUR"})
 RUB = "RUB"
@@ -96,7 +96,7 @@ def fetch_daily_xml(
         try:
             request = urllib.request.Request(
                 url,
-                headers={"User-Agent": "Day2Worker/1.0 (+https://day2.pro)"},
+                headers={"User-Agent": "GingerWorker/1.0 (+https://lisa52.com)"},
             )
             if opener is None:
                 with urllib.request.urlopen(request, timeout=timeout_seconds) as response:

@@ -192,18 +192,18 @@ jobs:
         with:
           context: ./backend
           push: false
-          tags: day2-backend:ci
+          tags: ginger-backend:ci
 
       - name: Build worker image
         uses: docker/build-push-action@v6
         with:
           context: ./worker
           push: false
-          tags: day2-worker:ci
+          tags: ginger-worker:ci
 
       - name: Build frontend image
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
           push: false
-          tags: day2-frontend:ci
+          tags: ginger-frontend:ci

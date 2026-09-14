@@ -77,7 +77,7 @@ async def test_otp_login_me_logout(client: AsyncClient, db_session: AsyncSession
     assert verify.status_code == 200
     body = verify.json()
     assert body["email"] == normalize_email(settings.seed_admin_email)
-    assert "day2_session" in verify.cookies
+    assert settings.session_cookie_name in verify.cookies
 
     me = await client.get("/api/v1/auth/me")
     assert me.status_code == 200

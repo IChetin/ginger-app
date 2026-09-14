@@ -1,1 +1,1 @@
-"""Day2 background worker package."""
+"""Ginger APP background worker."""

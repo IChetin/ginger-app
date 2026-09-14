@@ -1,1 +1,1 @@
-"""Background jobs for Day2 worker."""
+"""Background jobs for the Ginger APP worker."""

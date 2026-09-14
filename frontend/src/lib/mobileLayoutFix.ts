@@ -19,6 +19,6 @@ export function isBrokenMobileLayout(): boolean {
 
 export function applyMobileLayoutFix(): boolean {
   const broken = isBrokenMobileLayout();
-  document.documentElement.classList.toggle("day2-layout-wide", broken);
+  document.documentElement.classList.toggle("ginger-layout-wide", broken);
   return broken;
 }

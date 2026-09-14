@@ -1,4 +1,4 @@
-"""Shared helpers for scripts that talk to the Day2 Postgres (dev contour)."""
+"""Shared helpers for scripts that talk to the local Ginger Postgres (dev contour)."""
 
 from __future__ import annotations
 
