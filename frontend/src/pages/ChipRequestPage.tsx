@@ -13,8 +13,68 @@ import {
   formatNumber,
   formatRemaining,
   isOpen,
+  requestSteps,
+  type StepState,
 } from "@/features/chips/lib/format";
 import { useNow } from "@/features/tournaments/hooks";
+import { cn } from "@/lib/utils";
+
+const MARK_CLASS: Record<StepState, string> = {
+  done: "bg-gold border-gold",
+  current: "border-gold bg-gold-soft",
+  todo: "border-line-strong bg-surface",
+  failed: "bg-danger border-danger",
+};
+
+const LABEL_CLASS: Record<StepState, string> = {
+  done: "text-ink-2",
+  current: "text-gold",
+  todo: "text-ink-3",
+  failed: "text-danger",
+};
+
+/** Шкала заявки: ромбы-отметки, как срезанные углы в фирменном стиле. */
+function RequestStepper({ request }: { request: ChipRequest }) {
+  const steps = requestSteps(request);
+  return (
+    <ol className="mt-3 flex items-start" aria-label="Ход заявки" data-testid="request-steps">
+      {steps.map((step, index) => (
+        <li
+          key={`${index}-${step.label}`}
+          aria-current={step.state === "current" ? "step" : undefined}
+          className="flex flex-1 flex-col items-center gap-1 text-center"
+        >
+          <div className="flex w-full items-center" aria-hidden="true">
+            <span
+              className={cn(
+                "h-px flex-1",
+                index === 0
+                  ? "bg-transparent"
+                  : steps[index - 1]?.state === "done"
+                    ? "bg-gold"
+                    : "bg-line-strong",
+              )}
+            />
+            <span className={cn("h-2.5 w-2.5 shrink-0 rotate-45 border", MARK_CLASS[step.state])} />
+            <span
+              className={cn(
+                "h-px flex-1",
+                index === steps.length - 1
+                  ? "bg-transparent"
+                  : step.state === "done"
+                    ? "bg-gold"
+                    : "bg-line-strong",
+              )}
+            />
+          </div>
+          <span className={cn("text-[11px] leading-tight font-semibold", LABEL_CLASS[step.state])}>
+            {step.label}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
 
 function Box({
   tone = "plain",
@@ -56,8 +116,23 @@ function PaymentBlock({ request }: { request: ChipRequest }) {
       <div className="flex items-baseline justify-between">
         <span className="text-ink text-[14px] font-bold">Реквизиты для оплаты</span>
         {remaining !== null ? (
-          <span className="text-warn num text-[15px] font-extrabold" data-testid="payment-timer">
-            {remaining > 0 ? `Осталось ${formatRemaining(remaining)}` : "Время вышло"}
+          <span
+            className={cn(
+              "num text-right",
+              remaining > 0 && remaining < 3 * 60_000 ? "text-danger" : "text-warn",
+            )}
+            data-testid="payment-timer"
+          >
+            {remaining > 0 ? (
+              <>
+                <span className="text-[11px] font-semibold">Осталось</span>{" "}
+                <span className="font-display text-[24px] leading-none font-bold">
+                  {formatRemaining(remaining)}
+                </span>
+              </>
+            ) : (
+              <span className="text-[15px] font-bold">Время вышло</span>
+            )}
           </span>
         ) : null}
       </div>
@@ -147,6 +222,7 @@ export function ChipRequestPage() {
         {withdrawal ? "Вывод" : "Заявка на фишки"}
       </h1>
       <p className="text-ink-3 text-[12px]">{formatDateMsk(request.created_at)} МСК</p>
+      <RequestStepper request={request} />
 
       <div className="border-line bg-surface mt-2 rounded-md border">
         {request.items.map((item) => (

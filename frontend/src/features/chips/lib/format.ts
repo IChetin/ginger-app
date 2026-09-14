@@ -91,6 +91,78 @@ export function computeTotals(rows: { club: AccountClub; amount: number }[]): To
   return [...totals.values()];
 }
 
+export type StepState = "done" | "current" | "todo" | "failed";
+
+export interface RequestStep {
+  label: string;
+  state: StepState;
+}
+
+/** Сколько шагов пройдено при каждом статусе — отдельно для каждого пути заявки. */
+const DONE_STEPS: Record<"credit" | "payment" | "withdrawal", Record<ChipRequestStatus, number>> = {
+  credit: {
+    sent: 1,
+    accepted: 2,
+    awaiting_payment: 2,
+    paid: 2,
+    completed: 3,
+    rejected: 1,
+    expired: 1,
+  },
+  payment: {
+    sent: 1,
+    accepted: 1,
+    awaiting_payment: 1,
+    paid: 2,
+    completed: 4,
+    rejected: 1,
+    expired: 1,
+  },
+  withdrawal: {
+    sent: 1,
+    accepted: 2,
+    awaiting_payment: 2,
+    paid: 2,
+    completed: 3,
+    rejected: 1,
+    expired: 1,
+  },
+};
+
+/**
+ * Шкала заявки в карточке (экраны §3.3: «отправлена → принята → выдана»). У пополнения
+ * с реквизитами путь длиннее — оплата и её проверка; отказ и истёкшее время отмечают шаг,
+ * на котором заявка остановилась.
+ */
+export function requestSteps(request: ChipRequest): RequestStep[] {
+  const payment =
+    request.kind === "topup" &&
+    (request.payment_requisites !== null ||
+      request.status === "awaiting_payment" ||
+      request.status === "paid" ||
+      request.status === "expired");
+  const flow = request.kind === "withdrawal" ? "withdrawal" : payment ? "payment" : "credit";
+  const labels = {
+    credit: ["Отправлена", "Принята", "Выдана"],
+    payment: ["Отправлена", "Оплата", "Проверка", "Выдана"],
+    withdrawal: ["Отправлена", "Принята", "Выведено"],
+  }[flow];
+  const done = DONE_STEPS[flow][request.status];
+  const failedLabel =
+    request.status === "rejected"
+      ? "Отклонена"
+      : request.status === "expired"
+        ? "Время вышло"
+        : null;
+
+  return labels.map((label, index) => {
+    if (index < done) return { label, state: "done" };
+    if (index === done && failedLabel) return { label: failedLabel, state: "failed" };
+    if (index === done) return { label, state: "current" };
+    return { label, state: "todo" };
+  });
+}
+
 export function requestSummary(request: ChipRequest): string {
   return request.items.map((item) => `${item.club.name} ${formatNumber(item.amount)}`).join(", ");
 }

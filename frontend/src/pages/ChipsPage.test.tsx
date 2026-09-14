@@ -124,10 +124,14 @@ describe("ChipsPage", () => {
 
     const [first] = await screen.findAllByTestId("amount-row");
     await userEvent.click(within(first!).getByRole("button", { name: "100" }));
-    await userEvent.click(screen.getByRole("button", { name: "+ Добавить ещё клуб" }));
+    expect(screen.getByRole("button", { name: "Ginger · player" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Ginger21 · player" }));
 
     const rows = screen.getAllByTestId("amount-row");
-    expect(within(rows[1]!).getByRole("combobox")).toHaveValue("acc-g21");
+    expect(within(rows[1]!).getByText("Ginger21")).toBeInTheDocument();
     await userEvent.click(within(rows[1]!).getByRole("button", { name: /^5\s000$/ }));
 
     const total = screen.getByTestId("request-total").textContent?.replace(/\s/g, " ");
@@ -145,6 +149,34 @@ describe("ChipsPage", () => {
       }),
     );
     expect(await screen.findByTestId("chip-request-page")).toBeInTheDocument();
+  });
+
+  it("история: повторить заявку в один тап", async () => {
+    fetchPlayerMe.mockResolvedValue(player());
+    fetchChipRequests.mockResolvedValue([
+      {
+        ...created,
+        id: "r-old",
+        status: "completed",
+        items: [
+          {
+            id: "i1",
+            account_id: "acc-g",
+            account_nickname: "player",
+            account_app_id: "100",
+            club: ginger,
+            amount: "100.00",
+            chip_value: "1.0000",
+            chip_currency_code: "USDT",
+            money_amount: "100.0000",
+          },
+        ],
+      },
+    ]);
+    renderWithProviders(<AppRoutes />, { route: "/chips" });
+
+    const repeat = await screen.findByRole("link", { name: "Повторить: Ginger 100" });
+    expect(repeat).toHaveAttribute("href", "/chips?repeat=r-old");
   });
 
   it("без подтверждённого аккаунта — предлагает привязать", async () => {

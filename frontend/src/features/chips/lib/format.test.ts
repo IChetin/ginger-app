@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { AccountClub } from "@/api/types/chips";
+import type { AccountClub, ChipRequest } from "@/api/types/chips";
 import {
   amountPresets,
   computeTotals,
@@ -8,6 +8,7 @@ import {
   formatRemaining,
   isOpen,
   parseAmount,
+  requestSteps,
   statusLabel,
 } from "@/features/chips/lib/format";
 
@@ -54,6 +55,61 @@ describe("chips format", () => {
     expect(statusLabel("completed", "withdrawal")).toBe("Выведено");
     expect(isOpen("paid")).toBe(true);
     expect(isOpen("expired")).toBe(false);
+  });
+
+  it("шкала заявки: кредитный путь, оплата по реквизитам, отказ и истёкшее время", () => {
+    const base: ChipRequest = {
+      id: "r",
+      kind: "topup",
+      status: "sent",
+      items: [],
+      totals: [],
+      payment_requisites: null,
+      payment_deadline_at: null,
+      has_screenshot: false,
+      withdrawal_requisites: null,
+      reject_comment: null,
+      created_at: "2026-09-14T10:00:00Z",
+      updated_at: "2026-09-14T10:00:00Z",
+      completed_at: null,
+    };
+    const states = (request: ChipRequest) =>
+      requestSteps(request).map((step) => `${step.label}:${step.state}`);
+
+    expect(states(base)).toEqual(["Отправлена:done", "Принята:current", "Выдана:todo"]);
+    expect(states({ ...base, status: "completed" })).toEqual([
+      "Отправлена:done",
+      "Принята:done",
+      "Выдана:done",
+    ]);
+    expect(states({ ...base, status: "awaiting_payment", payment_requisites: "Карта" })).toEqual([
+      "Отправлена:done",
+      "Оплата:current",
+      "Проверка:todo",
+      "Выдана:todo",
+    ]);
+    expect(states({ ...base, status: "paid", payment_requisites: "Карта" })).toEqual([
+      "Отправлена:done",
+      "Оплата:done",
+      "Проверка:current",
+      "Выдана:todo",
+    ]);
+    expect(states({ ...base, status: "expired", payment_requisites: "Карта" })).toEqual([
+      "Отправлена:done",
+      "Время вышло:failed",
+      "Проверка:todo",
+      "Выдана:todo",
+    ]);
+    expect(states({ ...base, status: "rejected" })).toEqual([
+      "Отправлена:done",
+      "Отклонена:failed",
+      "Выдана:todo",
+    ]);
+    expect(states({ ...base, kind: "withdrawal", status: "completed" })).toEqual([
+      "Отправлена:done",
+      "Принята:done",
+      "Выведено:done",
+    ]);
   });
 
   it("ввод суммы и таймер", () => {

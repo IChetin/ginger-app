@@ -45,98 +45,135 @@ function initialRows(
   return first ? [newRow(first)] : [];
 }
 
-function AmountRow({
-  row,
+function ClubIcon({ account, className }: { account: PlayerAccount; className: string }) {
+  const src = APP_ICONS[account.club.app];
+  return src ? (
+    <img src={src} alt="" aria-hidden="true" className={cn("shrink-0 rounded-[22%]", className)} />
+  ) : null;
+}
+
+/** Фишки × курс клуба: «$100», «₽5 000». Без курса или без суммы — ничего. */
+function moneyFor(account: PlayerAccount, chips: number): string | null {
+  const { chip_value, chip_currency_code, currency_symbol } = account.club;
+  if (!chip_value || !chip_currency_code || chips <= 0) return null;
+  return formatMoney(chips * Number(chip_value), currency_symbol, chip_currency_code);
+}
+
+/**
+ * Клубы игрока плитками: тап добавляет клуб в заявку или убирает его. Запрос в другой клуб —
+ * три тапа: клуб, сумма, отправить (проверка по кликам, экраны §4).
+ */
+function ClubTiles({
   accounts,
-  usedIds,
-  canRemove,
+  rows,
+  onToggle,
+}: {
+  accounts: PlayerAccount[];
+  rows: Row[];
+  onToggle: (accountId: string) => void;
+}) {
+  return (
+    <div
+      role="group"
+      aria-label="Клубы в заявке"
+      className="-mx-3 flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-3 pb-0.5 [&::-webkit-scrollbar]:hidden"
+    >
+      {accounts.map((account) => {
+        const selected = rows.some((row) => row.accountId === account.id);
+        return (
+          <button
+            key={account.id}
+            type="button"
+            aria-pressed={selected}
+            aria-label={`${account.club.name} · ${account.nickname}`}
+            onClick={() => onToggle(account.id)}
+            className={cn(
+              "flex h-12 shrink-0 items-center gap-2 rounded-md border pr-3 pl-2 text-left",
+              selected ? "border-line-gold bg-gold-soft" : "border-line bg-surface",
+            )}
+          >
+            <ClubIcon account={account} className="h-6 w-6" />
+            <span className="flex flex-col leading-tight">
+              <span className={cn("text-[13.5px] font-bold", selected ? "text-gold" : "text-ink")}>
+                {account.club.name}
+              </span>
+              <span className="text-ink-3 text-[11px]">{account.nickname}</span>
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function AmountBlock({
+  row,
+  account,
   onChange,
-  onRemove,
 }: {
   row: Row;
-  accounts: PlayerAccount[];
-  usedIds: Set<string>;
-  canRemove: boolean;
+  account: PlayerAccount;
   onChange: (row: Row) => void;
-  onRemove: () => void;
 }) {
-  const account = accounts.find((item) => item.id === row.accountId);
   const selected = parseAmount(row.amount);
+  const money = moneyFor(account, selected);
+  const { chip_value, chip_currency_code, currency_symbol } = account.club;
+  const rate =
+    chip_value && chip_currency_code
+      ? formatMoney(chip_value, currency_symbol, chip_currency_code)
+      : null;
+
   return (
-    <div className="bg-surface border-line rounded-md border p-2.5" data-testid="amount-row">
+    <div className="bg-surface border-line rounded-lg border p-3" data-testid="amount-row">
       <div className="flex items-center gap-2">
-        {account && APP_ICONS[account.club.app] ? (
-          <img src={APP_ICONS[account.club.app]} alt="" className="h-5 w-5 rounded-[22%]" />
-        ) : null}
-        <select
-          aria-label="Клуб и аккаунт"
-          className="text-ink min-w-0 flex-1 bg-transparent text-[14px] font-bold outline-none"
-          value={row.accountId}
-          onChange={(event) => onChange({ ...row, accountId: event.target.value })}
+        <ClubIcon account={account} className="h-5 w-5" />
+        <span className="min-w-0 flex-1 truncate">
+          <span className="text-ink text-[14px] font-bold">{account.club.name}</span>
+          <span className="text-ink-3 text-[12px]">
+            {" "}
+            · {account.nickname} · ID {account.app_account_id}
+          </span>
+        </span>
+        <span
+          className={cn(
+            "font-display num shrink-0 text-[17px] font-bold",
+            money ? "text-value-hi" : "text-ink-3",
+          )}
         >
-          {accounts.map((item) => (
-            <option
-              key={item.id}
-              value={item.id}
-              disabled={usedIds.has(item.id) && item.id !== row.accountId}
-            >
-              {item.club.name} · {item.nickname}
-            </option>
-          ))}
-        </select>
-        {canRemove ? (
-          <button
-            type="button"
-            aria-label="Убрать клуб"
-            onClick={onRemove}
-            className="text-ink-3 h-8 w-8 rounded-md text-[14px]"
-          >
-            ✕
-          </button>
-        ) : null}
+          {money ?? "—"}
+        </span>
       </div>
-      {account ? (
-        <>
-          <div className="mt-2 grid grid-cols-4 gap-1.5">
-            {amountPresets(account.club).map((preset) => (
-              <button
-                key={preset}
-                type="button"
-                aria-pressed={selected === preset}
-                onClick={() => onChange({ ...row, amount: String(preset) })}
-                className={cn(
-                  "num h-9 rounded-md border text-[14px] font-bold",
-                  selected === preset
-                    ? "border-line-gold bg-gold-soft text-gold"
-                    : "border-line bg-surface-2 text-ink",
-                )}
-              >
-                {formatNumber(preset)}
-              </button>
-            ))}
-          </div>
-          <div className="mt-1.5 flex items-center gap-2">
-            <input
-              aria-label="Своя сумма"
-              inputMode="decimal"
-              placeholder="или своя сумма"
-              value={row.amount}
-              onChange={(event) => onChange({ ...row, amount: event.target.value })}
-              className="border-line bg-surface-2 text-ink num h-9 min-w-0 flex-1 rounded-md border px-2.5 text-[14px] outline-none"
-            />
-            {account.club.chip_value && account.club.chip_currency_code ? (
-              <span className="text-ink-3 shrink-0 text-[11px]">
-                1 фишка ={" "}
-                {formatMoney(
-                  account.club.chip_value,
-                  account.club.currency_symbol,
-                  account.club.chip_currency_code,
-                )}
-              </span>
-            ) : null}
-          </div>
-        </>
-      ) : null}
+      <div className="mt-2.5 grid grid-cols-4 gap-1.5">
+        {amountPresets(account.club).map((preset) => (
+          <button
+            key={preset}
+            type="button"
+            aria-pressed={selected === preset}
+            onClick={() => onChange({ ...row, amount: String(preset) })}
+            className={cn(
+              "font-display num h-11 rounded-md border text-[16px] font-bold",
+              selected === preset
+                ? "border-line-gold bg-gold-soft text-gold"
+                : "border-line bg-surface-2 text-ink",
+            )}
+          >
+            {formatNumber(preset)}
+          </button>
+        ))}
+      </div>
+      <div className="border-line bg-surface-2 focus-within:border-gold mt-1.5 flex h-11 items-center gap-2 rounded-md border px-3">
+        <input
+          aria-label="Своя сумма"
+          inputMode="decimal"
+          placeholder="Своя сумма"
+          value={row.amount}
+          onChange={(event) => onChange({ ...row, amount: event.target.value })}
+          className="text-ink num min-w-0 flex-1 bg-transparent text-[15px] outline-none"
+        />
+        <span className="text-ink-3 shrink-0 text-[12px]">
+          фиш.{rate ? ` · 1 фишка = ${rate}` : ""}
+        </span>
+      </div>
     </div>
   );
 }
@@ -158,7 +195,6 @@ function RequestForm({
   const [requisites, setRequisites] = useState("");
 
   const byId = new Map(accounts.map((account) => [account.id, account]));
-  const usedIds = new Set(rows.map((row) => row.accountId));
   const totals = computeTotals(
     rows.flatMap((row) => {
       const account = byId.get(row.accountId);
@@ -169,7 +205,16 @@ function RequestForm({
     rows.length > 0 &&
     rows.every((row) => byId.has(row.accountId) && parseAmount(row.amount) > 0) &&
     (kind === "topup" || requisites.trim().length > 0);
-  const freeAccount = accounts.find((account) => !usedIds.has(account.id));
+
+  const toggleAccount = (accountId: string) => {
+    setRows((current) => {
+      if (current.some((row) => row.accountId === accountId)) {
+        // Последний клуб не убираем: заявка без клуба не имеет смысла.
+        return current.length > 1 ? current.filter((row) => row.accountId !== accountId) : current;
+      }
+      return [...current, newRow(accountId)];
+    });
+  };
 
   const submit = async () => {
     if (!valid) return;
@@ -189,27 +234,24 @@ function RequestForm({
   };
 
   return (
-    <div className="flex flex-col gap-1.5">
-      {rows.map((row, index) => (
-        <AmountRow
-          key={row.key}
-          row={row}
-          accounts={accounts}
-          usedIds={usedIds}
-          canRemove={rows.length > 1}
-          onChange={(next) => setRows(rows.map((item, i) => (i === index ? next : item)))}
-          onRemove={() => setRows(rows.filter((_, i) => i !== index))}
-        />
-      ))}
-      {freeAccount ? (
-        <button
-          type="button"
-          onClick={() => setRows([...rows, newRow(freeAccount.id)])}
-          className="text-gold self-start px-1 py-1 text-[13px] font-bold"
-        >
-          + Добавить ещё клуб
-        </button>
+    <div className="flex flex-col gap-2">
+      {accounts.length > 1 ? (
+        <ClubTiles accounts={accounts} rows={rows} onToggle={toggleAccount} />
       ) : null}
+
+      {rows.map((row) => {
+        const account = byId.get(row.accountId);
+        return account ? (
+          <AmountBlock
+            key={row.key}
+            row={row}
+            account={account}
+            onChange={(next) =>
+              setRows((current) => current.map((item) => (item.key === next.key ? next : item)))
+            }
+          />
+        ) : null;
+      })}
 
       {kind === "withdrawal" ? (
         <textarea
@@ -218,37 +260,58 @@ function RequestForm({
           value={requisites}
           onChange={(event) => setRequisites(event.target.value)}
           rows={2}
-          className="border-line bg-surface text-ink rounded-md border px-2.5 py-2 text-[14px] outline-none"
+          className="border-line bg-surface text-ink focus:border-gold rounded-lg border px-3 py-2.5 text-[14px] outline-none"
         />
       ) : null}
 
-      <div className="flex items-baseline justify-between px-0.5 pt-1">
-        <span className="text-ink-3 text-[12px] font-semibold">Итого</span>
-        <span className="num text-ink text-[16px] font-extrabold" data-testid="request-total">
-          {totals.length
-            ? totals.map((line) => formatMoney(line.amount, line.symbol, line.code)).join(" · ")
-            : "—"}
-        </span>
+      <div className="border-line-strong bg-surface mt-1 rounded-lg border p-3">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="text-ink-2 text-[13px] font-semibold">
+            {kind === "withdrawal" ? "К выводу" : "Итого"}
+          </span>
+          <span
+            className="font-display num text-value-hi text-right text-[22px] font-bold"
+            data-testid="request-total"
+          >
+            {totals.length
+              ? totals.map((line) => formatMoney(line.amount, line.symbol, line.code)).join(" · ")
+              : "—"}
+          </span>
+        </div>
+        {!player.cashdesk_open ? (
+          <p className="text-warn mt-1 text-[12px]">
+            Касса работает {player.cashdesk_hours} — заявка встанет в очередь.
+          </p>
+        ) : null}
+        {create.isError ? (
+          <p role="alert" className="text-danger mt-1 text-[13px] font-semibold">
+            {create.error instanceof ApiError
+              ? create.error.message
+              : "Не удалось отправить заявку"}
+          </p>
+        ) : null}
+        <button
+          type="button"
+          disabled={!valid || create.isPending}
+          onClick={() => void submit()}
+          className="bg-gold-grad text-ink-ongold shadow-sheen-glow mt-2.5 h-12 w-full rounded-md text-[16px] font-bold disabled:opacity-45 disabled:shadow-none"
+        >
+          {create.isPending
+            ? "Отправляем…"
+            : kind === "withdrawal"
+              ? "Запросить вывод"
+              : "Запросить фишки"}
+        </button>
       </div>
-      {!player.cashdesk_open ? (
-        <p className="text-ink-3 text-[12px]">
-          Касса работает {player.cashdesk_hours} — заявка встанет в очередь.
-        </p>
-      ) : null}
-      {create.isError ? (
-        <p role="alert" className="text-danger text-[13px] font-semibold">
-          {create.error instanceof ApiError ? create.error.message : "Не удалось отправить заявку"}
-        </p>
-      ) : null}
-      <button
-        type="button"
-        disabled={!valid || create.isPending}
-        onClick={() => void submit()}
-        className="bg-gold-grad text-ink-ongold mt-1 h-11 rounded-md text-[15px] font-bold disabled:opacity-45"
-      >
-        {kind === "withdrawal" ? "Запросить вывод" : "Запросить фишки"}
-      </button>
     </div>
+  );
+}
+
+function SectionTitle({ children }: { children: string }) {
+  return (
+    <h2 className="text-ink-3 mb-1.5 text-[11px] font-bold tracking-[0.06em] uppercase">
+      {children}
+    </h2>
   );
 }
 
@@ -295,7 +358,17 @@ export function ChipsPage() {
   return (
     <div className="bg-bg min-h-full pb-4" data-testid="chips-page">
       <header className="border-line bg-bg/90 sticky top-0 z-20 flex items-center gap-2 border-b px-3 pt-2.5 pb-2 backdrop-blur-[14px]">
-        <h1 className="flex-1 text-[17px] font-extrabold tracking-tight">Фишки</h1>
+        <h1 className="text-[18px] font-bold">Фишки</h1>
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold",
+            me.cashdesk_open ? "bg-live-soft text-live" : "bg-surface-2 text-ink-3",
+          )}
+        >
+          <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-current" />
+          {me.cashdesk_open ? "Касса открыта" : "Касса закрыта"}
+        </span>
+        <span className="flex-1" />
         <Link to="/chips/accounts" className="text-gold text-[13px] font-bold">
           Аккаунты
         </Link>
@@ -326,9 +399,7 @@ export function ChipsPage() {
 
       {open.length > 0 ? (
         <section className="px-3 pt-3">
-          <h2 className="text-ink-3 mb-1.5 text-[11px] font-bold tracking-[0.04em] uppercase">
-            В работе
-          </h2>
+          <SectionTitle>В работе</SectionTitle>
           <div className="flex flex-col gap-1.5">
             {open.map((item) => (
               <RequestRow key={item.id} request={item} />
@@ -339,7 +410,7 @@ export function ChipsPage() {
 
       <section className="px-3 pt-3">
         {confirmed.length === 0 ? (
-          <div className="border-line-gold bg-surface rounded-md border border-dashed px-4 py-5 text-center">
+          <div className="border-line-gold bg-surface rounded-lg border border-dashed px-4 py-5 text-center">
             <p className="text-ink text-[15px] font-bold">Привяжите аккаунт в клубе</p>
             <p className="text-ink-2 mt-1 text-[13px]">
               {me.accounts.some((account) => account.status === "pending")
@@ -366,12 +437,10 @@ export function ChipsPage() {
 
       {history.length > 0 ? (
         <section className="px-3 pt-4">
-          <h2 className="text-ink-3 mb-1.5 text-[11px] font-bold tracking-[0.04em] uppercase">
-            История
-          </h2>
+          <SectionTitle>История</SectionTitle>
           <div className="flex flex-col gap-1.5">
             {history.slice(0, 20).map((item) => (
-              <RequestRow key={item.id} request={item} />
+              <RequestRow key={item.id} request={item} repeat />
             ))}
           </div>
         </section>

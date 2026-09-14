@@ -39,16 +39,22 @@ export function StatusBadge({
   );
 }
 
-/** Строка заявки в списке: две строки — телефон первым. */
-export function RequestRow({ request }: { request: ChipRequest }) {
+/**
+ * Строка заявки в списке: две строки — телефон первым. В истории рядом кнопка «Повторить»
+ * (экраны §3.3): та же заявка открывается в форме уже заполненной.
+ */
+export function RequestRow({ request, repeat }: { request: ChipRequest; repeat?: boolean }) {
   const totals = request.totals
     .map((total) => formatMoney(total.amount, total.currency_symbol, total.currency_code))
     .join(" · ");
-  return (
+  const row = (
     <Link
       to={`/chips/${request.id}`}
       data-testid="chip-request-row"
-      className="bg-surface border-line block rounded-md border px-2.5 py-2"
+      className={cn(
+        "bg-surface border-line block rounded-md border px-2.5 py-2",
+        repeat && "min-w-0 flex-1",
+      )}
     >
       <div className="flex items-center gap-2">
         <span className="text-ink min-w-0 flex-1 truncate text-[14px] font-bold">
@@ -62,5 +68,20 @@ export function RequestRow({ request }: { request: ChipRequest }) {
         <span className="num">{totals}</span>
       </div>
     </Link>
+  );
+  if (!repeat) return row;
+  const repeatTo = `/chips?repeat=${request.id}${request.kind === "withdrawal" ? "&kind=withdrawal" : ""}`;
+  return (
+    <div className="flex items-stretch gap-1.5">
+      {row}
+      <Link
+        to={repeatTo}
+        aria-label={`Повторить: ${requestSummary(request)}`}
+        title="Повторить"
+        className="border-line bg-surface text-gold flex w-11 shrink-0 items-center justify-center rounded-md border text-[18px] font-bold"
+      >
+        ↻
+      </Link>
+    </div>
   );
 }
