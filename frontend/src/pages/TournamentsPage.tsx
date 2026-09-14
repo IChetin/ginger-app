@@ -27,6 +27,7 @@ import {
 } from "@/features/tournaments/hooks";
 import {
   displayName,
+  earlyBirdActive,
   formatDayLabel,
   formatMoney,
   formatTimeMsk,
@@ -182,7 +183,7 @@ function rowTags(tournament: Tournament): string[] {
   if (tournament.bounty_kind === "pko") tags.push("PKO");
   if (tournament.bounty_kind === "ko") tags.push("KO");
   if (tournament.bounty_kind === "mystery") tags.push("MYST");
-  if (tournament.bounty_kind !== "pko" && tournament.bounty_kind !== "mystery") tags.push("R+A");
+  if (tournament.bounty_kind === "none") tags.push("R+A");
   return tags;
 }
 
@@ -301,6 +302,14 @@ function TableView({ groups, now, onSelect, stickyTop }: ViewProps & { stickyTop
                         {tag}
                       </span>
                     ))}
+                    {earlyBirdActive(item, now) ? (
+                      <span
+                        title="Early Bird: бонус за ранний вход"
+                        className="shrink-0 rounded-[4px] bg-[var(--live-soft)] px-1 text-[9px] leading-[14px] font-extrabold tracking-[0.03em] text-[var(--action-live-fg)]"
+                      >
+                        EB
+                      </span>
+                    ) : null}
                   </div>
                 </td>
                 <td

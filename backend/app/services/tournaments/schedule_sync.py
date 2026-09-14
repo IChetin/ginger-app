@@ -50,6 +50,11 @@ COPIED_FIELDS: tuple[str, ...] = (
     "ticket_value",
     "satellite_target",
     "early_bird_players",
+    "lobby_name",
+    "bounty_share",
+    "early_bird_bonus",
+    "early_bird_levels",
+    "has_jackpot",
     "is_promoted",
     "notes",
 )

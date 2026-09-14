@@ -36,6 +36,14 @@ export interface Tournament {
   /** Куда ведёт сателлит: показываем «Sat → цель». */
   satellite_target: string | null;
   early_bird_players: number | null;
+  /** Имя в лобби приложения — игроку показываем его; имя с афиши остаётся только в базе. */
+  lobby_name: string | null;
+  /** Какая часть бай-ина уходит в баунти, %. */
+  bounty_share: number | null;
+  /** Бонус Early Bird: «+50% фишек» — тем, кто сел до конца early_bird_levels уровней. */
+  early_bird_bonus: string | null;
+  early_bird_levels: number | null;
+  has_jackpot: boolean;
   notes: string | null;
   club: TournamentClub;
   starts_at: string;
@@ -45,6 +53,8 @@ export interface Tournament {
   buyin_rub: string | null;
   guarantee_rub: string | null;
   has_addon: boolean;
+  /** До какого момента ещё можно получить бонус Early Bird. */
+  early_bird_closes_at?: string | null;
 }
 
 /** Колокольчик: за 5 минут до старта или до конца поздней регистрации (ответ 11.7). */

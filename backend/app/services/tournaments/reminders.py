@@ -57,7 +57,9 @@ def _payload(tournament: Tournament, kind: ReminderKind) -> dict[str, object]:
     assert moment is not None
     clock = moment.astimezone(_MSK).strftime("%H:%M")
     name = (
-        f"Sat → {tournament.satellite_target}" if tournament.satellite_target else tournament.name
+        f"Sat → {tournament.satellite_target}"
+        if tournament.satellite_target
+        else (tournament.lobby_name or tournament.name)
     )
     buyin = _money(tournament.buyin, tournament.club)
     if kind is ReminderKind.START:

@@ -66,6 +66,14 @@ class TournamentFieldsMixin:
     satellite_target: Mapped[str | None] = mapped_column(String(160))
     # Early Bird: сколько первых зарегистрировавшихся получают бонус (больше стек, скидку).
     early_bird_players: Mapped[int | None] = mapped_column(SmallInteger)
+    # Имя турнира в лобби приложения — его игрок и ищет; имя с афиши остаётся в `name`.
+    lobby_name: Mapped[str | None] = mapped_column(String(160))
+    # Какая часть бай-ина уходит в баунти, %: у Poker21 «Hunter Race Ratio 1/2» — это 50.
+    bounty_share: Mapped[int | None] = mapped_column(SmallInteger)
+    # Early Bird у Poker21: бонус («+50% фишек») тем, кто сел до конца N-го уровня.
+    early_bird_bonus: Mapped[str | None] = mapped_column(String(64))
+    early_bird_levels: Mapped[int | None] = mapped_column(SmallInteger)
+    has_jackpot: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
     is_promoted: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
     notes: Mapped[str | None] = mapped_column(Text)
 

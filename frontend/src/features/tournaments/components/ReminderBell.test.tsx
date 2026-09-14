@@ -46,6 +46,11 @@ function tournament(overrides: Partial<Tournament> = {}): Tournament {
     ticket_value: null,
     satellite_target: null,
     early_bird_players: null,
+    lobby_name: null,
+    bounty_share: null,
+    early_bird_bonus: null,
+    early_bird_levels: null,
+    has_jackpot: false,
     notes: null,
     club: {
       id: "c1",

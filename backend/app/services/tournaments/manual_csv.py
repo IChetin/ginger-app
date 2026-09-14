@@ -23,6 +23,15 @@
     minutes   длительность уровней, «15/12/12»
     addon     стоимость аддона
     rebuy     стоимость ребая
+    rebuy_terms, addon_terms  условия словами: «20 000 фишек / x2 — 40 000», «есть»
+    stack     стартовый стек
+    max       игроков за столом
+    structure структура: Deep Stack, Turbo…
+    lobby_name        имя в лобби приложения — игрок видит его, name остаётся с афиши
+    bounty_share      доля бай-ина в баунти: «50» или как в лобби Poker21 — «1/2»
+    early_bird_bonus  бонус Early Bird: «+50% фишек»
+    early_bird_levels до конца какого уровня действует бонус: 1
+    jackpot           да — турнир участвует в джекпоте
     notes     заметка
 """
 
@@ -146,6 +155,26 @@ def parse_date(value: str, today: date) -> date | None:
     return None
 
 
+def _share(value: str) -> int | None:
+    """Доля баунти в бай-ине, %: «50», «50%» или как в лобби Poker21 — «1/2»."""
+    text = value.strip().rstrip("%").strip()
+    if not text:
+        return None
+    try:
+        if "/" in text:
+            top, _, bottom = text.partition("/")
+            share = round(int(top) * 100 / int(bottom))
+        else:
+            share = int(text)
+    except (ValueError, ZeroDivisionError):
+        return None
+    return share if 0 < share <= 100 else None
+
+
+def _flag(value: str) -> bool:
+    return value.strip().lower() in {"1", "+", "да", "есть", "yes", "true"}
+
+
 def parse_manual_csv(data: bytes, *, today: date | None = None) -> TemplateParseResult:
     if not looks_like_manual_csv(data):
         raise ManualCsvError(
@@ -227,6 +256,11 @@ def parse_manual_csv(data: bytes, *, today: date | None = None) -> TemplateParse
             start_stack=_int(row.get("stack", "")),
             table_size=_int(row.get("max", "")),
             structure=_text(row.get("structure", "")),
+            lobby_name=_text(row.get("lobby_name", "")),
+            bounty_share=_share(row.get("bounty_share", "")),
+            early_bird_bonus=_text(row.get("early_bird_bonus", "")),
+            early_bird_levels=_int(row.get("early_bird_levels", "")),
+            has_jackpot=_flag(row.get("jackpot", "")),
             late_reg_levels=late_reg_levels,
             level_minutes=level_minutes,
             ticket_value=_decimal(row.get("ticket", "")),

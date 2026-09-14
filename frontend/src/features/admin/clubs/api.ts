@@ -26,6 +26,7 @@ export interface TemplateAdmin {
   guarantee: string | null;
   ticket_value: string | null;
   satellite_target: string | null;
+  lobby_name?: string | null;
   weekdays: number[];
   start_time: string;
   valid_from: string | null;

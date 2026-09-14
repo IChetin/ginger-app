@@ -29,6 +29,11 @@ class TournamentFields(BaseModel):
     ticket_value: Decimal | None = Field(default=None, ge=0)
     satellite_target: str | None = Field(default=None, max_length=160)
     early_bird_players: int | None = Field(default=None, ge=0)
+    lobby_name: str | None = Field(default=None, max_length=160)
+    bounty_share: int | None = Field(default=None, ge=1, le=100)
+    early_bird_bonus: str | None = Field(default=None, max_length=64)
+    early_bird_levels: int | None = Field(default=None, ge=1, le=50)
+    has_jackpot: bool = False
     notes: str | None = None
 
 
@@ -106,6 +111,8 @@ class TournamentRead(TournamentFields):
     buyin_rub: Decimal | None
     guarantee_rub: Decimal | None
     has_addon: bool
+    # До какого момента действует Early Bird: старт + N уровней с перерывами, как у поздней реги.
+    early_bird_closes_at: datetime | None = None
 
 
 class TemplateDeleteResult(BaseModel):

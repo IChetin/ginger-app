@@ -121,7 +121,9 @@ function TemplatesTable({
               <td className="py-1 pr-2 whitespace-nowrap">{formatTemplateDays(template)}</td>
               <td className="num py-1 pr-2">{template.start_time.slice(0, 5)}</td>
               <td className="py-1 pr-2">
-                {template.satellite_target ? `Sat → ${template.satellite_target}` : template.name}
+                {template.satellite_target
+                  ? `Sat → ${template.satellite_target}`
+                  : [template.lobby_name, template.name].filter(Boolean).join(" · ")}
               </td>
               <td className="num py-1 pr-2 text-right">
                 {numberFormat.format(Number(template.buyin))}
@@ -168,7 +170,9 @@ export function AdminGridImportPage() {
 
   const removeTemplate = async (template: TemplateAdmin) => {
     if (!clubId) return;
-    const title = template.satellite_target ? `Sat → ${template.satellite_target}` : template.name;
+    const title = template.satellite_target
+      ? `Sat → ${template.satellite_target}`
+      : [template.lobby_name, template.name].filter(Boolean).join(" · ");
     const ok = await confirm({
       title: "Удалить турнир из сетки?",
       description: `${title} · ${formatTemplateDays(template)} ${template.start_time.slice(0, 5)}. Будущие старты пропадут из расписания, прошедшие останутся.`,

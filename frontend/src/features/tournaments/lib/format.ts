@@ -17,6 +17,13 @@ export const APP_ICONS: Partial<Record<PokerApp, string>> = {
   poker21: "/apps/poker21.png",
 };
 
+/** Фирменный цвет приложения — приглушённым фоном карточки турнира. */
+export const APP_TINT: Partial<Record<PokerApp, string>> = {
+  pppoker: "#1fa35a",
+  xpoker: "#2f6bff",
+  poker21: "#b3202e",
+};
+
 const amountFormat = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 });
 
 /**
@@ -108,9 +115,20 @@ export function lateRegLabel(tournament: Tournament): string | null {
   return tournament.has_addon ? `Аддон в ${time}` : `Рег. до ${time}`;
 }
 
-/** Сателлит показываем как «Sat → Main Event», остальные турниры — по названию. */
+/** Бонус Early Bird ещё можно взять: до его дедлайна, а у «первых N игроков» — до старта. */
+export function earlyBirdActive(tournament: Tournament, now: Date): boolean {
+  if (tournament.early_bird_closes_at) return new Date(tournament.early_bird_closes_at) > now;
+  if (tournament.early_bird_players || tournament.early_bird_bonus) {
+    return new Date(tournament.starts_at) > now;
+  }
+  return false;
+}
+
+/** Сателлит — «Sat → Main Event», остальные — по имени из лобби, а без него — с афиши. */
 export function displayName(tournament: Tournament): string {
-  return tournament.satellite_target ? `Sat → ${tournament.satellite_target}` : tournament.name;
+  return tournament.satellite_target
+    ? `Sat → ${tournament.satellite_target}`
+    : (tournament.lobby_name ?? tournament.name);
 }
 
 /** Короткие метки формата: PKO, Mystery, PLO5, Early Bird. */
@@ -124,6 +142,8 @@ export function formatTags(tournament: Tournament): string[] {
   // Ответ Ивана 14.09: турниры без баунти у союзов идут с ребаями и аддоном; KO, PKO и Mystery — нет.
   if (tournament.bounty_kind === "none") tags.push("R+A");
   if (tournament.early_bird_players) tags.push(`Early Bird ×${tournament.early_bird_players}`);
+  else if (tournament.early_bird_bonus) tags.push("Early Bird");
+  if (tournament.has_jackpot) tags.push("Джекпот");
   if (tournament.ticket_value) {
     const ticket = formatMoney(tournament.ticket_value, tournament.club);
     if (ticket) tags.push(`Билет ${ticket}`);

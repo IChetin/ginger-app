@@ -1,4 +1,5 @@
 import { Drawer } from "@base-ui/react/drawer";
+import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 
 import type { ReminderKind, Tournament } from "@/api/types/tournaments";
@@ -8,7 +9,10 @@ import { useReminderToggle } from "@/features/tournaments/useReminderToggle";
 import { cn } from "@/lib/utils";
 import {
   APP_LABELS,
+  APP_TINT,
   displayName,
+  earlyBirdActive,
+  formatCountdown,
   formatMoney,
   formatTags,
   formatTimeMsk,
@@ -103,6 +107,49 @@ function SheetReminders({ tournament }: { tournament: Tournament }) {
   );
 }
 
+/** Приглушённый цвет приложения сверху карточки: PPPoker — зелёный, X-Poker — синий. */
+function tintStyle(tournament: Tournament | null): CSSProperties | undefined {
+  const tint = tournament ? APP_TINT[tournament.club.app] : undefined;
+  if (!tint) return undefined;
+  return {
+    backgroundImage: `linear-gradient(180deg, color-mix(in srgb, ${tint} 20%, transparent) 0%, color-mix(in srgb, ${tint} 7%, transparent) 40%, transparent 100%)`,
+  };
+}
+
+/**
+ * Early Bird — бонус за ранний вход, поэтому показываем его как дедлайн: до скольких сесть,
+ * а после старта — сколько осталось. Бонус сгорел — плашка пропадает.
+ */
+function EarlyBird({ tournament }: { tournament: Tournament }) {
+  const now = useNow(1000);
+  if (!earlyBirdActive(tournament, now)) return null;
+  const closesAt = tournament.early_bird_closes_at
+    ? new Date(tournament.early_bird_closes_at)
+    : null;
+  const started = new Date(tournament.starts_at) <= now;
+  const when = tournament.early_bird_players
+    ? `первым ${tournament.early_bird_players} игрокам`
+    : closesAt
+      ? started
+        ? `осталось ${formatCountdown(closesAt.getTime() - now.getTime())}`
+        : `если сядешь до ${formatTimeMsk(closesAt.toISOString())} МСК`
+      : "до старта";
+  return (
+    <div
+      data-testid="early-bird"
+      className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 rounded-md border border-[color-mix(in_srgb,var(--live)_35%,transparent)] bg-[var(--live-soft)] px-3 py-2"
+    >
+      <span className="text-[11px] font-extrabold tracking-[0.06em] text-[var(--action-live-fg)] uppercase">
+        Early Bird
+      </span>
+      <span className="text-ink text-[14px] font-bold">
+        {tournament.early_bird_bonus ?? "бонус к стеку"}
+      </span>
+      <span className="num text-ink-2 ml-auto text-[12.5px] tabular-nums">{when}</span>
+    </div>
+  );
+}
+
 function withTerms(cost: string | null, terms: string | null, tournament: Tournament) {
   const money = formatMoney(cost, tournament.club);
   if (!money && !terms) return null;
@@ -130,6 +177,7 @@ export function TournamentSheet({
         <Drawer.Viewport className="fixed inset-0 z-40 flex items-end justify-center">
           <Drawer.Popup
             data-testid="tournament-sheet"
+            style={tintStyle(tournament)}
             className="border-line-strong bg-surface max-h-[88vh] w-full max-w-[420px] overflow-y-auto rounded-t-lg border border-b-0 px-5 pt-2.5 pb-[calc(20px+env(safe-area-inset-bottom))] outline-none"
           >
             <div className="bg-line-strong mx-auto mb-3.5 h-1 w-9 rounded-full" />
@@ -176,6 +224,8 @@ function SheetBody({
         ))}
       </div>
 
+      <EarlyBird tournament={tournament} />
+
       <div className="mt-3 grid grid-cols-2 gap-1.5">
         <Stat label="Бай-ин" value={formatMoney(tournament.buyin, club) ?? "—"} />
         <Stat label="Гарантия" value={guarantee ?? "—"} />
@@ -197,6 +247,10 @@ function SheetBody({
           value={tournament.late_reg_levels ? `${tournament.late_reg_levels} уровней` : null}
         />
         <Param label="Структура" value={tournament.structure} />
+        <Param
+          label="Баунти"
+          value={tournament.bounty_share ? `${tournament.bounty_share}% бай-ина` : null}
+        />
         <Param
           label="За столом"
           value={tournament.table_size ? `${tournament.table_size}-max` : null}

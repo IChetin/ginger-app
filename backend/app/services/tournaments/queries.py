@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from decimal import Decimal
 from enum import StrEnum
 
@@ -16,9 +16,20 @@ from app.models.enums import ClubBlock, PokerApp, TournamentStatus
 from app.models.tournaments import Tournament
 from app.schemas.tournaments import TournamentClub, TournamentRead
 from app.services.clubs import rub_per_chip
+from app.services.tournaments.late_reg import late_reg_close_offset
 from app.services.tournaments.schedule_sync import MSK
 
 _FIELDS = tuple(name for name in TournamentRead.model_fields if name in Tournament.__table__.c)
+
+
+def _early_bird_closes_at(item: Tournament) -> datetime | None:
+    """Старт + N уровней Early Bird с часовыми перерывами — так же, как у поздней регистрации."""
+    if not item.early_bird_levels:
+        return None
+    offset = late_reg_close_offset(
+        item.starts_at.minute, item.early_bird_levels, item.level_minutes
+    )
+    return item.starts_at + timedelta(minutes=offset) if offset is not None else None
 
 
 class DayPeriod(StrEnum):
@@ -149,6 +160,7 @@ async def list_tournaments(
                 buyin_rub=buyin_rub,
                 guarantee_rub=_to_rub(item.guarantee, rate),
                 has_addon=item.addon_cost is not None or item.addon_terms is not None,
+                early_bird_closes_at=_early_bird_closes_at(item),
             )
         )
     return result
