@@ -41,6 +41,21 @@ async def _queued(db: AsyncSession) -> list[NotificationQueue]:
     return list(rows)
 
 
+async def test_late_reg_bell_talks_about_addon_when_there_is_one(
+    user_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    tournament = await _tournament(db_session, starts_in=timedelta(hours=2))
+    tournament.addon_cost = Decimal("10")
+    await db_session.flush()
+
+    response = await user_client.put(_url(tournament), json={"kinds": ["late_reg"]})
+    assert response.status_code == 200, response.text
+
+    (late,) = await _queued(db_session)
+    assert late.payload["title"] == "Аддон через 5 минут: Daily Bounty"
+    assert "перерыв на аддон" in str(late.payload["body"])
+
+
 def _url(tournament: Tournament) -> str:
     return f"/api/v1/me/tournament-reminders/{tournament.id}"
 

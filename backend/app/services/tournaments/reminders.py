@@ -63,6 +63,10 @@ def _payload(tournament: Tournament, kind: ReminderKind) -> dict[str, object]:
     if kind is ReminderKind.START:
         title = f"Через {minutes} минут: {name}"
         body = f"{tournament.club.name} · старт в {clock} МСК · бай-ин {buyin}"
+    elif tournament.addon_cost is not None or tournament.addon_terms is not None:
+        # Аддон берут на перерыве в конце поздней регистрации — об этом и напоминаем.
+        title = f"Аддон через {minutes} минут: {name}"
+        body = f"{tournament.club.name} · перерыв на аддон и конец регистрации в {clock} МСК"
     else:
         title = f"Регистрация закрывается: {name}"
         body = f"{tournament.club.name} · поздняя регистрация до {clock} МСК"

@@ -1,6 +1,11 @@
 import { Drawer } from "@base-ui/react/drawer";
+import { Link } from "react-router-dom";
 
-import type { Tournament } from "@/api/types/tournaments";
+import type { ReminderKind, Tournament } from "@/api/types/tournaments";
+import { BellIcon, ReminderHints } from "@/features/tournaments/components/ReminderBell";
+import { useNow } from "@/features/tournaments/hooks";
+import { useReminderToggle } from "@/features/tournaments/useReminderToggle";
+import { cn } from "@/lib/utils";
 import {
   APP_LABELS,
   displayName,
@@ -31,6 +36,68 @@ function Param({ label, value }: { label: string; value: string | null }) {
     <div className="border-line flex items-baseline justify-between gap-3 border-b py-2 last:border-b-0">
       <dt className="text-ink-2 text-[13px]">{label}</dt>
       <dd className="num text-ink m-0 text-right text-[13.5px] font-semibold">{value}</dd>
+    </div>
+  );
+}
+
+/**
+ * Две кнопки с колокольчиком: пуш за 5 минут до старта и за 5 минут до конца поздней
+ * регистрации — там, где есть аддон, это и есть напоминание про аддон.
+ */
+function SheetReminders({ tournament }: { tournament: Tournament }) {
+  const now = useNow(30_000);
+  const reminder = useReminderToggle(tournament);
+  const options: { kind: ReminderKind; label: string; at: string | null }[] = [
+    { kind: "start", label: "Уведомить о старте", at: tournament.starts_at },
+    {
+      kind: "late_reg",
+      label: tournament.has_addon ? "Напомнить про аддон" : "Напомнить о конце реги",
+      at: tournament.late_reg_closes_at,
+    },
+  ];
+  const available = options.filter(
+    (option) =>
+      option.at !== null && (new Date(option.at) > now || reminder.active.has(option.kind)),
+  );
+  if (available.length === 0) return null;
+
+  if (reminder.isGuest) {
+    return (
+      <p className="text-ink-2 mt-4 text-center text-[12.5px]">
+        Напоминания о турнирах — для игроков клуба.{" "}
+        <Link to="/login" className="text-gold font-bold">
+          Войти
+        </Link>
+      </p>
+    );
+  }
+
+  return (
+    <div className="mt-4">
+      <div className="grid grid-cols-2 gap-1.5">
+        {available.map((option) => {
+          const on = reminder.active.has(option.kind);
+          return (
+            <button
+              key={option.kind}
+              type="button"
+              aria-pressed={on}
+              disabled={reminder.pending}
+              onClick={() => void reminder.toggle(option.kind)}
+              className={cn(
+                "flex h-11 items-center justify-center gap-1.5 rounded-md border px-2 text-[13px] font-bold disabled:opacity-60",
+                available.length === 1 && "col-span-2",
+                on ? "border-line-gold bg-gold-soft text-gold" : "border-line-strong text-ink",
+              )}
+            >
+              <BellIcon filled={on} className="h-4 w-4 shrink-0" />
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-ink-3 mt-1 text-center text-[11px]">Пуш придёт за 5 минут</p>
+      <ReminderHints hint={reminder.hint} error={reminder.error} />
     </div>
   );
 }
@@ -143,6 +210,8 @@ function SheetBody({
         />
         <Param label="Заметка" value={tournament.notes} />
       </dl>
+
+      <SheetReminders tournament={tournament} />
 
       {onOpenApp ? (
         <button

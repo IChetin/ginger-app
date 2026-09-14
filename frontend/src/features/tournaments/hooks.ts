@@ -10,14 +10,11 @@ export type PriceTier = "low" | "mid" | "high";
 export interface TournamentFilters {
   range: RangeKey;
   prices: PriceTier[];
-  /** Сателлиты по умолчанию скрыты: они рвут ленту основных турниров. */
-  showSatellites: boolean;
 }
 
 export const EMPTY_FILTERS: TournamentFilters = {
   range: "day",
   prices: [],
-  showSatellites: false,
 };
 
 const RANGE_HOURS: Record<RangeKey, number> = { day: 24, "3days": 72, week: 168 };
@@ -37,12 +34,15 @@ export function priceTier(buyinRub: string | null): PriceTier | null {
   return "high";
 }
 
-/** Фильтры работают на месте: турниры за выбранный период уже загружены. */
+/**
+ * Фильтры работают на месте: турниры за выбранный период уже загружены. Сателлиты в выдачу
+ * не попадают вовсе — решение Ивана 14.09: они рвут ленту и игрокам неважны.
+ */
 export function applyTournamentFilters<
   T extends Pick<Tournament, "buyin_rub" | "satellite_target">,
 >(items: T[], filters: TournamentFilters): T[] {
   return items.filter((item) => {
-    if (!filters.showSatellites && item.satellite_target) return false;
+    if (item.satellite_target) return false;
     if (filters.prices.length === 0) return true;
     const tier = priceTier(item.buyin_rub);
     return tier !== null && filters.prices.includes(tier);
@@ -61,7 +61,6 @@ function readStoredFilters(): TournamentFilters {
       prices: Array.isArray(stored.prices)
         ? stored.prices.filter((tier) => PRICE_TIERS.some((option) => option.value === tier))
         : [],
-      showSatellites: stored.showSatellites === true,
     };
   } catch {
     return EMPTY_FILTERS;

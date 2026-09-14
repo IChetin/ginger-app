@@ -101,7 +101,7 @@ describe("TournamentsPage", () => {
     expect(river.getByText("$16")).toBeInTheDocument();
     expect(river.getByText("PKO")).toBeInTheDocument();
     expect(river.getByText("Early Bird ×10")).toBeInTheDocument();
-    expect(within(cards[0]).getByText(/Рег. ещё 4\d:\d\d/)).toBeInTheDocument();
+    expect(within(cards[0]).getByText(/late 4\d:\d\d/)).toBeInTheDocument();
     expect(screen.getByText(/2 турнира/)).toBeInTheDocument();
   });
 
@@ -112,7 +112,7 @@ describe("TournamentsPage", () => {
     const rows = await screen.findAllByTestId("tournament-row");
     expect(rows).toHaveLength(2);
     expect(screen.getByRole("table")).toBeInTheDocument();
-    expect(within(rows[0]).getByText("рег. ещё")).toBeInTheDocument();
+    expect(within(rows[0]).getByText("late")).toBeInTheDocument();
     expect(within(rows[0]).getByText(/^4\d:\d\d$/)).toBeInTheDocument();
     expect(screen.queryByTestId("tournament-card")).toBeNull();
   });
@@ -143,7 +143,7 @@ describe("TournamentsPage", () => {
     expect(within(sheet).getByText(/Ссылка на клуб в PPPoker скоро появится/)).toBeInTheDocument();
   });
 
-  it("сателлиты скрыты по умолчанию, цена фильтрует на месте, выбор запоминается", async () => {
+  it("сателлитов в выдаче нет, цена фильтрует на месте, выбор запоминается", async () => {
     fetchCurrentUser.mockResolvedValue(user);
     const satellite = tournament({
       id: "t3",
@@ -166,9 +166,7 @@ describe("TournamentsPage", () => {
 
     expect(await screen.findAllByTestId("tournament-card")).toHaveLength(3);
     expect(screen.queryByText("Sat → Main Event")).toBeNull();
-
-    await userEvent.click(screen.getByRole("checkbox", { name: "Сателлиты" }));
-    expect(screen.getByText("Sat → Main Event")).toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: "Сателлиты" })).toBeNull();
 
     await userEvent.click(screen.getByRole("button", { name: "от 3 000 ₽" }));
     const cards = screen.getAllByTestId("tournament-card");
@@ -180,6 +178,6 @@ describe("TournamentsPage", () => {
     expect(Object.keys(params).sort()).toEqual(["from", "to"]);
     expect(
       JSON.parse(window.localStorage.getItem("ginger.tournaments.filters.v2") ?? "{}"),
-    ).toMatchObject({ prices: ["high"], showSatellites: true });
+    ).toEqual({ range: "day", prices: ["high"] });
   });
 });

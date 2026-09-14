@@ -28,12 +28,12 @@ export function LateRegCountdown({ closesAt, compact }: { closesAt: Date; compac
     // В узкой колонке «Старт» подпись над отсчётом: «1:25:39» в одну строку с ней не влезает.
     return (
       <span className="text-warn num block leading-tight font-bold tabular-nums">
-        <span className="block text-[10px] font-semibold">рег. ещё</span>
+        <span className="block text-[9.5px] font-semibold">late</span>
         {left}
       </span>
     );
   }
-  return <span className="text-warn num shrink-0 font-bold tabular-nums">Рег. ещё {left}</span>;
+  return <span className="text-warn num shrink-0 font-bold tabular-nums">late {left}</span>;
 }
 
 /**

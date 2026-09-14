@@ -1,4 +1,13 @@
-import { useMemo, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 
 import type { ScheduleView, Tournament } from "@/api/types/tournaments";
 import { useMe } from "@/features/auth/hooks";
@@ -37,6 +46,36 @@ function toggle<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
 }
 
+/**
+ * Время страницы: тик раз в 30 секунд плюс точный перескок на ближайший старт или конец
+ * поздней регистрации. Поэтому турнир уходит из списка ровно тогда, когда отсчёт дошёл до нуля,
+ * а не висит с «00:00» до следующего тика.
+ */
+function useScheduleNow(items: Tournament[] | undefined): Date {
+  const tick = useNow(30_000);
+  const [boundary, setBoundary] = useState<Date | null>(null);
+  const now = boundary && boundary > tick ? boundary : tick;
+
+  useEffect(() => {
+    if (!items) return;
+    const current = now.getTime();
+    let next = Number.POSITIVE_INFINITY;
+    for (const item of items) {
+      for (const iso of [item.starts_at, item.late_reg_closes_at]) {
+        if (!iso) continue;
+        const at = new Date(iso).getTime();
+        if (at > current && at < next) next = at;
+      }
+    }
+    if (!Number.isFinite(next)) return;
+    const wait = Math.min(next - current + 50, 2_147_000_000);
+    const id = window.setTimeout(() => setBoundary(new Date(next + 50)), wait);
+    return () => window.clearTimeout(id);
+  }, [items, now]);
+
+  return now;
+}
+
 function Chip({
   active,
   onClick,
@@ -52,7 +91,7 @@ function Chip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "inline-flex h-8 shrink-0 items-center gap-1 rounded-full border px-2.5 text-[12px] font-bold whitespace-nowrap",
+        "inline-flex h-7 shrink-0 items-center gap-1 rounded-full border px-2.5 text-[11.5px] font-bold whitespace-nowrap",
         active ? "border-line-gold bg-gold-soft text-gold" : "border-line bg-surface text-ink-2",
       )}
     >
@@ -63,7 +102,7 @@ function Chip({
 
 function DayHeader({ day, now }: { day: string; now: Date }) {
   return (
-    <h2 className="text-ink-3 px-4 pt-3 pb-1.5 text-[11px] font-bold tracking-[0.04em] uppercase">
+    <h2 className="text-ink-3 px-4 pt-3 pb-1.5 text-[10.5px] font-bold tracking-[0.04em] uppercase">
       {formatDayLabel(day, now)} · МСК
     </h2>
   );
@@ -131,6 +170,11 @@ function valueTier(rub: string | null, hi: number, mid = Number.POSITIVE_INFINIT
   return null;
 }
 
+const TIER_TEXT: Record<Exclude<ValueTier, null>, string> = {
+  hi: "text-value-hi",
+  mid: "text-value-mid",
+};
+
 /** Короткие метки формата для строки таблицы: длинные «Early Bird» и «Билет» — в карточках. */
 function rowTags(tournament: Tournament): string[] {
   const tags: string[] = [];
@@ -143,7 +187,15 @@ function rowTags(tournament: Tournament): string[] {
   return tags;
 }
 
-function StartCell({ tournament, now }: { tournament: Tournament; now: Date }) {
+function StartCell({
+  tournament,
+  now,
+  tierText,
+}: {
+  tournament: Tournament;
+  now: Date;
+  tierText: string | null;
+}) {
   const phase = tournamentPhase(tournament, now);
   if (phase.kind === "late_reg") {
     return <LateRegCountdown closesAt={phase.closesAt} compact />;
@@ -151,138 +203,165 @@ function StartCell({ tournament, now }: { tournament: Tournament; now: Date }) {
   const minutes = Math.ceil((new Date(tournament.starts_at).getTime() - now.getTime()) / 60_000);
   if (minutes <= SOON_MINUTES) {
     return (
-      <span className="text-live block text-[11.5px] leading-tight font-bold">
-        через {minutes} мин
-      </span>
+      <span className="text-live block text-[11px] leading-tight font-bold">in {minutes}m</span>
     );
   }
-  return <span className="text-ink font-bold">{formatTimeMsk(tournament.starts_at)}</span>;
+  return (
+    <span className={cn("font-bold", tierText ?? "text-ink")}>
+      {formatTimeMsk(tournament.starts_at)}
+    </span>
+  );
 }
 
 /**
- * Плотный вид по образцу лобби GG: одна строка — один турнир. Цвет несут только время
- * (поздняя регистрация, скорый старт) и деньги: крупная гарантия и дорогой бай-ин — золотом.
- * Форматы — серыми метками, сателлиты уходят в тень.
+ * Плотный вид по образцу лобби GG: одна строка — один турнир. Крупная гарантия красит золотом
+ * всю строку — время, название и деньги; дорогой бай-ин без крупной гарантии — только бай-ин.
+ * Шапка колонок прилипает под фильтрами.
  */
-function TableView({ groups, now, onSelect }: ViewProps) {
+function TableView({ groups, now, onSelect, stickyTop }: ViewProps & { stickyTop: number }) {
+  const headCell = "bg-bg sticky z-10 py-1.5 border-line border-b";
   return (
-    <div className="mt-1 overflow-x-auto">
-      <table className="w-full table-fixed border-collapse text-[13px]">
-        <colgroup>
-          <col className="w-[60px]" />
-          <col />
-          <col className="w-[56px]" />
-          <col className="w-[74px]" />
-        </colgroup>
-        <thead>
-          <tr className="text-ink-3 border-line border-b text-[10px] font-bold uppercase">
-            <th className="py-1.5 pl-3 text-left">МСК</th>
-            <th className="py-1.5 text-left">Турнир</th>
-            <th className="py-1.5 text-right">Бай-ин</th>
-            <th className="py-1.5 pr-3 text-right">GTD</th>
+    <table className="mt-0 w-full table-fixed border-separate border-spacing-0 text-[12px]">
+      <colgroup>
+        <col className="w-[54px]" />
+        <col />
+        <col className="w-[50px]" />
+        <col className="w-[66px]" />
+      </colgroup>
+      <thead>
+        <tr className="text-ink-3 text-[9.5px] font-bold uppercase">
+          <th style={{ top: stickyTop }} className={cn(headCell, "pl-3 text-left")}>
+            МСК
+          </th>
+          <th style={{ top: stickyTop }} className={cn(headCell, "text-left")}>
+            Турнир
+          </th>
+          <th style={{ top: stickyTop }} className={cn(headCell, "text-right")}>
+            Бай-ин
+          </th>
+          <th style={{ top: stickyTop }} className={cn(headCell, "pr-3 text-right")}>
+            GTD
+          </th>
+        </tr>
+      </thead>
+      {groups.map(([day, items]) => (
+        <tbody key={day}>
+          <tr>
+            <th
+              colSpan={4}
+              scope="colgroup"
+              className="bg-surface-2 text-ink-2 border-line border-b px-3 py-1 text-left text-[10.5px] font-bold"
+            >
+              {formatDayLabel(day, now)}
+            </th>
           </tr>
-        </thead>
-        {groups.map(([day, items]) => (
-          <tbody key={day}>
-            <tr>
-              <th
-                colSpan={4}
-                scope="colgroup"
-                className="bg-surface-2 text-ink-2 px-3 py-1 text-left text-[11px] font-bold"
+          {items.map((item) => {
+            const tier = valueTier(item.guarantee_rub, GUARANTEE_HI_RUB, GUARANTEE_MID_RUB);
+            const tierText = tier ? TIER_TEXT[tier] : null;
+            const buyinTier = valueTier(item.buyin_rub, BUYIN_HI_RUB);
+            const guarantee = formatMoney(item.guarantee, item.club);
+            const cell = "border-line border-b py-1.5";
+            return (
+              <tr
+                key={item.id}
+                className={cn(
+                  "hover:bg-surface cursor-pointer",
+                  tier === "hi" && "bg-[linear-gradient(90deg,transparent_35%,var(--gold-soft))]",
+                )}
+                data-testid="tournament-row"
+                data-value={tier ?? undefined}
+                tabIndex={0}
+                aria-label={`Подробнее: ${displayName(item)}`}
+                onClick={(event) => selectUnlessButton(event, () => onSelect(item))}
+                onKeyDown={(event) => selectOnEnter(event, () => onSelect(item))}
               >
-                {formatDayLabel(day, now)}
-              </th>
-            </tr>
-            {items.map((item) => {
-              const satellite = Boolean(item.satellite_target);
-              const guaranteeTier = satellite
-                ? null
-                : valueTier(item.guarantee_rub, GUARANTEE_HI_RUB, GUARANTEE_MID_RUB);
-              const buyinTier = satellite ? null : valueTier(item.buyin_rub, BUYIN_HI_RUB);
-              const guarantee = formatMoney(item.guarantee, item.club);
-              return (
-                <tr
-                  key={item.id}
-                  className={cn(
-                    "border-line hover:bg-surface cursor-pointer border-b",
-                    guaranteeTier === "hi" &&
-                      "bg-[linear-gradient(90deg,transparent_35%,var(--gold-soft))]",
-                  )}
-                  data-testid="tournament-row"
-                  data-value={guaranteeTier ?? undefined}
-                  tabIndex={0}
-                  aria-label={`Подробнее: ${displayName(item)}`}
-                  onClick={(event) => selectUnlessButton(event, () => onSelect(item))}
-                  onKeyDown={(event) => selectOnEnter(event, () => onSelect(item))}
-                >
-                  <td className="num py-1.5 pl-3 whitespace-nowrap tabular-nums">
-                    <StartCell tournament={item} now={now} />
-                  </td>
-                  <td className="min-w-0 py-1.5 pr-2">
-                    <div className="flex min-w-0 items-center gap-1.5">
-                      <AppIcon app={item.club.app} className="h-3.5 w-3.5 shrink-0" />
+                <td className={cn(cell, "num pl-3 whitespace-nowrap tabular-nums")}>
+                  <StartCell tournament={item} now={now} tierText={tierText} />
+                </td>
+                <td className={cn(cell, "min-w-0 pr-2")}>
+                  <div className="flex min-w-0 items-center gap-1.5">
+                    <AppIcon app={item.club.app} className="h-3.5 w-3.5 shrink-0" />
+                    <span
+                      className={cn(
+                        "min-w-0 truncate",
+                        item.is_promoted
+                          ? "text-gold font-bold"
+                          : tier === "hi"
+                            ? cn(tierText, "font-bold")
+                            : tier === "mid"
+                              ? cn(tierText, "font-semibold")
+                              : "text-ink font-semibold",
+                      )}
+                    >
+                      {displayName(item)}
+                    </span>
+                    {rowTags(item).map((tag) => (
                       <span
-                        className={cn(
-                          "min-w-0 truncate",
-                          satellite
-                            ? "text-ink-3 font-medium"
-                            : item.is_promoted
-                              ? "text-gold font-bold"
-                              : guaranteeTier === "hi"
-                                ? "text-ink font-bold"
-                                : "text-ink font-semibold",
-                        )}
+                        key={tag}
+                        className="bg-surface-2 text-ink-3 shrink-0 rounded-[4px] px-1 text-[9px] leading-[14px] font-bold tracking-[0.03em]"
                       >
-                        {displayName(item)}
+                        {tag}
                       </span>
-                      {rowTags(item).map((tag) => (
-                        <span
-                          key={tag}
-                          className="bg-surface-2 text-ink-3 shrink-0 rounded-[4px] px-1 text-[9.5px] leading-[15px] font-bold tracking-[0.03em]"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td
-                    className={cn(
-                      "num py-1.5 text-right font-bold whitespace-nowrap",
-                      satellite ? "text-ink-3" : buyinTier === "hi" ? "text-value-hi" : "text-ink",
-                    )}
-                  >
-                    {formatMoney(item.buyin, item.club)}
-                  </td>
-                  <td
-                    className={cn(
-                      "num py-1.5 pr-3 text-right text-[12.5px] whitespace-nowrap",
-                      guaranteeTier === "hi"
-                        ? "text-value-hi font-bold"
-                        : guaranteeTier === "mid"
-                          ? "text-value-mid font-semibold"
-                          : guarantee
-                            ? "text-ink-2"
-                            : "text-ink-3",
-                    )}
-                  >
-                    {guarantee ?? "—"}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        ))}
-      </table>
-    </div>
+                    ))}
+                  </div>
+                </td>
+                <td
+                  className={cn(
+                    cell,
+                    "num text-right font-bold whitespace-nowrap",
+                    tierText ?? (buyinTier === "hi" ? "text-value-hi" : "text-ink"),
+                  )}
+                >
+                  {formatMoney(item.buyin, item.club)}
+                </td>
+                <td
+                  className={cn(
+                    cell,
+                    "num pr-3 text-right text-[11.5px] whitespace-nowrap",
+                    tier === "hi"
+                      ? cn(tierText, "font-bold")
+                      : tier === "mid"
+                        ? cn(tierText, "font-semibold")
+                        : guarantee
+                          ? "text-ink-2"
+                          : "text-ink-3",
+                  )}
+                >
+                  {guarantee ?? "—"}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      ))}
+    </table>
   );
+}
+
+/** Высота липкой шапки страницы — под ней прилипает шапка таблицы. */
+function useElementHeight<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [height, setHeight] = useState(0);
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const measure = () => setHeight(element.getBoundingClientRect().height);
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  return [ref, height] as const;
 }
 
 export function TournamentsPage() {
   const { data: user } = useMe();
   const { filters, update, reset } = useTournamentFilters();
   const query = useTournaments(filters);
-  const now = useNow(30_000);
+  const now = useScheduleNow(query.data);
   const view: ScheduleView = user?.schedule_view ?? "table";
+  const [headerRef, headerHeight] = useElementHeight<HTMLElement>();
 
   const visible = useMemo(
     () =>
@@ -292,18 +371,21 @@ export function TournamentsPage() {
     [query.data, filters, now],
   );
   const groups = useMemo(() => groupByDay(visible), [visible]);
-  const hasFilters = filters.prices.length > 0 || filters.showSatellites;
+  const hasFilters = filters.prices.length > 0;
   const [selected, setSelected] = useState<Tournament | null>(null);
 
   return (
     <div className="bg-bg min-h-full pb-4" data-testid="tournaments-page">
-      {/* Телефон первым: заголовок, счётчик и период — одна строка, все фильтры — вторая. */}
-      <header className="border-line bg-bg/90 sticky top-0 z-20 border-b backdrop-blur-[14px]">
-        <div className="flex items-center gap-2 px-3 pt-2.5 pb-2">
-          <h1 className="text-[17px] font-extrabold tracking-tight">Турниры</h1>
+      {/* Телефон первым: заголовок, счётчик и период — одна строка, фильтр цены — вторая. */}
+      <header
+        ref={headerRef}
+        className="border-line bg-bg/90 sticky top-0 z-20 border-b backdrop-blur-[14px]"
+      >
+        <div className="flex items-center gap-2 px-3 pt-2 pb-1.5">
+          <h1 className="text-[16px] font-extrabold tracking-tight">Турниры</h1>
           <span
             aria-live="polite"
-            className="text-ink-3 num min-w-0 flex-1 truncate text-[12px] font-semibold"
+            className="text-ink-3 num min-w-0 flex-1 truncate text-[11.5px] font-semibold"
           >
             {query.isSuccess
               ? `${visible.length} ${pluralRu(visible.length, "турнир", "турнира", "турниров")}`
@@ -322,7 +404,7 @@ export function TournamentsPage() {
                 aria-selected={filters.range === option.value}
                 onClick={() => update({ range: option.value })}
                 className={cn(
-                  "h-7 rounded-full px-2.5 text-[12px] font-bold",
+                  "h-6 rounded-full px-2.5 text-[11.5px] font-bold",
                   filters.range === option.value ? "bg-surface-3 text-ink" : "text-ink-3",
                 )}
               >
@@ -337,7 +419,7 @@ export function TournamentsPage() {
               type="button"
               aria-label="Сбросить фильтры"
               onClick={reset}
-              className="text-gold border-line-gold h-8 shrink-0 rounded-full border px-2.5 text-[12px] font-bold"
+              className="text-gold border-line-gold h-7 shrink-0 rounded-full border px-2.5 text-[11.5px] font-bold"
             >
               ✕
             </button>
@@ -351,22 +433,6 @@ export function TournamentsPage() {
               {tier.label}
             </Chip>
           ))}
-          <label
-            className={cn(
-              "inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 text-[12px] font-bold whitespace-nowrap",
-              filters.showSatellites
-                ? "border-line-gold bg-gold-soft text-gold"
-                : "border-line bg-surface text-ink-2",
-            )}
-          >
-            <input
-              type="checkbox"
-              className="accent-gold h-3.5 w-3.5"
-              checked={filters.showSatellites}
-              onChange={(event) => update({ showSatellites: event.target.checked })}
-            />
-            Сателлиты
-          </label>
         </div>
       </header>
 
@@ -395,7 +461,7 @@ export function TournamentsPage() {
           </p>
         </div>
       ) : view === "table" ? (
-        <TableView groups={groups} now={now} onSelect={setSelected} />
+        <TableView groups={groups} now={now} onSelect={setSelected} stickyTop={headerHeight} />
       ) : (
         <CardsView groups={groups} now={now} onSelect={setSelected} />
       )}
