@@ -69,6 +69,11 @@ export default defineConfig({
       filename: "sw.ts",
       registerType: "autoUpdate",
       injectRegister: false,
+      // Шрифты свои (public/fonts) — кладём в офлайн-кэш вместе с кодом, иначе без сети
+      // установленное приложение откатится на системный шрифт.
+      injectManifest: {
+        globPatterns: ["**/*.{js,css,html,woff2}"],
+      },
       manifest: {
         name: "Ginger",
         short_name: "Ginger",
