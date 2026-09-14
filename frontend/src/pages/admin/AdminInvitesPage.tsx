@@ -113,7 +113,8 @@ export function AdminInvitesPage() {
           >
             <span className="min-w-0 flex-1">
               <span className="text-ink block truncate text-[13px] font-bold">
-                {invite.note || (invite.player_kind === "deposit" ? "Депозитный" : "Кредитный")}
+                {invite.player_kind === "deposit" ? "Депозитный" : "Кредитный"}
+                {invite.note ? ` · ${invite.note}` : ""}
               </span>
               <span className="text-ink-3 block truncate text-[11.5px]">
                 {STATE_LABEL[invite.state]}

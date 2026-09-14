@@ -27,7 +27,8 @@ class Settings(BaseSettings):
     otp_max_attempts: int = 5
     otp_min_interval_seconds: int = 60
     otp_daily_limit: int = 5
-    otp_ip_hourly_limit: int = 20
+    # С одного IP: в офлайн-клубе вся база входит через один Wi-Fi.
+    otp_ip_hourly_limit: int = 60
     session_cookie_name: str = "ginger_session"
     session_ttl_days: int = 30
     session_cookie_secure: bool = False
@@ -38,11 +39,13 @@ class Settings(BaseSettings):
     password_max_length: int = 128
     password_login_max_attempts: int = 5
     password_login_lockout_seconds: int = 900
-    # Captcha after N prior OTP sends today (2 = starting from 3rd request).
-    otp_captcha_after_count: int = 2
+    # Captcha after N prior OTP sends today for one email (4 = starting from 5th request).
+    otp_captcha_after_count: int = 4
     # Existence probes (register/start account_exists, login OTP account_not_found).
-    account_lookup_captcha_after_count: int = 5
-    account_lookup_ip_hourly_limit: int = 60
+    # Считаются по IP: в офлайн-клубе все игроки сидят за одним Wi-Fi, поэтому порог высокий
+    # (прогон 15.09: капча включилась на третьем входе с одного устройства).
+    account_lookup_captcha_after_count: int = 20
+    account_lookup_ip_hourly_limit: int = 120
     # Short-lived proof after register OTP verify (before password+nickname).
     register_token_ttl_seconds: int = 1800
     auth_token_ip_hourly_limit: int = 20

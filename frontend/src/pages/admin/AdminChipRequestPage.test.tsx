@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ConfirmProvider } from "@/components/ui/ConfirmDialog";
 import type { ChipRequestAdmin } from "@/features/admin/chips/api";
 import * as api from "@/features/admin/chips/api";
 import { AdminChipRequestPage } from "@/pages/admin/AdminChipRequestPage";
@@ -76,9 +77,11 @@ function renderPage() {
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={["/admin/chips/r1"]}>
-        <Routes>
-          <Route path="/admin/chips/:requestId" element={<AdminChipRequestPage />} />
-        </Routes>
+        <ConfirmProvider>
+          <Routes>
+            <Route path="/admin/chips/:requestId" element={<AdminChipRequestPage />} />
+          </Routes>
+        </ConfirmProvider>
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -114,6 +117,9 @@ describe("AdminChipRequestPage", () => {
     vi.mocked(api.sendRequisites).mockResolvedValue({ ...request, status: "awaiting_payment" });
     renderPage();
     fireEvent.click(await screen.findByRole("button", { name: /Т-Банк/ }));
+    // Реквизиты уходят только после подтверждения.
+    expect(api.sendRequisites).not.toHaveBeenCalled();
+    fireEvent.click(await screen.findByRole("button", { name: "Отправить" }));
     await waitFor(() =>
       expect(api.sendRequisites).toHaveBeenCalledWith("r1", { template_id: "t1" }),
     );

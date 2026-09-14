@@ -215,7 +215,7 @@ async def test_expired_otp(client: AsyncClient, db_session: AsyncSession) -> Non
     )
 
 
-async def test_captcha_required_on_third_request(
+async def test_captcha_required_after_daily_code_requests(
     client: AsyncClient,
     db_session: AsyncSession,
 ) -> None:
@@ -223,16 +223,14 @@ async def test_captcha_required_on_third_request(
     email = "captcha@example.com"
     await _ensure_user(db_session, email)
 
-    first = await client.post("/api/v1/auth/request-code", json={"email": email})
-    assert first.status_code == 200
-
-    await db_session.execute(
-        update(OtpCode)
-        .where(OtpCode.email == email)
-        .values(created_at=datetime.now(UTC) - timedelta(minutes=2))
-    )
-    second = await client.post("/api/v1/auth/request-code", json={"email": email})
-    assert second.status_code == 200
+    for _ in range(settings.otp_captcha_after_count):
+        await db_session.execute(
+            update(OtpCode)
+            .where(OtpCode.email == email)
+            .values(created_at=datetime.now(UTC) - timedelta(minutes=2))
+        )
+        allowed = await client.post("/api/v1/auth/request-code", json={"email": email})
+        assert allowed.status_code == 200, allowed.text
 
     await db_session.execute(
         update(OtpCode)

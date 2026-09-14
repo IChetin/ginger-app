@@ -242,7 +242,7 @@ export function AdminPlayersPage() {
         </section>
       ) : null}
 
-      <div className="-mx-3 mt-3 flex gap-1.5 overflow-x-auto px-3 pb-0.5">
+      <div className="-mx-3 mt-3 flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-3 pb-0.5 [&::-webkit-scrollbar]:hidden">
         {SEGMENTS.map((option) => {
           const count = (players.data ?? []).filter((player) =>
             inSegment(player, option.value),
@@ -267,7 +267,7 @@ export function AdminPlayersPage() {
         })}
       </div>
       {allTags.length > 0 ? (
-        <div className="-mx-3 mt-1.5 flex gap-1.5 overflow-x-auto px-3 pb-0.5">
+        <div className="-mx-3 mt-1.5 flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-3 pb-0.5 [&::-webkit-scrollbar]:hidden">
           {allTags.map(([item, count]) => (
             <button
               key={item}

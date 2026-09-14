@@ -97,13 +97,10 @@ describe("chips format", () => {
     expect(states({ ...base, status: "expired", payment_requisites: "Карта" })).toEqual([
       "Отправлена:done",
       "Время вышло:failed",
-      "Проверка:todo",
-      "Выдана:todo",
     ]);
     expect(states({ ...base, status: "rejected" })).toEqual([
       "Отправлена:done",
       "Отклонена:failed",
-      "Выдана:todo",
     ]);
     expect(states({ ...base, kind: "withdrawal", status: "completed" })).toEqual([
       "Отправлена:done",

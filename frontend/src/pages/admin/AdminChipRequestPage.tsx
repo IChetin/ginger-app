@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
+import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { ApiError } from "@/api/client";
 import { adminScreenshotUrl, type ChipRequestAdmin } from "@/features/admin/chips/api";
 import {
@@ -37,6 +38,7 @@ function RequisitesForm({
   pending: boolean;
 }) {
   const templates = useRequisiteTemplates();
+  const confirm = useConfirm();
   const active = templates.data?.filter((template) => template.is_active) ?? [];
   const [text, setText] = useState("");
 
@@ -53,7 +55,16 @@ function RequisitesForm({
               key={template.id}
               type="button"
               disabled={pending}
-              onClick={() => onSend({ templateId: template.id })}
+              onClick={async () => {
+                // Промах пальцем стоит игроку 20 минут таймера с чужими реквизитами.
+                const ok = await confirm({
+                  title: `Отправить реквизиты «${template.title}»?`,
+                  description: template.body,
+                  confirmLabel: "Отправить",
+                  cancelLabel: "Отмена",
+                });
+                if (ok) onSend({ templateId: template.id });
+              }}
               className="border-line-strong bg-surface text-ink rounded-md border px-3 py-2 text-left disabled:opacity-45"
             >
               <span className="block text-[13px] font-bold">{template.title}</span>

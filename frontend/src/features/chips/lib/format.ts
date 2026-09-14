@@ -155,7 +155,9 @@ export function requestSteps(request: ChipRequest): RequestStep[] {
         ? "Время вышло"
         : null;
 
-  return labels.map((label, index) => {
+  // Отклонённая или просроченная заявка заканчивается на провале: дальше шагов нет.
+  const shown = failedLabel ? labels.slice(0, done + 1) : labels;
+  return shown.map((label, index) => {
     if (index < done) return { label, state: "done" };
     if (index === done && failedLabel) return { label: failedLabel, state: "failed" };
     if (index === done) return { label, state: "current" };
