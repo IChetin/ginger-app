@@ -2,6 +2,7 @@ from app.core.config import Settings, get_settings
 from app.core.exceptions import AppError
 from app.services.email.base import EmailProvider, EmailSendResult
 from app.services.email.mock import MockEmailProvider
+from app.services.email.postbox import PostboxEmailProvider
 from app.services.email.smtp import SmtpEmailProvider
 
 
@@ -43,6 +44,15 @@ def get_email_provider(settings: Settings | None = None) -> EmailProvider:
         if settings.is_production:
             return UnconfiguredEmailProvider()
         return MockEmailProvider()
+
+    if provider == "postbox":
+        if not (
+            settings.postbox_access_key_id
+            and settings.postbox_secret_access_key
+            and settings.smtp_from
+        ):
+            return UnconfiguredEmailProvider()
+        return PostboxEmailProvider(settings)
 
     if provider == "smtp":
         if not settings.smtp_host or not settings.smtp_from:

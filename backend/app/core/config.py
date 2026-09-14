@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     auth_token_ip_hourly_limit: int = 20
     frontend_base_url: str = "http://localhost:5173"
 
-    # Email adapter: mock (dev/test) | smtp
+    # Email adapter: mock (dev/test) | smtp | postbox
     email_provider: str = "mock"
     smtp_host: str = ""
     smtp_port: int = 587
@@ -59,6 +59,13 @@ class Settings(BaseSettings):
     # Port 465 → SMTP_SSL; port 587 → STARTTLS (smtp_use_tls).
     smtp_use_ssl: bool = False
     smtp_use_tls: bool = True
+    # Yandex Cloud Postbox по HTTPS (EMAIL_PROVIDER=postbox): API, совместимый с Amazon SES v2.
+    # Статический ключ сервисного аккаунта с ролью postbox.sender; отправитель — SMTP_FROM
+    # и SMTP_FROM_NAME, адрес на домене, подтверждённом в Postbox.
+    postbox_endpoint: str = "https://postbox.cloud.yandex.net"
+    postbox_region: str = "ru-central1"
+    postbox_access_key_id: str = ""
+    postbox_secret_access_key: str = ""
 
     # Captcha: mock | yandex
     captcha_provider: str = "mock"

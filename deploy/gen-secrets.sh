@@ -44,16 +44,14 @@ SESSION_COOKIE_NAME=ginger_session
 SESSION_COOKIE_SECURE=true
 SESSION_COOKIE_SAMESITE=lax
 
-# Почта: Yandex Cloud Postbox (Brevo, SMTP2GO и ZeptoMail не регистрируют из РФ).
-# SMTP_USER — ID API-ключа сервисного аккаунта (scope yc.postbox.send), SMTP_PASSWORD — его
-# секрет. Вписывает владелец облака, в чат не пересылает.
-EMAIL_PROVIDER=smtp
-SMTP_HOST=postbox.cloud.yandex.net
-SMTP_PORT=587
-SMTP_USE_TLS=true
-SMTP_USE_SSL=false
-SMTP_USER=
-SMTP_PASSWORD=
+# Почта: Yandex Cloud Postbox по HTTPS — хостер закрывает SMTP-порты, а 443 открыт.
+# Статический ключ сервисного аккаунта с ролью postbox.sender. Ключи вписывает владелец
+# облака скриптом deploy/set-env-secret.sh, в чат не пересылает.
+EMAIL_PROVIDER=postbox
+POSTBOX_ENDPOINT=https://postbox.cloud.yandex.net
+POSTBOX_REGION=ru-central1
+POSTBOX_ACCESS_KEY_ID=
+POSTBOX_SECRET_ACCESS_KEY=
 SMTP_FROM=noreply@${DOMAIN}
 SMTP_FROM_NAME=Ginger
 
@@ -83,4 +81,5 @@ print("VAPID_PUBLIC_KEY=" + base64.urlsafe_b64encode(raw).rstrip(b"=").decode())
 print("VAPID_PRIVATE_KEY=" + base64.urlsafe_b64encode(private).rstrip(b"=").decode())
 PY
 
-echo "VAPID-ключи добавлены. Осталось вписать SMTP_USER и SMTP_PASSWORD от Brevo."
+echo "VAPID-ключи добавлены. Осталось вписать POSTBOX_ACCESS_KEY_ID и POSTBOX_SECRET_ACCESS_KEY"
+echo "скриптом deploy/set-env-secret.sh."
