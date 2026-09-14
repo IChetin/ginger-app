@@ -20,13 +20,16 @@ describe("App routes", () => {
     fetchCurrentUser.mockRejectedValue(new ApiError(401, "unauthorized", "Unauthorized"));
   });
 
-  it("sends a guest from home to login", async () => {
+  it("shows a guest the app home instead of the login form", async () => {
     renderWithProviders(<AppRoutes />, { route: "/" });
-    expect(await screen.findByRole("heading", { name: "Вход" })).toBeInTheDocument();
+    expect(await screen.findByTestId("home-guest")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Вход" })).not.toBeInTheDocument();
   });
 
-  it("redirects a profile guest to login", async () => {
+  it("keeps a guest in the app on a personal page and offers to log in", async () => {
     renderWithProviders(<AppRoutes />, { route: "/profile" });
-    expect(await screen.findByRole("heading", { name: "Вход" })).toBeInTheDocument();
+    expect(await screen.findByTestId("guest-gate")).toBeInTheDocument();
+    expect(screen.getByText("Войдите, чтобы продолжить")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Войти" })).toHaveAttribute("href", "/login");
   });
 });

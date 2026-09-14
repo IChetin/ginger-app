@@ -282,7 +282,7 @@ export function TournamentsPage() {
   const { filters, update, reset } = useTournamentFilters();
   const query = useTournaments(filters);
   const now = useNow(30_000);
-  const view: ScheduleView = user?.schedule_view ?? "cards";
+  const view: ScheduleView = user?.schedule_view ?? "table";
 
   const visible = useMemo(
     () =>

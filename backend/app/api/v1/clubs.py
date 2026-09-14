@@ -29,11 +29,8 @@ _MAX_RANGE = timedelta(days=15)
 
 
 @router.get("/clubs", response_model=list[ClubBrief])
-async def list_clubs(
-    user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)],
-) -> list[ClubBrief]:
-    del user
+async def list_clubs(db: Annotated[AsyncSession, Depends(get_db)]) -> list[ClubBrief]:
+    """Справочник клубов открыт без входа (решение Ивана 14.09): гость видит приложение."""
     return await clubs_service.list_public_clubs(db)
 
 

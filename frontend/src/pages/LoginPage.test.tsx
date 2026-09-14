@@ -186,6 +186,8 @@ describe("LoginPage", () => {
     const user = userEvent.setup();
     verifyAuthCode.mockResolvedValue(userWithPassword);
     renderWithProviders(<AppRoutes />, { route: "/profile" });
+    // Гостя не выкидывает на /login: на месте раздела — «Войти», который помнит, куда вернуть.
+    await user.click(await screen.findByRole("link", { name: "Войти" }));
     expect(await screen.findByTestId("login-credentials")).toBeInTheDocument();
 
     await user.type(screen.getByLabelText("Email"), "player@example.com");

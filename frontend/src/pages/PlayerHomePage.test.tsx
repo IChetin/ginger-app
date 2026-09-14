@@ -7,7 +7,13 @@ import * as client from "@/api/client";
 import type { ChipRequest, PlayerMe } from "@/api/types/chips";
 import type { Tournament } from "@/api/types/tournaments";
 import * as chipsApi from "@/features/chips/api";
+import * as feedApi from "@/features/feed/feedApi";
 import { PlayerHomePage } from "@/pages/PlayerHomePage";
+
+vi.mock("@/features/feed/feedApi", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/features/feed/feedApi")>();
+  return { ...original, fetchFeed: vi.fn() };
+});
 
 vi.mock("@/features/chips/api", async (importOriginal) => {
   const original = await importOriginal<typeof import("@/features/chips/api")>();
@@ -134,13 +140,32 @@ function renderHome() {
 
 describe("PlayerHomePage", () => {
   beforeEach(() => {
-    vi.mocked(client.fetchTournaments).mockResolvedValue([
-      tournament("other", g21, 10),
-      tournament("mine", ginger, 30),
-    ]);
+    vi.mocked(client.fetchCurrentUser).mockResolvedValue({
+      nickname: "fox",
+      role: "user",
+    } as Awaited<ReturnType<typeof client.fetchCurrentUser>>);
+    vi.mocked(feedApi.fetchFeed).mockResolvedValue({
+      main_events: [
+        { ...tournament("main", g21, 120), name: "Grand Knockout", guarantee: "1500000" },
+      ],
+      evening: [tournament("eve", ginger, 300)],
+      wins: [
+        {
+          id: "w1",
+          player_nickname: "Player123",
+          club: { id: "c2", name: "Ginger21", app: "poker21" },
+          tournament_name: "Daily PKO",
+          place: 1,
+          prize_amount: "32000",
+          currency_code: "RUB",
+          currency_symbol: "₽",
+          won_on: "2026-09-14",
+        },
+      ],
+    });
   });
 
-  it("shows open request, repeat of last topup and tournaments in my clubs first", async () => {
+  it("shows open request, repeat of last topup and the club feed", async () => {
     vi.mocked(chipsApi.fetchPlayerMe).mockResolvedValue(player());
     vi.mocked(chipsApi.fetchChipRequests).mockResolvedValue([
       request("open", "sent"),
@@ -151,10 +176,10 @@ describe("PlayerHomePage", () => {
     const open = await screen.findByTestId("home-open-requests");
     expect(within(open).getAllByTestId("chip-request-row")).toHaveLength(1);
     expect(await screen.findByTestId("home-repeat")).toHaveTextContent("Ещё Ginger 100");
-    expect(await screen.findByText("Ближайшие в ваших клубах")).toBeInTheDocument();
-    const nearest = screen.getByTestId("home-nearest");
-    expect(within(nearest).getAllByTestId("tournament-card")).toHaveLength(1);
-    expect(within(nearest).getByText("T mine")).toBeInTheDocument();
+    expect(await screen.findByTestId("feed-main-event")).toHaveTextContent("Grand Knockout");
+    expect(within(screen.getByTestId("feed-evening")).getByText("T eve")).toBeInTheDocument();
+    expect(within(screen.getByTestId("feed-win")).getByText("Player123")).toBeInTheDocument();
+    expect(screen.queryByTestId("home-guest")).not.toBeInTheDocument();
   });
 
   it("newcomer without requests gets a big request button", async () => {
@@ -163,7 +188,19 @@ describe("PlayerHomePage", () => {
     renderHome();
     expect(await screen.findByRole("link", { name: "Запросить фишки" })).toBeInTheDocument();
     expect(screen.queryByTestId("home-repeat")).not.toBeInTheDocument();
-    expect(await screen.findByText("Ближайшие турниры")).toBeInTheDocument();
+    expect(await screen.findByTestId("feed")).toBeInTheDocument();
+  });
+
+  it("guest sees the app: welcome, login link and the feed", async () => {
+    const unauthorized = new client.ApiError(401, "unauthorized", "Authentication required");
+    vi.mocked(client.fetchCurrentUser).mockRejectedValue(unauthorized);
+    vi.mocked(chipsApi.fetchPlayerMe).mockRejectedValue(unauthorized);
+    renderHome();
+
+    expect(await screen.findByTestId("home-guest")).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "Войти" })[0]).toHaveAttribute("href", "/login");
+    expect(await screen.findByTestId("feed-main-event")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Запросить фишки" })).not.toBeInTheDocument();
   });
 
   it("blocked player sees only the stub", async () => {

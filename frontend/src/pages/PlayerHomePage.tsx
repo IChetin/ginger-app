@@ -6,12 +6,10 @@ import { isStaffUser, useMe } from "@/features/auth/hooks";
 import { RequestRow } from "@/features/chips/components/RequestRow";
 import { useChipRequests, usePlayerMe } from "@/features/chips/hooks";
 import { isOpen, requestSummary } from "@/features/chips/lib/format";
+import { FeedSections } from "@/features/feed/FeedSections";
 import { InstallPlaque } from "@/features/onboarding/InstallPlaque";
-import { TournamentCard } from "@/features/tournaments/components/TournamentCard";
 import { useThreads } from "@/features/threads/hooks";
-import { EMPTY_FILTERS, useNow, useTournaments } from "@/features/tournaments/hooks";
-
-const NEAREST_LIMIT = 3;
+import { useNow } from "@/features/tournaments/hooks";
 
 function SectionTitle({
   children,
@@ -33,15 +31,17 @@ function SectionTitle({
 }
 
 /**
- * Главная (экраны §3.2): собирается под игрока, блоки — по срочности.
- * Активная заявка → повторить последнюю → ближайшие турниры → «Запросить фишки» и «Написать».
+ * Главная (экраны §3.2): сверху личные блоки игрока по срочности — активная заявка, ответ
+ * менеджера, «Ещё 100 в Ginger», — ниже лента клуба. Гость видит приветствие и ленту: главная
+ * — витрина, а не форма входа (решение Ивана 14.09).
  */
 export function PlayerHomePage() {
   const navigate = useNavigate();
-  const { data: user } = useMe();
+  const me_ = useMe();
+  const user = me_.data;
+  const guest = me_.isFetched && !user;
   const player = usePlayerMe();
   const requests = useChipRequests(player.isSuccess);
-  const tournaments = useTournaments(EMPTY_FILTERS);
   const threads = useThreads(player.isSuccess);
   const now = useNow(60_000);
 
@@ -63,17 +63,6 @@ export function PlayerHomePage() {
     (item) => item.kind === "topup" && !isOpen(item.status) && item.status !== "rejected",
   );
 
-  // Сначала турниры клубов, где у игрока есть аккаунт: туда он реально может зайти.
-  const myClubs = new Set(
-    (me?.accounts ?? []).filter((a) => a.status === "confirmed").map((a) => a.club.id),
-  );
-  // Сателлиты на главной не показываем: они рвут ленту основных турниров.
-  const upcoming = (tournaments.data ?? []).filter(
-    (item) => !item.satellite_target && new Date(item.late_reg_closes_at ?? item.starts_at) > now,
-  );
-  const mine = upcoming.filter((item) => myClubs.has(item.club.id));
-  const nearest = (mine.length > 0 ? mine : upcoming).slice(0, NEAREST_LIMIT);
-
   return (
     <div className="bg-bg min-h-full px-3 pb-4" data-testid="player-home">
       <header className="flex items-center gap-2 pt-3">
@@ -88,8 +77,45 @@ export function PlayerHomePage() {
         </span>
         {user ? (
           <span className="text-ink-3 truncate text-[12px] font-semibold">{user.nickname}</span>
+        ) : guest ? (
+          <Link to="/login" className="text-gold text-[13px] font-bold">
+            Войти
+          </Link>
         ) : null}
       </header>
+
+      {guest ? (
+        <div
+          className="border-line-gold bg-surface relative mt-3 overflow-hidden rounded-lg border p-3.5"
+          data-testid="home-guest"
+        >
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(110%_80%_at_0%_0%,var(--gold-soft),transparent_65%)]"
+          />
+          <p className="font-display text-ink relative text-[19px] leading-tight font-bold">
+            Покерные клубы Ginger
+          </p>
+          <p className="text-ink-2 relative mt-1 text-[13px]">
+            Расписание всех клубов, главные турниры и выигрыши игроков. Фишки и связь с менеджером —
+            после входа по приглашению.
+          </p>
+          <div className="relative mt-3 flex gap-1.5">
+            <Link
+              to="/login"
+              className="bg-gold-grad text-ink-ongold flex h-10 flex-1 items-center justify-center rounded-md text-[14px] font-bold"
+            >
+              Войти
+            </Link>
+            <Link
+              to="/clubs"
+              className="border-line-strong bg-surface-2 text-ink flex h-10 flex-1 items-center justify-center rounded-md border text-[14px] font-bold"
+            >
+              Клубы
+            </Link>
+          </div>
+        </div>
+      ) : null}
       {me ? (
         <p className="text-ink-3 mt-0.5 text-[12px]">
           {me.cashdesk_open
@@ -175,18 +201,7 @@ export function PlayerHomePage() {
         </div>
       ) : null}
 
-      <SectionTitle link={{ to: "/tournaments", label: "Всё расписание" }}>
-        {mine.length > 0 ? "Ближайшие в ваших клубах" : "Ближайшие турниры"}
-      </SectionTitle>
-      {tournaments.isPending ? <div className="bg-surface h-24 rounded-md" /> : null}
-      {tournaments.isSuccess && nearest.length === 0 ? (
-        <p className="text-ink-3 text-[13px]">В ближайшие сутки турниров нет</p>
-      ) : null}
-      <div className="flex flex-col gap-1.5" data-testid="home-nearest">
-        {nearest.map((item) => (
-          <TournamentCard key={item.id} tournament={item} now={now} />
-        ))}
-      </div>
+      <FeedSections now={now} />
     </div>
   );
 }

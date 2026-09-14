@@ -39,11 +39,12 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     password_hash: Mapped[str | None] = mapped_column(Text)
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    # Ginger APP: вид расписания турниров — карточки или плотная таблица (как лобби Покерка).
+    # Ginger APP: вид расписания турниров — плотная таблица (по умолчанию, как лобби GG)
+    # или карточки.
     schedule_view: Mapped[str] = mapped_column(
         String(16),
         nullable=False,
-        server_default=text("'cards'"),
+        server_default=text("'table'"),
     )
     role: Mapped[UserRole] = mapped_column(
         pg_enum(UserRole, "user_role"),

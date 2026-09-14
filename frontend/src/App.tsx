@@ -16,6 +16,7 @@ import { AdminLayout } from "@/pages/admin/AdminLayout";
 import { AdminOrganizersPage } from "@/pages/admin/AdminOrganizersPage";
 import { AdminPlayersPage } from "@/pages/admin/AdminPlayersPage";
 import { AdminRequisitesPage } from "@/pages/admin/AdminRequisitesPage";
+import { AdminWinsPage } from "@/pages/admin/AdminWinsPage";
 import { AdminThreadPage } from "@/pages/admin/AdminThreadPage";
 import { AdminThreadsPage } from "@/pages/admin/AdminThreadsPage";
 import { AdminUsersPage } from "@/pages/admin/AdminUsersPage";
@@ -46,12 +47,12 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route element={<AppShell />}>
-        {/* Расписание — витрина клуба, открыто без входа. */}
+        {/* Витрина клуба открыта без входа: главная с лентой, расписание, клубы, «Ещё». */}
+        <Route path="/" element={<PlayerHomePage />} />
         <Route path="/tournaments" element={<TournamentsPage />} />
+        <Route path="/clubs" element={<ClubsPage />} />
+        <Route path="/more" element={<MorePage />} />
         <Route element={<AuthGuard />}>
-          <Route path="/" element={<PlayerHomePage />} />
-          <Route path="/more" element={<MorePage />} />
-          <Route path="/clubs" element={<ClubsPage />} />
           <Route path="/offline" element={<OfflinePage />} />
           <Route path="/dialogs/*" element={<DialogsPage />} />
           <Route path="/chips" element={<ChipsPage />} />
@@ -86,6 +87,7 @@ export function AppRoutes() {
           <Route path="players" element={<AdminPlayersPage />} />
           <Route path="invites" element={<AdminInvitesPage />} />
           <Route path="requisites" element={<AdminRequisitesPage />} />
+          <Route path="wins" element={<AdminWinsPage />} />
           <Route path="threads" element={<AdminThreadsPage />} />
           <Route path="threads/:threadId" element={<AdminThreadPage />} />
         </Route>

@@ -61,7 +61,16 @@ export function MorePage() {
             icon="🃏"
           />
         ) : null}
-        <Row to="/profile" title="Профиль" subtitle={user?.email} icon="👤" />
+        {user ? (
+          <Row to="/profile" title="Профиль" subtitle={user.email} icon="👤" />
+        ) : (
+          <Row
+            to="/login"
+            title="Войти"
+            subtitle="Фишки, диалоги и профиль — для игроков клуба"
+            icon="🔑"
+          />
+        )}
         {isStaffUser(user) ? (
           <Row to="/admin" title="Админка" subtitle="Касса, сетки, игроки" icon="⚙" />
         ) : null}

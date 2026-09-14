@@ -33,6 +33,7 @@ EXPECTED_TABLES = {
     "organizers",
     "otp_codes",
     "player_accounts",
+    "player_wins",
     "players",
     "push_subscriptions",
     "requisite_templates",

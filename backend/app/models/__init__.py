@@ -8,6 +8,7 @@ from app.models.chips import (
     RequisiteTemplate,
 )
 from app.models.clubs import Club
+from app.models.feed import PlayerWin
 from app.models.notifications import NotificationQueue
 from app.models.players import Invite, Player, PlayerAccount
 from app.models.references import Currency, FxRate, Organizer
@@ -30,6 +31,7 @@ __all__ = [
     "OtpCode",
     "Player",
     "PlayerAccount",
+    "PlayerWin",
     "PushSubscription",
     "RequisiteTemplate",
     "Session",

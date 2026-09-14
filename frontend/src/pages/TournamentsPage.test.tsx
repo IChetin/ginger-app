@@ -123,7 +123,8 @@ describe("TournamentsPage", () => {
     );
     renderWithProviders(<AppRoutes />, { route: "/tournaments" });
 
-    expect(await screen.findAllByTestId("tournament-card")).toHaveLength(2);
+    // Гостю по умолчанию — таблица, как и новым игрокам.
+    expect(await screen.findAllByTestId("tournament-row")).toHaveLength(2);
     expect(screen.getByRole("heading", { name: "Турниры" })).toBeInTheDocument();
   });
 

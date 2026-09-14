@@ -47,9 +47,10 @@ async def test_public_clubs_hide_invisible_and_admin_fields(user_client: AsyncCl
 
 
 async def test_clubs_require_login(client: AsyncClient, seeded_db: None) -> None:
-    assert (await client.get("/api/v1/clubs")).status_code == 401
-    # Расписание открыто всем: это витрина клуба.
+    # Клубы, расписание и лента открыты всем: гость видит приложение, а не форму входа.
+    assert (await client.get("/api/v1/clubs")).status_code == 200
     assert (await client.get("/api/v1/tournaments")).status_code == 200
+    assert (await client.get("/api/v1/feed")).status_code == 200
 
 
 async def test_player_cannot_touch_admin_clubs(
@@ -202,10 +203,11 @@ async def test_running_tournament_shown_while_late_reg_open(
 
 
 async def test_profile_schedule_view(user_client: AsyncClient) -> None:
-    assert (await user_client.get("/api/v1/auth/me")).json()["schedule_view"] == "cards"
-    updated = await user_client.patch("/api/v1/auth/me", json={"schedule_view": "table"})
+    # По умолчанию — таблица (решение Ивана 14.09), карточки выбираются в профиле.
+    assert (await user_client.get("/api/v1/auth/me")).json()["schedule_view"] == "table"
+    updated = await user_client.patch("/api/v1/auth/me", json={"schedule_view": "cards"})
     assert updated.status_code == 200, updated.text
-    assert updated.json()["schedule_view"] == "table"
+    assert updated.json()["schedule_view"] == "cards"
     wrong = await user_client.patch("/api/v1/auth/me", json={"schedule_view": "grid"})
     assert wrong.status_code == 422
 
