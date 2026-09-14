@@ -18,6 +18,10 @@ RUN uv sync --frozen --no-dev --no-install-project
 
 COPY app ./app
 
+# Скриншоты оплаты пишутся в том /data/uploads: пустой том берёт владельца из образа,
+# иначе бэкенд под appuser получает Permission denied и заявка падает с 500.
+RUN mkdir -p /data/uploads && chown -R appuser:appuser /data
+
 USER appuser
 
 EXPOSE 8000
