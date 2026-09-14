@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-do
 
 import type { UserRole } from "@/api/types/auth";
 import { useAdminDesktop } from "@/components/admin/useAdminDesktop";
+import { GingerWordmark } from "@/components/brand/GingerWordmark";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { useAdminChipRequests, usePendingAccounts } from "@/features/admin/chips/hooks";
 import { useAdminThreads } from "@/features/admin/threads/hooks";
@@ -73,8 +74,8 @@ function SidebarNav({ showUsers, onNavigate }: { showUsers: boolean; onNavigate?
           aria-hidden="true"
           className="h-6 w-6 rounded-full"
         />
-        Ginger
-        <small className="text-ink-3 ml-0.5 text-[11px] font-bold tracking-[0.08em] uppercase">
+        <GingerWordmark className="h-[13px] w-auto" />
+        <small className="text-ink-3 ml-1 text-[11px] font-bold tracking-[0.08em] uppercase">
           админка
         </small>
       </Link>

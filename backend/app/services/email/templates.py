@@ -2,9 +2,10 @@
 """Письма входа в фирменном стиле Ginger.
 
 Вёрстка под почтовые клиенты: таблицы и инлайн-стили (Gmail вырезает <style> и не знает
-flex/grid), ширина до 480 px, светлая палитра приложения. Логотип грузится с сайта —
-`FRONTEND_BASE_URL/icons/ginger-mark-96.png`; если клиент картинки не показывает, остаётся
-текстовое «Ginger». Скрытый прехедер задаёт строку превью в списке писем.
+flex/grid), ширина до 480 px, светлая палитра приложения. Шапка — лиса и логотип «GINGER»
+картинками с сайта (`/icons/ginger-mark-96.png`, `/brand/ginger-wordmark-email.png`): SVG и
+веб-шрифты почтовики не показывают. Без картинок остаётся alt «Ginger». Скрытый прехедер
+задаёт строку превью в списке писем.
 """
 
 from html import escape
@@ -22,13 +23,15 @@ GOLD_SOFT = "#f0e8d7"
 GOLD_BUTTON = "#d3a94f"
 GOLD_GRAD = "linear-gradient(180deg, #e9c877 0%, #c89a3f 100%)"
 TEXT_ON_GOLD = "#241a04"
-FONT = "'Manrope', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+FONT = "'Golos Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+DISPLAY_FONT = "'Tektur', 'Golos Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
 
 
 def _layout(*, settings: Settings, preheader: str, title: str, body: str, footnote: str) -> str:
     app_name = escape(settings.app_name)
     site = settings.frontend_base_url.rstrip("/")
     logo = f"{site}/icons/ginger-mark-96.png"
+    wordmark = f"{site}/brand/ginger-wordmark-email.png"
     host = escape(site.split("://", 1)[-1])
     return f"""<!DOCTYPE html>
 <html lang="ru">
@@ -52,8 +55,8 @@ def _layout(*, settings: Settings, preheader: str, title: str, body: str, footno
                 <td style="vertical-align:middle;">
                   <img src="{escape(logo)}" width="40" height="40" alt="" style="display:block;border:0;border-radius:20px;">
                 </td>
-                <td style="vertical-align:middle;padding-left:10px;font-family:{FONT};font-size:22px;font-weight:800;color:{TEXT};letter-spacing:-0.02em;">
-                  {app_name}
+                <td style="vertical-align:middle;padding-left:12px;font-family:{DISPLAY_FONT};font-size:20px;font-weight:700;color:{GOLD};">
+                  <img src="{escape(wordmark)}" width="150" height="23" alt="{app_name}" style="display:block;border:0;width:150px;height:auto;">
                 </td>
               </tr>
             </table>
@@ -61,7 +64,7 @@ def _layout(*, settings: Settings, preheader: str, title: str, body: str, footno
         </tr>
         <tr>
           <td style="background:{CARD};border:1px solid {LINE};border-radius:16px;padding:28px 24px;font-family:{FONT};color:{TEXT};">
-            <h1 style="margin:0 0 10px 0;font-size:22px;line-height:1.25;font-weight:800;letter-spacing:-0.02em;color:{TEXT};">{escape(title)}</h1>
+            <h1 style="margin:0 0 10px 0;font-family:{DISPLAY_FONT};font-size:22px;line-height:1.25;font-weight:700;letter-spacing:0.005em;color:{TEXT};">{escape(title)}</h1>
             {body}
           </td>
         </tr>
@@ -109,7 +112,7 @@ def build_otp_email(*, code: str, settings: Settings) -> tuple[str, str, str]:
         _paragraph("Введите этот код в приложении, чтобы войти:")
         + f"""<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 18px 0;">
               <tr>
-                <td align="center" style="background:{GOLD_SOFT};border:1px solid {LINE};border-radius:12px;padding:18px 8px;font-family:{FONT};font-size:36px;line-height:1;font-weight:800;letter-spacing:0.28em;color:{TEXT};">{escape(code)}</td>
+                <td align="center" style="background:{GOLD_SOFT};border:1px solid {LINE};border-radius:12px;padding:18px 8px;font-family:{DISPLAY_FONT};font-size:36px;line-height:1;font-weight:700;letter-spacing:0.28em;color:{TEXT};">{escape(code)}</td>
               </tr>
             </table>"""
         + _paragraph(

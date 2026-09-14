@@ -227,7 +227,10 @@
 }
 
 @theme {
-  --font-sans: "Manrope", system-ui, -apple-system, sans-serif;
+  /* Фирменная пара: Golos Text — текст и интерфейс, Tektur — заголовки и крупные цифры.
+     Срезанные углы Tektur рифмуются с логотипом Ethnocentric (он в приложении только контуром). */
+  --font-sans: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Tektur", "Golos Text", system-ui, sans-serif;
 
   --radius-sm: 10px;
   --radius-md: 12px;
@@ -236,7 +239,7 @@
 }
 
 @theme inline {
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-display);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -313,6 +316,13 @@
     transition:
       background-color 0.2s,
       color 0.2s;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: 0.005em;
   }
 
   :focus-visible {

@@ -22,6 +22,8 @@ def test_otp_email_shows_code_in_preview_body_and_plain_text() -> None:
     assert "Код 788425 — действует 5 минут" in html  # строка превью в списке писем
     assert ">788425</td>" in html
     assert 'src="https://lisa52.com/icons/ginger-mark-96.png"' in html
+    assert 'src="https://lisa52.com/brand/ginger-wordmark-email.png"' in html
+    assert 'alt="Ginger"' in html
 
 
 def test_link_emails_escape_url_and_render_button() -> None:

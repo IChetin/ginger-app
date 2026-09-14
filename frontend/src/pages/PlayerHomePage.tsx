@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
+import { GingerWordmark } from "@/components/brand/GingerWordmark";
 import { isStaffUser, useMe } from "@/features/auth/hooks";
 import { RequestRow } from "@/features/chips/components/RequestRow";
 import { useChipRequests, usePlayerMe } from "@/features/chips/hooks";
@@ -81,7 +82,9 @@ export function PlayerHomePage() {
           aria-hidden="true"
           className="h-7 w-7 rounded-full"
         />
-        <span className="flex-1 text-[18px] font-extrabold tracking-tight">Ginger</span>
+        <span className="flex flex-1 items-center">
+          <GingerWordmark className="h-[15px] w-auto" />
+        </span>
         {user ? (
           <span className="text-ink-3 truncate text-[12px] font-semibold">{user.nickname}</span>
         ) : null}

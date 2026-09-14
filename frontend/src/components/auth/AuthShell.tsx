@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
+import { GingerWordmark } from "@/components/brand/GingerWordmark";
+
 const iconClass =
   "h-5 w-5 stroke-current fill-none [stroke-width:1.8] [stroke-linecap:round] [stroke-linejoin:round]";
 
@@ -49,14 +51,14 @@ export function AuthShell({ children, onBack, toast }: Props) {
           </button>
         </div>
 
-        <div className="mt-7 mb-1.5 inline-flex items-center gap-1.5 text-[26px] font-extrabold tracking-[-0.02em]">
+        <div className="mt-7 mb-1.5 flex items-center gap-3">
           <img
             src="/icons/ginger-mark-96.png"
             alt=""
             aria-hidden="true"
             className="h-10 w-10 rounded-full"
           />
-          Ginger
+          <GingerWordmark className="h-[22px] w-auto" />
         </div>
 
         {children}
