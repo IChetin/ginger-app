@@ -2,6 +2,7 @@ import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ApiError } from "@/api/client";
 import type { UserMe } from "@/api/types/auth";
 import type { Tournament } from "@/api/types/tournaments";
 import { AppRoutes } from "@/App";
@@ -114,6 +115,16 @@ describe("TournamentsPage", () => {
     expect(within(rows[0]).getByText("рег. ещё")).toBeInTheDocument();
     expect(within(rows[0]).getByText(/^4\d:\d\d$/)).toBeInTheDocument();
     expect(screen.queryByTestId("tournament-card")).toBeNull();
+  });
+
+  it("расписание открывается без входа", async () => {
+    fetchCurrentUser.mockRejectedValue(
+      new ApiError(401, "unauthorized", "Authentication required"),
+    );
+    renderWithProviders(<AppRoutes />, { route: "/tournaments" });
+
+    expect(await screen.findAllByTestId("tournament-card")).toHaveLength(2);
+    expect(screen.getByRole("heading", { name: "Турниры" })).toBeInTheDocument();
   });
 
   it("тап по турниру открывает карточку с параметрами", async () => {

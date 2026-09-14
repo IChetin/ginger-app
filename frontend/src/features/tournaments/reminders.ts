@@ -5,13 +5,14 @@ import { fetchReminders, putReminders } from "@/features/tournaments/remindersAp
 
 const KEY = ["tournament-reminders"] as const;
 
-/** Колокольчики игрока — один запрос на весь список турниров. */
-export function useTournamentReminders() {
+/** Колокольчики игрока — один запрос на весь список турниров. Гостю не запрашиваем. */
+export function useTournamentReminders(enabled = true) {
   return useQuery({
     queryKey: KEY,
     queryFn: fetchReminders,
     staleTime: 60_000,
     retry: false,
+    enabled,
   });
 }
 

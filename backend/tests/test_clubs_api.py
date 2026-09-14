@@ -48,7 +48,8 @@ async def test_public_clubs_hide_invisible_and_admin_fields(user_client: AsyncCl
 
 async def test_clubs_require_login(client: AsyncClient, seeded_db: None) -> None:
     assert (await client.get("/api/v1/clubs")).status_code == 401
-    assert (await client.get("/api/v1/tournaments")).status_code == 401
+    # Расписание открыто всем: это витрина клуба.
+    assert (await client.get("/api/v1/tournaments")).status_code == 200
 
 
 async def test_player_cannot_touch_admin_clubs(

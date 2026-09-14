@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Tournament } from "@/api/types/tournaments";
 import { ReminderBell } from "@/features/tournaments/components/ReminderBell";
@@ -10,6 +10,12 @@ import * as remindersApi from "@/features/tournaments/remindersApi";
 vi.mock("@/features/tournaments/remindersApi", () => ({
   fetchReminders: vi.fn().mockResolvedValue([]),
   putReminders: vi.fn(),
+}));
+
+// Расписание открыто гостям: колокольчик сам решает, вошёл ли игрок.
+const auth = vi.hoisted(() => ({ user: { id: "u1" } as unknown }));
+vi.mock("@/features/auth/hooks", () => ({
+  useMe: () => ({ data: auth.user }),
 }));
 
 vi.mock("@/features/push/hooks", () => ({
@@ -73,6 +79,19 @@ function renderBell(item: Tournament) {
 }
 
 describe("ReminderBell", () => {
+  beforeEach(() => {
+    auth.user = { id: "u1" };
+  });
+
+  it("guest sees a login hint instead of reminder switches", () => {
+    auth.user = undefined;
+    renderBell(tournament());
+    fireEvent.click(screen.getByRole("button", { name: "Напомнить о турнире" }));
+    expect(screen.getByRole("link", { name: "Войти" })).toHaveAttribute("href", "/login");
+    expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+    expect(remindersApi.fetchReminders).not.toHaveBeenCalled();
+  });
+
   it("sets a start reminder and hints to install when push is unsupported", async () => {
     vi.mocked(remindersApi.putReminders).mockResolvedValue([
       { tournament_id: "t1", kind: "start" },

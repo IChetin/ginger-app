@@ -43,8 +43,7 @@ async def get_highlights(
     per_day: Annotated[int, Query(ge=1, le=20)] = 5,
     days: Annotated[int, Query(ge=1, le=14)] = 7,
 ) -> list[TournamentRead]:
-    """Витрина для новых: крупнейшие гарантии каждого дня. Без входа — это приманка для тех,
-    кто ещё не с нами; остальное расписание по-прежнему только для вошедших."""
+    """Витрина для новых: крупнейшие гарантии каждого дня. Без входа, как и всё расписание."""
     start = datetime.now(UTC)
     return await list_highlights(
         db, starts_from=start, starts_to=start + timedelta(days=days), per_day=per_day
@@ -53,7 +52,6 @@ async def get_highlights(
 
 @router.get("/tournaments", response_model=list[TournamentRead])
 async def get_tournaments(
-    user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
     starts_from: Annotated[datetime | None, Query(alias="from")] = None,
     starts_to: Annotated[datetime | None, Query(alias="to")] = None,
@@ -64,8 +62,8 @@ async def get_tournaments(
     buyin_rub_max: Annotated[Decimal | None, Query(ge=0)] = None,
 ) -> list[TournamentRead]:
     """Ближайшие турниры. По умолчанию — сутки от текущего момента (ТЗ §8а.3: фильтр
-    не обязателен, сначала показываем ближайшее по времени)."""
-    del user
+    не обязателен, сначала показываем ближайшее по времени). Открыто всем без входа
+    (решение Ивана 14.09): расписание — витрина клуба."""
     start = _aware(starts_from) or datetime.now(UTC)
     end = _aware(starts_to) or start + timedelta(days=1)
     if end <= start:

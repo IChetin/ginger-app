@@ -46,13 +46,14 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route element={<AppShell />}>
+        {/* Расписание — витрина клуба, открыто без входа. */}
+        <Route path="/tournaments" element={<TournamentsPage />} />
         <Route element={<AuthGuard />}>
           <Route path="/" element={<PlayerHomePage />} />
           <Route path="/more" element={<MorePage />} />
           <Route path="/clubs" element={<ClubsPage />} />
           <Route path="/offline" element={<OfflinePage />} />
           <Route path="/dialogs/*" element={<DialogsPage />} />
-          <Route path="/tournaments" element={<TournamentsPage />} />
           <Route path="/chips" element={<ChipsPage />} />
           <Route path="/chips/accounts" element={<ChipAccountsPage />} />
           <Route path="/chips/:requestId" element={<ChipRequestPage />} />

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
 import type { ReminderKind, Tournament } from "@/api/types/tournaments";
+import { useMe } from "@/features/auth/hooks";
 import { isPushSupported, usePushSubscription, useSubscribePush } from "@/features/push/hooks";
 import {
   remindersFor,
@@ -35,7 +36,8 @@ function BellIcon({ filled }: { filled: boolean }) {
  * и есть тот жест, без которого браузер разрешение не спросит.
  */
 export function ReminderBell({ tournament, now }: { tournament: Tournament; now: Date }) {
-  const reminders = useTournamentReminders();
+  const { data: user } = useMe();
+  const reminders = useTournamentReminders(Boolean(user));
   const save = useSetReminders(tournament.id);
   const push = usePushSubscription();
   const subscribe = useSubscribePush();
@@ -101,7 +103,15 @@ export function ReminderBell({ tournament, now }: { tournament: Tournament; now:
             aria-label="Напоминания"
             className="border-line-strong bg-surface shadow-elevated absolute top-9 right-0 z-50 w-[236px] rounded-md border p-1.5"
           >
-            {available.map((option) => (
+            {!user ? (
+              <p className="text-ink-2 px-2 py-1.5 text-[12.5px]">
+                Напоминания о турнирах — для игроков клуба.{" "}
+                <Link to="/login" className="text-gold font-bold">
+                  Войти
+                </Link>
+              </p>
+            ) : null}
+            {(user ? available : []).map((option) => (
               <button
                 key={option.kind}
                 type="button"
