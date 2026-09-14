@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from app.core.config import Settings
 from app.services.email.templates import (
     build_otp_email,
@@ -15,15 +17,19 @@ def _settings() -> Settings:
 
 
 def test_otp_email_shows_code_in_preview_body_and_plain_text() -> None:
-    subject, plain, html = build_otp_email(code="788425", settings=_settings())
+    requested_at = datetime(2026, 9, 14, 10, 42, tzinfo=UTC)
+    subject, plain, html = build_otp_email(
+        code="788425", settings=_settings(), requested_at=requested_at
+    )
 
     assert subject == "Ginger — код для входа"
     assert "788425" in plain
     assert "Код 788425 — действует 5 минут" in html  # строка превью в списке писем
-    assert ">788425</td>" in html
-    assert 'src="https://lisa52.com/icons/ginger-mark-96.png"' in html
-    assert 'src="https://lisa52.com/brand/ginger-wordmark-email.png"' in html
+    assert ">788425</td>" in html  # код одной строкой — работает «Скопировать код»
+    assert 'src="https://lisa52.com/brand/email-header.png"' in html
     assert 'alt="Ginger"' in html
+    assert "запрошен 14 сентября в 13:42 по Москве" in html
+    assert "Запрошен 14 сентября в 13:42 по Москве" in plain
 
 
 def test_link_emails_escape_url_and_render_button() -> None:
