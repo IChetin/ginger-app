@@ -115,6 +115,17 @@ export function lateRegLabel(tournament: Tournament): string | null {
   return tournament.has_addon ? `Аддон в ${time}` : `Рег. до ${time}`;
 }
 
+/**
+ * R+A — у турниров без баунти (ответ Ивана 14.09), кроме Freezeout: там вход только один
+ * (ответ Ивана 15.09). Смотрим и имя из лобби, и имя с афиши.
+ */
+export function hasRebuyAddon(
+  tournament: Pick<Tournament, "bounty_kind" | "name" | "lobby_name">,
+): boolean {
+  if (tournament.bounty_kind !== "none") return false;
+  return !/freeze\s*out/i.test(`${tournament.lobby_name ?? ""} ${tournament.name}`);
+}
+
 /** Бонус Early Bird ещё можно взять: до его дедлайна, а у «первых N игроков» — до старта. */
 export function earlyBirdActive(tournament: Tournament, now: Date): boolean {
   if (tournament.early_bird_closes_at) return new Date(tournament.early_bird_closes_at) > now;
@@ -140,7 +151,7 @@ export function formatTags(tournament: Tournament): string[] {
   if (tournament.bounty_kind === "ko") tags.push("KO");
   if (tournament.bounty_kind === "mystery") tags.push("Mystery");
   // Ответ Ивана 14.09: турниры без баунти у союзов идут с ребаями и аддоном; KO, PKO и Mystery — нет.
-  if (tournament.bounty_kind === "none") tags.push("R+A");
+  if (hasRebuyAddon(tournament)) tags.push("R+A");
   if (tournament.early_bird_players) tags.push(`Early Bird ×${tournament.early_bird_players}`);
   else if (tournament.early_bird_bonus) tags.push("Early Bird");
   if (tournament.has_jackpot) tags.push("Джекпот");

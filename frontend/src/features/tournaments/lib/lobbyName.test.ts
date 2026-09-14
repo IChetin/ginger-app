@@ -32,5 +32,8 @@ describe("имя из лобби и то, что продаёт турнир", (
       "R+A",
       "Джекпот",
     ]);
+    expect(
+      formatTags({ ...base, bounty_kind: "none", lobby_name: "FREEZEOUT", early_bird_bonus: null }),
+    ).toEqual(["Джекпот"]);
   });
 });

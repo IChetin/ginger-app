@@ -32,6 +32,7 @@ import {
   formatMoney,
   formatTimeMsk,
   groupByDay,
+  hasRebuyAddon,
   tournamentPhase,
 } from "@/features/tournaments/lib/format";
 import { pluralRu } from "@/lib/plural";
@@ -183,7 +184,7 @@ function rowTags(tournament: Tournament): string[] {
   if (tournament.bounty_kind === "pko") tags.push("PKO");
   if (tournament.bounty_kind === "ko") tags.push("KO");
   if (tournament.bounty_kind === "mystery") tags.push("MYST");
-  if (tournament.bounty_kind === "none") tags.push("R+A");
+  if (hasRebuyAddon(tournament)) tags.push("R+A");
   return tags;
 }
 
