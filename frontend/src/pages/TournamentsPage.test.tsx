@@ -116,22 +116,58 @@ describe("TournamentsPage", () => {
     expect(screen.queryByTestId("tournament-card")).toBeNull();
   });
 
-  it("фильтры уходят в запрос и запоминаются", async () => {
-    fetchCurrentUser.mockResolvedValue(user);
+  it("тап по турниру открывает карточку с параметрами", async () => {
+    fetchCurrentUser.mockResolvedValue({ ...user, schedule_view: "table" });
     renderWithProviders(<AppRoutes />, { route: "/tournaments" });
-    await screen.findAllByTestId("tournament-card");
 
-    await userEvent.click(screen.getByRole("button", { name: "X-Poker" }));
-    await userEvent.selectOptions(screen.getByLabelText("Бай-ин от"), "500");
+    const rows = await screen.findAllByTestId("tournament-row");
+    await userEvent.click(within(rows[1]).getByText("DREAM RIVER"));
+
+    const sheet = await screen.findByTestId("tournament-sheet");
+    expect(within(sheet).getByText("DREAM RIVER")).toBeInTheDocument();
+    expect(within(sheet).getByText("20 000")).toBeInTheDocument();
+    expect(within(sheet).getByText("15/12/12 мин")).toBeInTheDocument();
+    expect(within(sheet).getByText("10 уровней")).toBeInTheDocument();
+    expect(within(sheet).getByText(/Ссылка на клуб в PPPoker скоро появится/)).toBeInTheDocument();
+  });
+
+  it("сателлиты скрыты по умолчанию, цена фильтрует на месте, выбор запоминается", async () => {
+    fetchCurrentUser.mockResolvedValue(user);
+    const satellite = tournament({
+      id: "t3",
+      name: "Sat Main",
+      satellite_target: "Main Event",
+      buyin: "1.00",
+      buyin_rub: "88",
+      guarantee: null,
+      guarantee_rub: null,
+    });
+    const highRoller = tournament({
+      id: "t4",
+      name: "HIGH ROLLER",
+      bounty_kind: "none",
+      buyin: "50.00",
+      buyin_rub: "4400",
+    });
+    fetchTournaments.mockResolvedValue([running, tournament({}), satellite, highRoller]);
+    renderWithProviders(<AppRoutes />, { route: "/tournaments" });
+
+    expect(await screen.findAllByTestId("tournament-card")).toHaveLength(3);
+    expect(screen.queryByText("Sat → Main Event")).toBeNull();
+
+    await userEvent.click(screen.getByRole("checkbox", { name: "Сателлиты" }));
+    expect(screen.getByText("Sat → Main Event")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "от 3 000 ₽" }));
+    const cards = screen.getAllByTestId("tournament-card");
+    expect(cards).toHaveLength(1);
+    expect(within(cards[0]).getByText("HIGH ROLLER")).toBeInTheDocument();
+    expect(within(cards[0]).getByText("R+A")).toBeInTheDocument();
 
     const params = fetchTournaments.mock.calls.at(-1)?.[0] as Record<string, unknown>;
-    expect(params.app).toEqual(["xpoker"]);
-    expect(params.buyin_rub_min).toBe(500);
+    expect(Object.keys(params).sort()).toEqual(["from", "to"]);
     expect(
-      JSON.parse(window.localStorage.getItem("ginger.tournaments.filters.v1") ?? "{}"),
-    ).toMatchObject({
-      apps: ["xpoker"],
-      buyinMin: 500,
-    });
+      JSON.parse(window.localStorage.getItem("ginger.tournaments.filters.v2") ?? "{}"),
+    ).toMatchObject({ prices: ["high"], showSatellites: true });
   });
 });

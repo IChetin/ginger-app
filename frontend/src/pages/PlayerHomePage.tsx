@@ -67,8 +67,9 @@ export function PlayerHomePage() {
   const myClubs = new Set(
     (me?.accounts ?? []).filter((a) => a.status === "confirmed").map((a) => a.club.id),
   );
+  // Сателлиты на главной не показываем: они рвут ленту основных турниров.
   const upcoming = (tournaments.data ?? []).filter(
-    (item) => new Date(item.late_reg_closes_at ?? item.starts_at) > now,
+    (item) => !item.satellite_target && new Date(item.late_reg_closes_at ?? item.starts_at) > now,
   );
   const mine = upcoming.filter((item) => myClubs.has(item.club.id));
   const nearest = (mine.length > 0 ? mine : upcoming).slice(0, NEAREST_LIMIT);

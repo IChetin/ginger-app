@@ -43,6 +43,8 @@
   --gold-hi: #f1d68e;
   --gold-lo: #c79e48;
   --gold-soft: rgb(217 179 106 / 13%);
+  --value-hi: #f1d68e;
+  --value-mid: #d9b36a;
   --gold-grad: linear-gradient(180deg, #f1d68e 0%, #d3a94f 100%);
   --gold-grad-hover: linear-gradient(180deg, #f7e0a0 0%, #ddb55c 100%);
   --gold-grad-press: linear-gradient(180deg, #e3c271 0%, #bd9440 100%);
@@ -88,6 +90,8 @@
   --gold-hi: #e9c877;
   --gold-lo: #b88e36;
   --gold-soft: rgb(138 106 43 / 12%);
+  --value-hi: #6f4f12;
+  --value-mid: #9a7432;
   --gold-grad: linear-gradient(180deg, #e9c877 0%, #c89a3f 100%);
   --gold-grad-hover: linear-gradient(180deg, #efd285 0%, #d2a64a 100%);
   --gold-grad-press: linear-gradient(180deg, #dbb863 0%, #b88e36 100%);
@@ -132,6 +136,8 @@
     --gold-hi: #e9c877;
     --gold-lo: #b88e36;
     --gold-soft: rgb(138 106 43 / 12%);
+    --value-hi: #6f4f12;
+    --value-mid: #9a7432;
     --gold-grad: linear-gradient(180deg, #e9c877 0%, #c89a3f 100%);
     --gold-grad-hover: linear-gradient(180deg, #efd285 0%, #d2a64a 100%);
     --gold-grad-press: linear-gradient(180deg, #dbb863 0%, #b88e36 100%);
@@ -196,6 +202,8 @@
   --color-gold-hi: var(--gold-hi);
   --color-gold-lo: var(--gold-lo);
   --color-gold-soft: var(--gold-soft);
+  --color-value-hi: var(--value-hi);
+  --color-value-mid: var(--value-mid);
   --color-live: var(--live);
   --color-live-soft: var(--live-soft);
   --color-warn: var(--warn);

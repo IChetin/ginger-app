@@ -121,6 +121,8 @@ export function formatTags(tournament: Tournament): string[] {
   if (tournament.bounty_kind === "pko") tags.push("PKO");
   if (tournament.bounty_kind === "ko") tags.push("KO");
   if (tournament.bounty_kind === "mystery") tags.push("Mystery");
+  // Ответ Ивана 14.09: у союзов всё, что не PKO и не Mystery, идёт с ребаями и аддоном.
+  if (tournament.bounty_kind !== "pko" && tournament.bounty_kind !== "mystery") tags.push("R+A");
   if (tournament.early_bird_players) tags.push(`Early Bird ×${tournament.early_bird_players}`);
   if (tournament.ticket_value) {
     const ticket = formatMoney(tournament.ticket_value, tournament.club);
