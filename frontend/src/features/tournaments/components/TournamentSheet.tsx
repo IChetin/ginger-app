@@ -42,7 +42,7 @@ function Param({ label, value }: { label: string; value: string | null }) {
 
 /**
  * Две кнопки с колокольчиком: пуш за 5 минут до старта и за 5 минут до конца поздней
- * регистрации — там, где есть аддон, это и есть напоминание про аддон.
+ * регистрации, то есть про аддон. У турниров без аддона второй кнопки нет.
  */
 function SheetReminders({ tournament }: { tournament: Tournament }) {
   const now = useNow(30_000);
@@ -51,8 +51,9 @@ function SheetReminders({ tournament }: { tournament: Tournament }) {
     { kind: "start", label: "Уведомить о старте", at: tournament.starts_at },
     {
       kind: "late_reg",
-      label: tournament.has_addon ? "Напомнить про аддон" : "Напомнить о конце реги",
-      at: tournament.late_reg_closes_at,
+      label: "Напомнить про аддон",
+      // Без аддона конец реги даёт 5–15 бб — напоминать смысла нет (Иван, 14.09).
+      at: tournament.has_addon ? tournament.late_reg_closes_at : null,
     },
   ];
   const available = options.filter(

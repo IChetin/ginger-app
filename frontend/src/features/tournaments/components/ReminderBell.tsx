@@ -63,8 +63,9 @@ export function ReminderBell({ tournament, now }: { tournament: Tournament; now:
     { kind: "start", label: `За ${LEAD_MINUTES} мин до старта`, at: tournament.starts_at },
     {
       kind: "late_reg",
-      label: `За ${LEAD_MINUTES} мин до конца регистрации`,
-      at: tournament.late_reg_closes_at,
+      label: `За ${LEAD_MINUTES} мин до аддона`,
+      // Без аддона конец реги даёт 5–15 бб — напоминать смысла нет (Иван, 14.09).
+      at: tournament.has_addon ? tournament.late_reg_closes_at : null,
     },
   ];
   const available = options.filter((option) => option.at !== null && new Date(option.at) > now);

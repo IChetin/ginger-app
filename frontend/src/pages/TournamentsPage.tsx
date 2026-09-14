@@ -157,7 +157,6 @@ function CardsView({ groups, now, onSelect }: ViewProps) {
 /** «Золото по ценности»: пороги в рублях, общие для всех клубов (гарантия ~$2 000 и ~$500). */
 const GUARANTEE_HI_RUB = 180_000;
 const GUARANTEE_MID_RUB = 45_000;
-const BUYIN_HI_RUB = 2_700;
 const SOON_MINUTES = 60;
 
 type ValueTier = "hi" | "mid" | null;
@@ -215,7 +214,7 @@ function StartCell({
 
 /**
  * Плотный вид по образцу лобби GG: одна строка — один турнир. Крупная гарантия красит золотом
- * всю строку — время, название и деньги; дорогой бай-ин без крупной гарантии — только бай-ин.
+ * всю строку — время, название и деньги; отдельно деньги не красим, это непонятно игроку.
  * Шапка колонок прилипает под фильтрами.
  */
 function TableView({ groups, now, onSelect, stickyTop }: ViewProps & { stickyTop: number }) {
@@ -223,10 +222,10 @@ function TableView({ groups, now, onSelect, stickyTop }: ViewProps & { stickyTop
   return (
     <table className="mt-0 w-full table-fixed border-separate border-spacing-0 text-[12px]">
       <colgroup>
-        <col className="w-[54px]" />
+        <col className="w-[64px]" />
         <col />
-        <col className="w-[50px]" />
-        <col className="w-[66px]" />
+        <col className="w-[58px]" />
+        <col className="w-[80px]" />
       </colgroup>
       <thead>
         <tr className="text-ink-3 text-[9.5px] font-bold uppercase">
@@ -258,7 +257,6 @@ function TableView({ groups, now, onSelect, stickyTop }: ViewProps & { stickyTop
           {items.map((item) => {
             const tier = valueTier(item.guarantee_rub, GUARANTEE_HI_RUB, GUARANTEE_MID_RUB);
             const tierText = tier ? TIER_TEXT[tier] : null;
-            const buyinTier = valueTier(item.buyin_rub, BUYIN_HI_RUB);
             const guarantee = formatMoney(item.guarantee, item.club);
             const cell = "border-line border-b py-1.5";
             return (
@@ -275,7 +273,7 @@ function TableView({ groups, now, onSelect, stickyTop }: ViewProps & { stickyTop
                 onClick={(event) => selectUnlessButton(event, () => onSelect(item))}
                 onKeyDown={(event) => selectOnEnter(event, () => onSelect(item))}
               >
-                <td className={cn(cell, "num pl-3 whitespace-nowrap tabular-nums")}>
+                <td className={cn(cell, "num overflow-hidden pl-3 whitespace-nowrap tabular-nums")}>
                   <StartCell tournament={item} now={now} tierText={tierText} />
                 </td>
                 <td className={cn(cell, "min-w-0 pr-2")}>
@@ -308,8 +306,8 @@ function TableView({ groups, now, onSelect, stickyTop }: ViewProps & { stickyTop
                 <td
                   className={cn(
                     cell,
-                    "num text-right font-bold whitespace-nowrap",
-                    tierText ?? (buyinTier === "hi" ? "text-value-hi" : "text-ink"),
+                    "num overflow-hidden pl-2 text-right font-bold whitespace-nowrap",
+                    tierText ?? "text-ink",
                   )}
                 >
                   {formatMoney(item.buyin, item.club)}
@@ -317,14 +315,8 @@ function TableView({ groups, now, onSelect, stickyTop }: ViewProps & { stickyTop
                 <td
                   className={cn(
                     cell,
-                    "num pr-3 text-right text-[11.5px] whitespace-nowrap",
-                    tier === "hi"
-                      ? cn(tierText, "font-bold")
-                      : tier === "mid"
-                        ? cn(tierText, "font-semibold")
-                        : guarantee
-                          ? "text-ink-2"
-                          : "text-ink-3",
+                    "num overflow-hidden pr-3 pl-2 text-right font-bold whitespace-nowrap",
+                    tierText ?? (guarantee ? "text-ink" : "text-ink-3"),
                   )}
                 >
                   {guarantee ?? "—"}

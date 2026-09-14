@@ -98,20 +98,25 @@ describe("ReminderBell", () => {
     ]);
     renderBell(tournament());
     fireEvent.click(screen.getByRole("button", { name: "Напомнить о турнире" }));
-    expect(screen.getByRole("switch", { name: /до конца регистрации/ })).toBeInTheDocument();
+    // Без аддона о конце регистрации не напоминаем.
+    expect(screen.queryByRole("switch", { name: /до аддона/ })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("switch", { name: /до старта/ }));
     await waitFor(() => expect(remindersApi.putReminders).toHaveBeenCalledWith("t1", ["start"]));
     expect(await screen.findByText(/установите приложение на экран/)).toBeInTheDocument();
     expect(await screen.findByRole("button", { name: "Напоминания включены" })).toBeInTheDocument();
   });
 
-  it("offers only the late-reg bell for a running tournament and hides for finished", () => {
-    const running = tournament({ starts_at: "2026-09-13T14:30:00Z" });
+  it("offers only the addon bell for a running tournament and hides without addon", () => {
+    const running = tournament({ starts_at: "2026-09-13T14:30:00Z", has_addon: true });
     const { unmount } = renderBell(running);
     fireEvent.click(screen.getByRole("button", { name: "Напомнить о турнире" }));
     expect(screen.queryByRole("switch", { name: /до старта/ })).not.toBeInTheDocument();
-    expect(screen.getByRole("switch", { name: /до конца регистрации/ })).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: /до аддона/ })).toBeInTheDocument();
     unmount();
+
+    const noAddon = renderBell(tournament({ starts_at: "2026-09-13T14:30:00Z" }));
+    expect(screen.queryByRole("button", { name: "Напомнить о турнире" })).not.toBeInTheDocument();
+    noAddon.unmount();
 
     renderBell(tournament({ starts_at: "2026-09-13T12:00:00Z", late_reg_closes_at: null }));
     expect(screen.queryByRole("button", { name: "Напомнить о турнире" })).not.toBeInTheDocument();
