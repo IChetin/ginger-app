@@ -1,24 +1,60 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 
-import type { PlayerKind, PlayerStatus } from "@/api/types/chips";
-import { useConfirm } from "@/components/ui/ConfirmDialog";
+import type { PlayerKind } from "@/api/types/chips";
 import type { PendingAccount, PlayerAdmin } from "@/features/admin/chips/api";
 import {
   useAdminPlayers,
   usePendingAccounts,
   useReviewAccount,
-  useUpdateAdminPlayer,
 } from "@/features/admin/chips/hooks";
+import { PLAYERS_EXPORT_URL } from "@/features/admin/crm/crmApi";
+import { formatAgo, formatBirthdaySoon } from "@/features/admin/crm/hooks";
 import { isAdminUser, useMe } from "@/features/admin/hooks";
 import { APP_ICONS } from "@/features/tournaments/lib/format";
 import { cn } from "@/lib/utils";
 
 const KIND_LABEL: Record<PlayerKind, string> = { credit: "Кредитный", deposit: "Депозитный" };
-const STATUS_LABEL: Record<PlayerStatus, string> = {
-  active: "Активен",
-  blocked: "Заблокирован",
-  archived: "В архиве",
-};
+const BIRTHDAY_WINDOW_DAYS = 14;
+
+type Segment = "all" | "sleeping" | "birthdays" | "credit" | "deposit";
+
+const SEGMENTS: { value: Segment; label: string }[] = [
+  { value: "all", label: "Все" },
+  { value: "sleeping", label: "Спящие" },
+  { value: "birthdays", label: "ДР скоро" },
+  { value: "credit", label: "Кредитные" },
+  { value: "deposit", label: "Депозитные" },
+];
+
+function inSegment(player: PlayerAdmin, segment: Segment): boolean {
+  switch (segment) {
+    case "all":
+      return true;
+    case "sleeping":
+      return player.status === "active" && player.sleeping;
+    case "birthdays":
+      return player.days_to_birthday !== null && player.days_to_birthday <= BIRTHDAY_WINDOW_DAYS;
+    case "credit":
+    case "deposit":
+      return player.kind === segment;
+  }
+}
+
+function matches(player: PlayerAdmin, needle: string): boolean {
+  if (!needle) return true;
+  return (
+    player.nickname.toLowerCase().includes(needle) ||
+    player.email.toLowerCase().includes(needle) ||
+    (player.real_name ?? "").toLowerCase().includes(needle) ||
+    (player.phone ?? "").includes(needle) ||
+    (player.telegram ?? "").toLowerCase().includes(needle) ||
+    player.accounts.some(
+      (account) =>
+        account.nickname.toLowerCase().includes(needle) || account.app_account_id.includes(needle),
+    )
+  );
+}
 
 function PendingRow({ account }: { account: PendingAccount }) {
   const review = useReviewAccount();
@@ -59,139 +95,139 @@ function PendingRow({ account }: { account: PendingAccount }) {
   );
 }
 
-function PlayerCard({ player, canEdit }: { player: PlayerAdmin; canEdit: boolean }) {
-  const update = useUpdateAdminPlayer();
-  const confirm = useConfirm();
-  const [open, setOpen] = useState(false);
-
-  const patch = (body: Parameters<typeof update.mutate>[0]["body"]) =>
-    update.mutate({ id: player.id, body });
-
-  const setStatus = async (status: PlayerStatus) => {
-    if (status === "blocked") {
-      const ok = await confirm({
-        title: `Заблокировать ${player.nickname}?`,
-        description: "Игрок не сможет оставлять заявки на фишки.",
-        confirmLabel: "Заблокировать",
-        cancelLabel: "Отмена",
-        variant: "danger",
-      });
-      if (!ok) return;
-    }
-    patch({ status });
-  };
-
+function PlayerRow({ player }: { player: PlayerAdmin }) {
+  const birthday =
+    player.days_to_birthday !== null && player.days_to_birthday <= BIRTHDAY_WINDOW_DAYS
+      ? formatBirthdaySoon(player.days_to_birthday)
+      : null;
   return (
-    <div data-testid="player-card" className="border-line bg-surface rounded-md border">
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center gap-2 px-2.5 py-2 text-left"
-      >
-        <span className="min-w-0 flex-1">
-          <span className="text-ink block truncate text-[14px] font-bold">{player.nickname}</span>
-          <span className="text-ink-3 block truncate text-[11.5px]">
-            {player.accounts.map((account) => account.club.name).join(", ") || "без аккаунтов"}
-          </span>
+    <Link
+      to={`/admin/players/${player.id}`}
+      data-testid="player-row"
+      className="border-line bg-surface hover:border-line-strong flex items-center gap-2 rounded-md border px-2.5 py-2"
+    >
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-1.5">
+          <span className="text-ink truncate text-[14px] font-bold">{player.nickname}</span>
+          {player.real_name ? (
+            <span className="text-ink-3 truncate text-[12px]">{player.real_name}</span>
+          ) : null}
         </span>
-        <span className="text-ink-3 text-[11px] font-semibold">{KIND_LABEL[player.kind]}</span>
-        {player.status !== "active" ? (
-          <span className="bg-danger-soft text-danger rounded-full px-2 py-0.5 text-[11px] font-bold">
-            {STATUS_LABEL[player.status]}
+        <span className="text-ink-3 block truncate text-[11.5px]">
+          {KIND_LABEL[player.kind]} ·{" "}
+          {player.accounts.map((account) => account.club.name).join(", ") || "без аккаунтов"}
+        </span>
+        {player.tags.length > 0 ? (
+          <span className="mt-0.5 flex flex-wrap gap-1">
+            {player.tags.map((tag) => (
+              <span
+                key={tag}
+                className="bg-surface-3 text-ink-2 rounded-full px-1.5 text-[10.5px] font-bold"
+              >
+                {tag}
+              </span>
+            ))}
           </span>
         ) : null}
-      </button>
-      {open ? (
-        <div className="border-line border-t px-2.5 py-2 text-[12.5px]">
-          <p className="text-ink-2 select-all">{player.email}</p>
-          <ul className="text-ink-2 mt-1 space-y-0.5">
-            {player.accounts.map((account) => (
-              <li key={account.id}>
-                {account.club.name}: {account.nickname} · ID {account.app_account_id}
-                {account.status !== "confirmed" ? (
-                  <span className="text-warn"> · {account.status}</span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-          <p className="text-ink-3 mt-1">
-            Публикация результатов: {player.results_consent ? "разрешена" : "анонимно"}
-            {player.birthday
-              ? ` · ДР ${player.birthday.slice(5).split("-").reverse().join(".")}`
-              : ""}
-          </p>
-          {canEdit ? (
-            <div className="mt-2 grid grid-cols-2 gap-1.5">
-              <label className="font-bold">
-                Тип
-                <select
-                  aria-label="Тип игрока"
-                  value={player.kind}
-                  disabled={update.isPending}
-                  onChange={(event) => patch({ kind: event.target.value as PlayerKind })}
-                  className="border-line-strong bg-surface-2 mt-0.5 block h-9 w-full rounded-md border px-1.5 font-normal"
-                >
-                  <option value="credit">Кредитный</option>
-                  <option value="deposit">Депозитный</option>
-                </select>
-              </label>
-              <label className="font-bold">
-                Статус
-                <select
-                  aria-label="Статус игрока"
-                  value={player.status}
-                  disabled={update.isPending}
-                  onChange={(event) => void setStatus(event.target.value as PlayerStatus)}
-                  className="border-line-strong bg-surface-2 mt-0.5 block h-9 w-full rounded-md border px-1.5 font-normal"
-                >
-                  <option value="active">Активен</option>
-                  <option value="blocked">Заблокирован</option>
-                  <option value="archived">В архиве</option>
-                </select>
-              </label>
-              <label className="col-span-2 flex items-center gap-2 font-bold">
-                <input
-                  type="checkbox"
-                  checked={player.offline_access}
-                  disabled={update.isPending}
-                  onChange={(event) => patch({ offline_access: event.target.checked })}
-                  className="size-4"
-                />
-                Доступ к офлайн-блоку
-              </label>
-            </div>
-          ) : (
-            <p className="text-ink-3 mt-1.5">Тип и статус меняет администратор.</p>
+      </span>
+      <span className="flex shrink-0 flex-col items-end gap-0.5">
+        <span
+          className={cn(
+            "text-[11.5px] font-semibold",
+            player.sleeping ? "text-warn" : "text-ink-3",
           )}
-        </div>
-      ) : null}
-    </div>
+        >
+          {formatAgo(player.last_activity_at)}
+        </span>
+        {player.status !== "active" ? (
+          <span className="bg-danger-soft text-danger rounded-full px-2 py-0.5 text-[10.5px] font-bold">
+            {player.status === "blocked" ? "Заблокирован" : "В архиве"}
+          </span>
+        ) : null}
+        {birthday ? (
+          <span className="bg-gold-soft text-gold rounded-full px-2 py-0.5 text-[10.5px] font-bold">
+            {birthday}
+          </span>
+        ) : null}
+      </span>
+    </Link>
   );
 }
 
-/** Игроки: сверху — аккаунты на подтверждении (без них заявку не оставить), ниже — база. */
+/** Игроки (ТЗ §9а.3): аккаунты на подтверждении, сегменты базы, поиск, выгрузка. */
 export function AdminPlayersPage() {
   const { data: me } = useMe();
+  const [params, setParams] = useSearchParams();
   const pending = usePendingAccounts();
   const players = useAdminPlayers();
   const [search, setSearch] = useState("");
+
+  const segment = (params.get("segment") as Segment | null) ?? "all";
+  const tag = params.get("tag");
   const needle = search.trim().toLowerCase();
-  const filtered =
-    players.data?.filter(
+
+  const allTags = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const player of players.data ?? []) {
+      for (const item of player.tags) counts.set(item, (counts.get(item) ?? 0) + 1);
+    }
+    return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ru"));
+  }, [players.data]);
+
+  const filtered = useMemo(() => {
+    const list = (players.data ?? []).filter(
       (player) =>
-        !needle ||
-        player.nickname.toLowerCase().includes(needle) ||
-        player.email.toLowerCase().includes(needle) ||
-        player.accounts.some(
-          (account) =>
-            account.nickname.toLowerCase().includes(needle) ||
-            account.app_account_id.includes(needle),
-        ),
-    ) ?? [];
+        inSegment(player, segment) &&
+        (!tag || player.tags.includes(tag)) &&
+        matches(player, needle),
+    );
+    if (segment === "birthdays") {
+      list.sort((a, b) => (a.days_to_birthday ?? 999) - (b.days_to_birthday ?? 999));
+    }
+    return list;
+  }, [players.data, segment, tag, needle]);
+
+  const select = (next: { segment?: Segment; tag?: string | null }) => {
+    const nextParams = new URLSearchParams(params);
+    if (next.segment !== undefined) {
+      if (next.segment === "all") nextParams.delete("segment");
+      else nextParams.set("segment", next.segment);
+    }
+    if (next.tag !== undefined) {
+      if (next.tag) nextParams.set("tag", next.tag);
+      else nextParams.delete("tag");
+    }
+    setParams(nextParams, { replace: true });
+  };
+
+  const broadcastLink =
+    tag !== null
+      ? `/admin/broadcasts?segment=tag&tag=${encodeURIComponent(tag)}`
+      : segment === "sleeping" || segment === "credit" || segment === "deposit"
+        ? `/admin/broadcasts?segment=${segment}`
+        : "/admin/broadcasts";
 
   return (
     <div className="mx-auto w-full max-w-[720px] px-3 py-4" data-testid="admin-players">
-      <h1 className="text-[20px] font-extrabold">Игроки</h1>
+      <div className="flex flex-wrap items-center gap-2">
+        <h1 className="flex-1 text-[20px] font-extrabold">Игроки</h1>
+        {isAdminUser(me) ? (
+          <>
+            <Link
+              to={broadcastLink}
+              className="border-line-strong bg-surface text-ink inline-flex h-9 items-center rounded-md border px-3 text-[13px] font-bold"
+            >
+              Рассылка
+            </Link>
+            <a
+              href={PLAYERS_EXPORT_URL}
+              className="border-line-strong bg-surface text-ink inline-flex h-9 items-center rounded-md border px-3 text-[13px] font-bold"
+            >
+              Выгрузить CSV
+            </a>
+          </>
+        ) : null}
+      </div>
 
       {pending.data && pending.data.length > 0 ? (
         <section className="mt-2">
@@ -206,22 +242,66 @@ export function AdminPlayersPage() {
         </section>
       ) : null}
 
+      <div className="-mx-3 mt-3 flex gap-1.5 overflow-x-auto px-3 pb-0.5">
+        {SEGMENTS.map((option) => {
+          const count = (players.data ?? []).filter((player) =>
+            inSegment(player, option.value),
+          ).length;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              aria-pressed={segment === option.value}
+              onClick={() => select({ segment: option.value })}
+              className={cn(
+                "h-8 shrink-0 rounded-full border px-3 text-[12.5px] font-bold",
+                segment === option.value
+                  ? "border-line-gold bg-gold-soft text-gold"
+                  : "border-line bg-surface-2 text-ink-2",
+              )}
+            >
+              {option.label}
+              {players.data ? <span className="num ml-1 opacity-70">{count}</span> : null}
+            </button>
+          );
+        })}
+      </div>
+      {allTags.length > 0 ? (
+        <div className="-mx-3 mt-1.5 flex gap-1.5 overflow-x-auto px-3 pb-0.5">
+          {allTags.map(([item, count]) => (
+            <button
+              key={item}
+              type="button"
+              aria-pressed={tag === item}
+              onClick={() => select({ tag: tag === item ? null : item })}
+              className={cn(
+                "h-7 shrink-0 rounded-full border px-2.5 text-[12px] font-bold",
+                tag === item
+                  ? "border-line-gold bg-gold-soft text-gold"
+                  : "border-line text-ink-3 bg-transparent",
+              )}
+            >
+              #{item} <span className="num opacity-70">{count}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       <input
         type="search"
         aria-label="Поиск игрока"
-        placeholder="Ник, email, ID в клубе"
+        placeholder="Ник, имя, email, телефон, ID в клубе"
         value={search}
         onChange={(event) => setSearch(event.target.value)}
-        className={cn(
-          "border-line-strong bg-surface-2 block h-10 w-full rounded-md border px-2.5 text-[14px]",
-          "mt-3",
-        )}
+        className="border-line-strong bg-surface-2 mt-2 block h-10 w-full rounded-md border px-2.5 text-[14px]"
       />
       {players.isPending ? <div className="bg-surface mt-2 h-32 rounded-md" /> : null}
-      <p className="text-ink-3 mt-2 text-[11.5px]">Всего: {players.data?.length ?? 0}</p>
+      <p className="text-ink-3 mt-2 text-[11.5px]">
+        Показано: {filtered.length} из {players.data?.length ?? 0}
+      </p>
       <div className="mt-1 flex flex-col gap-1.5">
         {filtered.map((player) => (
-          <PlayerCard key={player.id} player={player} canEdit={isAdminUser(me)} />
+          <PlayerRow key={player.id} player={player} />
         ))}
       </div>
     </div>

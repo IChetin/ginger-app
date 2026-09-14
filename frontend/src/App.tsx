@@ -14,6 +14,8 @@ import { AdminGridImportPage } from "@/pages/admin/AdminGridImportPage";
 import { AdminInvitesPage } from "@/pages/admin/AdminInvitesPage";
 import { AdminLayout } from "@/pages/admin/AdminLayout";
 import { AdminOrganizersPage } from "@/pages/admin/AdminOrganizersPage";
+import { AdminBroadcastsPage } from "@/pages/admin/AdminBroadcastsPage";
+import { AdminPlayerPage } from "@/pages/admin/AdminPlayerPage";
 import { AdminPlayersPage } from "@/pages/admin/AdminPlayersPage";
 import { AdminRequisitesPage } from "@/pages/admin/AdminRequisitesPage";
 import { AdminWinsPage } from "@/pages/admin/AdminWinsPage";
@@ -85,6 +87,8 @@ export function AppRoutes() {
           <Route path="chips" element={<AdminChipRequestsPage />} />
           <Route path="chips/:requestId" element={<AdminChipRequestPage />} />
           <Route path="players" element={<AdminPlayersPage />} />
+          <Route path="players/:playerId" element={<AdminPlayerPage />} />
+          <Route path="broadcasts" element={<AdminBroadcastsPage />} />
           <Route path="invites" element={<AdminInvitesPage />} />
           <Route path="requisites" element={<AdminRequisitesPage />} />
           <Route path="wins" element={<AdminWinsPage />} />

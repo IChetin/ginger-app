@@ -110,6 +110,8 @@ export function useUpdateAdminPlayer() {
       updateAdminPlayer(vars.id, vars.body),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: keys.players });
+      await queryClient.invalidateQueries({ queryKey: ["admin", "player-card"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin", "crm-summary"] });
     },
   });
 }

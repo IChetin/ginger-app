@@ -47,6 +47,8 @@ class NotificationType(str, Enum):
     NEW_CHIP_REQUEST = "new_chip_request"
     # Ginger APP: треды — менеджеру о новом сообщении игрока.
     NEW_THREAD_MESSAGE = "new_thread_message"
+    # Ginger APP: ручная рассылка из админки (ТЗ §4.2б).
+    BROADCAST = "broadcast"
 
 
 class ReminderKind(str, Enum):

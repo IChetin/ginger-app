@@ -22,6 +22,7 @@ from app.models.enums import (
 EXPECTED_TABLES = {
     "attachments",
     "auth_tokens",
+    "broadcasts",
     "chip_request_events",
     "chip_request_items",
     "chip_requests",

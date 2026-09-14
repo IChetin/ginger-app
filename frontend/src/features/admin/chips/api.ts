@@ -45,6 +45,17 @@ export interface PlayerAdmin {
   referrer_player_id: string | null;
   accounts: PlayerAccount[];
   created_at: string;
+  real_name: string | null;
+  phone: string | null;
+  telegram: string | null;
+  source: string | null;
+  tags: string[];
+  last_seen_at: string | null;
+  last_request_at: string | null;
+  last_activity_at: string | null;
+  requests_30d: number;
+  sleeping: boolean;
+  days_to_birthday: number | null;
 }
 
 export interface PendingAccount extends PlayerAccount {
@@ -110,7 +121,21 @@ export const fetchAdminPlayers = (): Promise<PlayerAdmin[]> => apiGet(`${ADMIN}/
 
 export const updateAdminPlayer = (
   id: string,
-  body: Partial<Pick<PlayerAdmin, "kind" | "status" | "offline_access" | "notes">>,
+  body: Partial<
+    Pick<
+      PlayerAdmin,
+      | "kind"
+      | "status"
+      | "offline_access"
+      | "notes"
+      | "real_name"
+      | "phone"
+      | "telegram"
+      | "source"
+      | "birthday"
+      | "tags"
+    >
+  >,
 ): Promise<PlayerAdmin> => apiPatch(`${ADMIN}/players/${id}`, body);
 
 export const fetchPendingAccounts = (): Promise<PendingAccount[]> =>

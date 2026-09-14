@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { useAdminChipRequests, usePendingAccounts } from "@/features/admin/chips/hooks";
 import { useAdminClubs } from "@/features/admin/clubs/hooks";
+import { useCrmSummary } from "@/features/admin/crm/hooks";
 import { useAdminThreads } from "@/features/admin/threads/hooks";
 import { cn } from "@/lib/utils";
 
@@ -86,6 +87,7 @@ export function AdminDashboardPage() {
   const pendingAccounts = usePendingAccounts();
   const threads = useAdminThreads("open");
   const clubs = useAdminClubs();
+  const crm = useCrmSummary();
 
   const openRequests = requests.data?.length ?? null;
   const pending = pendingAccounts.data?.length ?? null;
@@ -142,6 +144,65 @@ export function AdminDashboardPage() {
             }
           />
         </div>
+
+        <div className="text-ink-3 mt-[22px] mb-2.5 text-xs font-bold tracking-[0.07em] uppercase">
+          Игроки
+        </div>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-3">
+          <DashboardCard
+            to="/admin/players?segment=sleeping"
+            value={crm.data?.sleeping ?? null}
+            title="спящих"
+            hint="Не появлялись 30 дней — повод написать"
+            attention={false}
+            icon={<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" />}
+          />
+          <DashboardCard
+            to="/admin/players"
+            value={crm.data?.active_7d ?? null}
+            title="активны за неделю"
+            hint={
+              crm.data
+                ? `Новых за неделю: ${crm.data.new_7d} · всего ${crm.data.total_active}`
+                : "Заходили, писали, заказывали фишки"
+            }
+            attention={false}
+            icon={<path d="M3 12h4l3-7 4 14 3-7h4" />}
+          />
+        </div>
+        {crm.data && crm.data.birthdays.length > 0 ? (
+          <div
+            className="border-line bg-surface mt-3 rounded-[14px] border p-3.5"
+            data-testid="dashboard-birthdays"
+          >
+            <div className="text-[13px] font-bold">Дни рождения в ближайшие 2 недели</div>
+            <ul className="mt-1.5 flex flex-col gap-1">
+              {crm.data.birthdays.map((item) => (
+                <li key={item.player_id}>
+                  <Link
+                    to={`/admin/players/${item.player_id}`}
+                    className="hover:text-gold flex items-center gap-2 text-[13px]"
+                  >
+                    <span className="font-bold">{item.nickname}</span>
+                    {item.real_name ? <span className="text-ink-3">{item.real_name}</span> : null}
+                    <span
+                      className={cn(
+                        "num ml-auto text-xs font-bold",
+                        item.days <= 1 ? "text-gold" : "text-ink-3",
+                      )}
+                    >
+                      {item.days === 0
+                        ? "сегодня"
+                        : item.days === 1
+                          ? "завтра"
+                          : `${item.birthday.slice(8, 10)}.${item.birthday.slice(5, 7)} · через ${item.days} дн.`}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
         <div className="text-ink-3 mt-[22px] mb-2.5 text-xs font-bold tracking-[0.07em] uppercase">
           Расписание

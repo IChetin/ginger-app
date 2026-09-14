@@ -183,6 +183,18 @@ class PlayerAdminRead(BaseModel):
     invited_total: int = 0
     invited_24h: int = 0
     referral_paused: bool = False
+    # Mini-CRM (ТЗ §9а.3).
+    real_name: str | None = None
+    phone: str | None = None
+    telegram: str | None = None
+    source: str | None = None
+    tags: list[str] = Field(default_factory=list)
+    last_seen_at: datetime | None = None
+    last_request_at: datetime | None = None
+    last_activity_at: datetime | None = None
+    requests_30d: int = 0
+    sleeping: bool = False
+    days_to_birthday: int | None = None
 
 
 class PlayerAdminUpdate(BaseModel):
@@ -190,6 +202,12 @@ class PlayerAdminUpdate(BaseModel):
     status: PlayerStatus | None = None
     offline_access: bool | None = None
     notes: str | None = None
+    real_name: str | None = Field(default=None, max_length=120)
+    phone: str | None = Field(default=None, max_length=32)
+    telegram: str | None = Field(default=None, max_length=64)
+    source: str | None = Field(default=None, max_length=64)
+    birthday: date | None = None
+    tags: list[str] | None = Field(default=None, max_length=20)
 
 
 class PendingAccountRead(PlayerAccountRead):

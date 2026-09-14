@@ -119,6 +119,13 @@ function SidebarNav({ showUsers, onNavigate }: { showUsers: boolean; onNavigate?
           </span>
         ) : null}
       </NavLink>
+      <NavLink to="/admin/broadcasts" className={navClass} onClick={onNavigate}>
+        <NavIcon>
+          <path d="M4 10v4a1 1 0 0 0 1 1h2l5 4V5L7 9H5a1 1 0 0 0-1 1z" />
+          <path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" />
+        </NavIcon>
+        Рассылки
+      </NavLink>
       <NavLink to="/admin/invites" className={navClass} onClick={onNavigate}>
         <NavIcon>
           <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />

@@ -25,6 +25,7 @@ from app.schemas.chips import (
     RequisiteTemplateUpdate,
 )
 from app.services import chips as chips_service
+from app.services import crm as crm_service
 from app.services import invites as invites_service
 
 router = APIRouter()
@@ -100,15 +101,16 @@ async def update_template(
 
 @router.get("/players", response_model=list[PlayerAdminRead])
 async def list_players(db: Db) -> list[PlayerAdminRead]:
-    return await chips_service.list_players(db)
+    """База игроков с активностью, «спящими» и днями рождения (ТЗ §9а.3)."""
+    return await crm_service.list_players(db)
 
 
 @router.patch("/players/{player_id}", response_model=PlayerAdminRead)
 async def update_player(
     player_id: UUID, body: PlayerAdminUpdate, _: Admin, db: Db
 ) -> PlayerAdminRead:
-    """Тип игрока, блокировка, офлайн-доступ — только админ (ТЗ §9а.1)."""
-    return await chips_service.update_player(db, player_id, body)
+    """Тип, блокировка, офлайн-доступ и карточка CRM — только админ (ТЗ §9а.1)."""
+    return await crm_service.update_player(db, player_id, body)
 
 
 @router.post("/players/{player_id}/referral/rotate", response_model=ReferralRead)

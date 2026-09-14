@@ -14,7 +14,7 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -38,6 +38,7 @@ class Player(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         Index("ix_players_status", "status"),
         Index("uq_players_referral_code", "referral_code", unique=True),
         Index("ix_players_referrer_player_id", "referrer_player_id"),
+        Index("ix_players_tags", "tags", postgresql_using="gin"),
     )
 
     user_id: Mapped[uuid.UUID] = mapped_column(
@@ -71,6 +72,13 @@ class Player(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     notes: Mapped[str | None] = mapped_column(Text)
     # Личная многоразовая ссылка «Пригласить» (/r/<код>); выдаётся при первом открытии.
     referral_code: Mapped[str | None] = mapped_column(String(16))
+    # Mini-CRM (ТЗ §9а.3): как зовут, где писать, откуда пришёл, метки для рассылок.
+    real_name: Mapped[str | None] = mapped_column(String(120))
+    telegram: Mapped[str | None] = mapped_column(String(64))
+    source: Mapped[str | None] = mapped_column(String(64))
+    tags: Mapped[list[str]] = mapped_column(
+        ARRAY(String(32)), nullable=False, server_default=text("'{}'::varchar[]")
+    )
 
     user: Mapped["User"] = relationship()
     accounts: Mapped[list["PlayerAccount"]] = relationship(

@@ -8,6 +8,7 @@ from app.models.chips import (
     RequisiteTemplate,
 )
 from app.models.clubs import Club
+from app.models.crm import Broadcast
 from app.models.feed import PlayerWin
 from app.models.notifications import NotificationQueue
 from app.models.players import Invite, Player, PlayerAccount
@@ -19,6 +20,7 @@ __all__ = [
     "Attachment",
     "AuthToken",
     "Base",
+    "Broadcast",
     "ChipRequest",
     "ChipRequestEvent",
     "ChipRequestItem",
