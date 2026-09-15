@@ -1,4 +1,4 @@
-# Сборщик лобби на десктопе: скриншот ОДНОГО окна клиента и клик/прокрутка внутри него.
+﻿# Сборщик лобби на десктопе: скриншот ОДНОГО окна клиента и клик/прокрутка внутри него.
 # Проба 15.09: официальные ПК-клиенты PPPoker и Suprema. Экран целиком не снимаем — только окно
 # клиента (в кадр не попадает ничего личного). Пароли и вход — только руками Ивана.
 #
@@ -138,6 +138,32 @@ function Invoke-WindowPostClick {
     [void][DeskWin]::PostMessage($target, 0x0201, [IntPtr]1, $lParam)       # WM_LBUTTONDOWN
     Start-Sleep -Milliseconds 90
     [void][DeskWin]::PostMessage($target, 0x0202, [IntPtr]::Zero, $lParam)  # WM_LBUTTONUP
+}
+
+function Invoke-WindowPostDrag {
+    # Прокрутка ленты перетаскиванием — сообщениями, курсор Ивана не трогается.
+    param([Parameter(Mandatory)][string]$Match, [int]$X, [int]$Y, [int]$ToX, [int]$ToY, [int]$Steps = 20)
+    $window = Get-DeskWindow -Match $Match
+    $origin = New-Object DeskWin+POINT
+    $origin.X = $X; $origin.Y = $Y
+    $target = [DeskWin]::ChildWindowFromPointEx($window.Handle, $origin, 0x0001)
+    if ($target -eq [IntPtr]::Zero) { $target = $window.Handle }
+    $post = {
+        param([uint32]$Message, [int]$WParam, [int]$PX, [int]$PY)
+        $point = New-Object DeskWin+POINT
+        $point.X = $PX; $point.Y = $PY
+        if ($target -ne $window.Handle) { [void][DeskWin]::MapWindowPoints($window.Handle, $target, [ref]$point, 1) }
+        $lParam = [IntPtr](($point.Y -shl 16) -bor ($point.X -band 0xFFFF))
+        [void][DeskWin]::PostMessage($target, $Message, [IntPtr]$WParam, $lParam)
+    }
+    & $post 0x0200 0 $X $Y
+    & $post 0x0201 1 $X $Y
+    for ($i = 1; $i -le $Steps; $i++) {
+        Start-Sleep -Milliseconds 16
+        & $post 0x0200 1 ([int]($X + ($ToX - $X) * $i / $Steps)) ([int]($Y + ($ToY - $Y) * $i / $Steps))
+    }
+    Start-Sleep -Milliseconds 120
+    & $post 0x0202 0 $ToX $ToY
 }
 
 function Invoke-WindowScroll {
