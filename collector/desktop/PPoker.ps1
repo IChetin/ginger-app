@@ -140,8 +140,17 @@ function Invoke-PPokerMttPass {
     $dir = Join-Path $env:TEMP 'desk\pp'
     New-Item -ItemType Directory -Force $dir | Out-Null
     if ($FromTop) {
-        for ($i = 0; $i -lt 12; $i++) { Invoke-WindowPostDrag -Match $script:PpMatch -X 330 -Y 560 -ToX 330 -ToY 1040 -Steps 12; Start-Sleep -Milliseconds 500 }
-        Start-Sleep -Seconds 2
+        # One message drag moves the list only a little: keep pulling until the top card stops changing.
+        $previous = $null; $same = 0
+        for ($i = 0; $i -lt 60 -and $same -lt 2; $i++) {
+            for ($k = 0; $k -lt 4; $k++) { Invoke-WindowPostDrag -Match $script:PpMatch -X 330 -Y 480 -ToX 330 -ToY 1050 -Steps 8; Start-Sleep -Milliseconds 250 }
+            $probe = Join-Path $dir 'top-probe.png'
+            Save-PpShot -Path $probe
+            $top = (Read-PpListCards $probe | Select-Object -First 1).name
+            if ($top -and $top -eq $previous) { $same++ } else { $same = 0 }
+            $previous = $top
+        }
+        Start-Sleep -Seconds 1
     }
     $cards = @{}
     $idle = 0
@@ -155,7 +164,7 @@ function Invoke-PPokerMttPass {
         }
         if ($new -eq 0) { $idle++ } else { $idle = 0 }
         if ($idle -ge 2) { break }
-        Invoke-WindowPostDrag -Match $script:PpMatch -X 330 -Y 1000 -ToX 330 -ToY 560 -Steps 25
+        for ($k = 0; $k -lt 2; $k++) { Invoke-WindowPostDrag -Match $script:PpMatch -X 330 -Y 1040 -ToX 330 -ToY 480 -Steps 10; Start-Sleep -Milliseconds 300 }
         Start-Sleep -Seconds 2
     }
     $items = @($cards.Values | Sort-Object { if ($_.starts_at) { $_.starts_at } else { 'z' } }, name)
