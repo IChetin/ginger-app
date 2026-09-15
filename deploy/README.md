@@ -30,6 +30,7 @@
 6. **Запуск.** `bash deploy/deploy.sh` ещё раз — Caddy получит сертификат, бэкенд проверит настройки.
 7. **Админ.** `ssh ginger 'cd /opt/ginger/app && docker compose -f docker-compose.prod.yml run --rm backend python -m app.seeds.create_admin <email> <ник>'`.
 8. **Бэкап.** `ssh ginger 'crontab -l 2>/dev/null; echo "15 3 * * * bash /opt/ginger/app/deploy/backup.sh >> /opt/ginger/backups/backup.log 2>&1"' | ssh ginger crontab -`.
+   Проверка восстановления с Google Drive — раз в неделю: `45 4 * * 1 bash /opt/ginger/app/deploy/backup-verify.sh >> /opt/ginger/backups/backup.log 2>&1` (там же, в crontab). Нужен `sudo apt-get install -y rclone`.
 
 ## Обычный деплой
 
@@ -59,4 +60,11 @@ bash deploy/deploy.sh
 
 Бэкапы: `/opt/ginger/backups` (база — `pg_dump` custom, вложения — tgz), 14 дней. Восстановление
 базы: `docker compose -f docker-compose.prod.yml exec -T postgres pg_restore -U ginger -d ginger --clean < db-….dump`.
-Копия за пределы сервера — не настроена (следующий шаг).
+Копия за пределы сервера — Google Drive, папка `ginger-backups`, 30 дней (`backup.sh` после
+локального бэкапа). rclone видит только свои файлы (scope `drive.file`). Токен Google — файл
+`/opt/ginger/secrets/rclone-drive-token.json`, не в `.env`: JSON с кавычками ломает разбор `.env`.
+Получить токен (на своём ПК, rclone с rclone.org/downloads):
+`rclone authorize "drive" "eyJzY29wZSI6ImRyaXZlLmZpbGUifQ"` → войти в Google → скопировать JSON
+`{...}` из консоли → `(Get-Clipboard -Raw).Trim() | ssh ginger "umask 077; cat > /opt/ginger/secrets/rclone-drive-token.json"`.
+Проверка восстановления — `backup-verify.sh` по понедельникам: свежий дамп с Drive
+восстанавливается во временный Postgres, результат — в `backup.log`.
