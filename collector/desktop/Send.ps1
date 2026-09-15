@@ -37,8 +37,13 @@ function Send-CollectorSnapshot {
             $item.starts_at = ([DateTimeOffset]$item.starts_at).ToString('yyyy-MM-ddTHH:mm:sszzz')
         }
     }
-    $future = @($items | Where-Object { $_.starts_at -and $_.name -and $_.status -ne 'running' })
-    if (-not $future.Count) { throw 'No future tournaments in the pass' }
+    # Уже начавшиеся к моменту отправки турниры не шлём: вне окна сверки приёмник записал бы их «новыми».
+    $windowFrom = [DateTimeOffset](Get-Date).AddMinutes(10)
+    $future = @($items | Where-Object {
+        $_.starts_at -and $_.name -and $_.status -ne 'running' -and
+        [DateTimeOffset]::Parse($_.starts_at, [Globalization.CultureInfo]::InvariantCulture) -ge $windowFrom
+    })
+    if (-not $future.Count) { throw 'No upcoming tournaments in the pass' }
 
     # Проход PPPoker (лента, есть max_entries) отдаёт только ядро: старт, имя, бай-ин, гарантия, игра, баунти.
     # Длину уровня из ленты («8 min») не шлём — приёмник сам пишет параметры в сетку и затёр бы «15/12/12».
@@ -53,8 +58,7 @@ function Send-CollectorSnapshot {
         }
     })
     $starts = $future | ForEach-Object { [DateTimeOffset]::Parse($_.starts_at, [Globalization.CultureInfo]::InvariantCulture) }
-    $windowFrom = [DateTimeOffset](Get-Date).AddMinutes(10)
-    $windowTo = ($starts | Measure-Object -Maximum).Maximum
+    $windowTo =($starts | Measure-Object -Maximum).Maximum
     $body = [ordered]@{
         club_slug = $ClubSlug
         window_from = $windowFrom.ToString('yyyy-MM-ddTHH:mm:sszzz')

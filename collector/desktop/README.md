@@ -27,10 +27,25 @@
 6. **Код:** `git clone` репозитория (или копия папки `collector\desktop`).
 7. **Токен сборщика** (тот же, что на сервере) — в файл профиля, не в репозиторий:
    `%USERPROFILE%\.ginger\collector_token`.
-8. **Планировщик заданий:** задача «Ginger collector morning», ежедневно 11:00, «Выполнять только для
-   вошедшего пользователя» (нужна открытая сессия с окнами), действие:
+7а. **Токен** — не привязан к ПК: это общий пароль сборщика и сервера. Проще всего сгенерировать его
+   сразу на резервном ПК командой из раздела «Токен» ниже — она кладёт файл и записывает токен на сервер.
+8. **Планировщик заданий:** задача «Ginger collector», **ежедневно 10:00 и 22:00** (два триггера),
+   «Выполнять только для вошедшего пользователя» (нужна открытая сессия с окнами), действие:
    `powershell.exe -NoProfile -ExecutionPolicy Bypass -File <путь>\collector\desktop\Run-Morning.ps1`.
 9. **Проверка:** запустить `Run-Morning.ps1 -NoSend` руками, посмотреть лог в
    `%LOCALAPPDATA%\GingerCollector\<дата>\`.
 
 Пока PPPoker листается, мышь занята — на резервном ПК это не мешает.
+
+## Токен сборщика
+
+Общий пароль между сборщиком и приёмником на сервере (`COLLECTOR_TOKEN` в `.env` прода). Не привязан к
+компьютеру: где лежит файл токена — оттуда и можно отправлять. Генерирует и ставит владелец, одной
+командой в PowerShell (значение не печатается; серверный скрипт перезапускает бэкенд, ~10 с):
+
+```powershell
+$b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); $t = [Convert]::ToBase64String($b) -replace '[+/=]', ''; New-Item -ItemType Directory -Force "$env:USERPROFILE\.ginger" | Out-Null; [IO.File]::WriteAllText("$env:USERPROFILE\.ginger\collector_token", $t); $t | ssh ginger bash /opt/ginger/app/deploy/set-env-secret.sh COLLECTOR_TOKEN; Remove-Variable t, b
+```
+
+Нужен ssh-доступ `ginger` с этого ПК. Если его нет — сгенерировать на основном ПК и перенести файл
+`%USERPROFILE%\.ginger\collector_token` на резервный. Новый токен отменяет старый.
