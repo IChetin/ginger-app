@@ -5,7 +5,18 @@ from datetime import date, datetime
 from decimal import Decimal
 from enum import StrEnum
 
-from sqlalchemy import Date, DateTime, Enum, Numeric, SmallInteger, String, Text, func, text
+from sqlalchemy import (
+    BigInteger,
+    Date,
+    DateTime,
+    Enum,
+    Numeric,
+    SmallInteger,
+    String,
+    Text,
+    func,
+    text,
+)
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -30,6 +41,12 @@ class NotificationType(StrEnum):
     NEW_CHIP_REQUEST = "new_chip_request"
     NEW_THREAD_MESSAGE = "new_thread_message"
     BROADCAST = "broadcast"
+    THREAD_REPLY = "thread_reply"
+
+
+class NotificationChannel(StrEnum):
+    PUSH = "push"
+    TELEGRAM = "telegram"
 
 
 _notification_status = Enum(
@@ -41,6 +58,12 @@ _notification_status = Enum(
 _notification_type = Enum(
     NotificationType,
     name="notification_type",
+    create_type=False,
+    values_callable=lambda enum_cls: [item.value for item in enum_cls],
+)
+_notification_channel = Enum(
+    NotificationChannel,
+    name="notification_channel",
     create_type=False,
     values_callable=lambda enum_cls: [item.value for item in enum_cls],
 )
@@ -56,6 +79,9 @@ class NotificationQueue(Base):
     )
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     type: Mapped[NotificationType] = mapped_column(_notification_type, nullable=False)
+    channel: Mapped[NotificationChannel] = mapped_column(
+        _notification_channel, nullable=False, server_default=text("'push'")
+    )
     payload: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
     scheduled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     status: Mapped[NotificationStatus] = mapped_column(
@@ -102,5 +128,10 @@ class FxRate(Base):
     rate_rub: Mapped[Decimal] = mapped_column(Numeric(14, 6), nullable=False)
 
 
+class TelegramLink(Base):
+    """Привязка Telegram для второго канала уведомлений (схема — в бэкенде)."""
 
+    __tablename__ = "telegram_links"
 
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    chat_id: Mapped[int | None] = mapped_column(BigInteger)

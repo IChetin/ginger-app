@@ -16,6 +16,11 @@ class Settings(BaseSettings):
     vapid_public_key: str = ""
     vapid_private_key: str = ""
     vapid_subject: str = "https://lisa52.com"
+    # Telegram-бот уведомлений — второй канал; пусто — такие уведомления не отправляются.
+    telegram_bot_token: str = ""
+    telegram_timeout_seconds: float = Field(default=10, ge=1, le=60)
+    # Куда ведёт кнопка «Открыть в Ginger» в сообщении бота.
+    frontend_base_url: str = "https://lisa52.com"
     notification_batch_size: int = Field(default=50, ge=1, le=500)
     notification_job_interval_seconds: int = Field(default=60, ge=10, le=3600)
 

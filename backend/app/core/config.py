@@ -54,6 +54,10 @@ class Settings(BaseSettings):
     # Минимальная сборка фронта (VITE_APP_BUILD, «20260915171400»). Клиент старее получает 426
     # и перезагружается. Ставит deploy.sh --force-update; пусто — проверка выключена.
     min_client_build: str = ""
+    # Telegram-бот уведомлений (второй канал после пушей). Токен — от @BotFather, ставит Иван;
+    # пусто — кнопка «Подключить Telegram» не показывается. Секрет вебхука выводится из токена.
+    telegram_bot_token: str = ""
+    telegram_bot_username: str = ""
     frontend_base_url: str = "http://localhost:5173"
 
     # Email adapter: mock (dev/test) | smtp | postbox

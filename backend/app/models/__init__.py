@@ -16,6 +16,7 @@ from app.models.notifications import NotificationQueue
 from app.models.picks import EditorPick
 from app.models.players import Invite, Player, PlayerAccount
 from app.models.references import Currency, FxRate, Organizer
+from app.models.telegram import TelegramLink
 from app.models.threads import Thread, ThreadMessage
 from app.models.tournaments import Tournament, TournamentReminder, TournamentTemplate
 
@@ -25,6 +26,8 @@ __all__ = [
     "Base",
     "Broadcast",
     "CashGame",
+    "CashTable",
+    "TelegramLink",
     "CollectorRun",
     "CollectorSnapshot",
     "TournamentChange",

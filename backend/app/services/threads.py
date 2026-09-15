@@ -326,16 +326,18 @@ async def post_manager_message(
     await _add_message(
         session, thread, author=actor, from_manager=True, body=body, image=image, now=moment
     )
-    if get_settings().thread_reply_push:
-        await enqueue_push(
-            session,
-            user_id=thread.player.user_id,
-            type=NotificationType.NEW_THREAD_MESSAGE,
-            title=f"Ответ: {thread.subject}",
-            body=thread.last_message_preview or "Новое сообщение",
-            url=f"/dialogs/{thread.id}",
-            now=moment,
-        )
+    # Пушем ответ менеджера не шлём (ТЗ §4.2а: в приложении — счётчик), а в подключённый
+    # Telegram — да: туда уходит всё важное (решение Ивана 15.09).
+    await enqueue_push(
+        session,
+        user_id=thread.player.user_id,
+        type=NotificationType.THREAD_REPLY,
+        title=f"Ответ менеджера: {thread.subject}",
+        body=thread.last_message_preview or "Новое сообщение",
+        url=f"/dialogs/{thread.id}",
+        now=moment,
+        push=get_settings().thread_reply_push,
+    )
     return await _read(session, thread, "manager")
 
 

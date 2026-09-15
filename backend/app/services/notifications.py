@@ -12,7 +12,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.auth import User
-from app.models.enums import NotificationStatus, NotificationType
+from app.models.enums import NotificationChannel, NotificationStatus, NotificationType
 from app.models.notifications import NotificationQueue
 from app.schemas.notifications import (
     NotificationHistoryItem,
@@ -33,6 +33,7 @@ async def list_notification_history(
         select(NotificationQueue)
         .where(
             NotificationQueue.user_id == user.id,
+            NotificationQueue.channel == NotificationChannel.PUSH,
             NotificationQueue.status == NotificationStatus.SENT,
             NotificationQueue.sent_at.is_not(None),
             NotificationQueue.sent_at >= cutoff,
@@ -68,6 +69,7 @@ async def list_notifications(
     clamped_offset = max(0, offset)
     conditions = [
         NotificationQueue.user_id == user.id,
+        NotificationQueue.channel == NotificationChannel.PUSH,
         NotificationQueue.status == NotificationStatus.SENT,
         NotificationQueue.sent_at.is_not(None),
     ]
@@ -120,6 +122,7 @@ async def mark_notifications_read(
 ) -> int:
     conditions = [
         NotificationQueue.user_id == user.id,
+        NotificationQueue.channel == NotificationChannel.PUSH,
         NotificationQueue.status == NotificationStatus.SENT,
         NotificationQueue.read_at.is_(None),
     ]
@@ -145,6 +148,7 @@ async def unread_notifications_count(session: AsyncSession, user: User) -> int:
             .select_from(NotificationQueue)
             .where(
                 NotificationQueue.user_id == user.id,
+                NotificationQueue.channel == NotificationChannel.PUSH,
                 NotificationQueue.status == NotificationStatus.SENT,
                 NotificationQueue.read_at.is_(None),
             )

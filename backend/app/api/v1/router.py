@@ -10,6 +10,7 @@ from app.api.v1 import (
     health,
     notifications,
     push,
+    telegram,
     threads,
 )
 from app.api.v1.admin.router import router as admin_router
@@ -25,4 +26,5 @@ api_router.include_router(collector.router)
 api_router.include_router(feed.router)
 api_router.include_router(chips.router)
 api_router.include_router(threads.router)
+api_router.include_router(telegram.router)
 api_router.include_router(admin_router)

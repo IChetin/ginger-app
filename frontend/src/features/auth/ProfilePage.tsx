@@ -23,6 +23,7 @@ import {
 } from "@/features/auth/hooks";
 import { usePushSubscription, useSubscribePush, useUnsubscribePush } from "@/features/push/hooks";
 import { pushErrorMessage } from "@/features/push/lib/pushErrorMessage";
+import { TelegramBlock } from "@/features/telegram/TelegramBlock";
 import packageJson from "../../../package.json";
 
 /** Ссылка на поддержку в Telegram; без переменной окружения пункт не показывается. */
@@ -68,6 +69,7 @@ export function ProfilePage() {
       />
       <InstallBanner />
       <PlayerProfileSection />
+      <TelegramBlock />
       <SettingsList
         staffEntry={
           isStaffUser(user)

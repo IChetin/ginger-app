@@ -31,6 +31,7 @@ from app.models.enums import (
     PlayerStatus,
 )
 from app.models.players import Player, PlayerAccount
+from app.models.telegram import TelegramLink
 from app.models.threads import Thread
 from app.schemas.chips import PlayerAdminRead, PlayerAdminUpdate
 from app.schemas.crm import (
@@ -386,7 +387,13 @@ async def _users_with_push(session: AsyncSession, user_ids: list[uuid.UUID]) -> 
     rows = await session.scalars(
         select(PushSubscription.user_id).where(PushSubscription.user_id.in_(user_ids)).distinct()
     )
-    return set(rows)
+    # Подключённый Telegram — тоже канал: рассылка дойдёт и без пуша.
+    linked = await session.scalars(
+        select(TelegramLink.user_id).where(
+            TelegramLink.user_id.in_(user_ids), TelegramLink.chat_id.is_not(None)
+        )
+    )
+    return set(rows) | set(linked)
 
 
 async def preview_broadcast(

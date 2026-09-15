@@ -23,10 +23,17 @@ from app.core.config import get_settings
 from app.core.exceptions import AppError, NotFoundError
 from app.models.auth import User
 from app.models.clubs import Club
-from app.models.enums import NotificationStatus, NotificationType, ReminderKind, TournamentStatus
+from app.models.enums import (
+    NotificationChannel,
+    NotificationStatus,
+    NotificationType,
+    ReminderKind,
+    TournamentStatus,
+)
 from app.models.notifications import NotificationQueue
 from app.models.tournaments import Tournament, TournamentReminder
 from app.schemas.tournaments import TournamentReminderRead
+from app.services.push_notify import telegram_linked
 
 _MSK = ZoneInfo("Europe/Moscow")
 
@@ -148,18 +155,23 @@ async def set_reminders(
         reminder = TournamentReminder(user_id=user.id, tournament_id=tournament.id, kind=kind)
         session.add(reminder)
         await session.flush()
-        session.add(
-            NotificationQueue(
-                user_id=user.id,
-                tournament_reminder_id=reminder.id,
-                type=NotificationType.REMINDER,
-                payload=_payload(tournament, kind),
-                # Поставили меньше чем за 5 минут — присылаем сразу.
-                scheduled_at=max(anchor - _lead(), moment),
-                status=NotificationStatus.PENDING,
-                attempts=0,
+        channels = [NotificationChannel.PUSH]
+        if await telegram_linked(session, user.id):
+            channels.append(NotificationChannel.TELEGRAM)
+        for channel in channels:
+            session.add(
+                NotificationQueue(
+                    user_id=user.id,
+                    tournament_reminder_id=reminder.id,
+                    type=NotificationType.REMINDER,
+                    channel=channel,
+                    payload=_payload(tournament, kind),
+                    # Поставили меньше чем за 5 минут — присылаем сразу.
+                    scheduled_at=max(anchor - _lead(), moment),
+                    status=NotificationStatus.PENDING,
+                    attempts=0,
+                )
             )
-        )
     await session.flush()
     return sorted(
         (TournamentReminderRead(tournament_id=tournament.id, kind=kind) for kind in kinds),

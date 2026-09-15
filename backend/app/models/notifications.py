@@ -17,6 +17,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, UUIDPrimaryKeyMixin
 from app.models.enums import (
+    NotificationChannel,
     NotificationStatus,
     NotificationType,
     pg_enum,
@@ -57,6 +58,11 @@ class NotificationQueue(UUIDPrimaryKeyMixin, Base):
     type: Mapped[NotificationType] = mapped_column(
         pg_enum(NotificationType, "notification_type"),
         nullable=False,
+    )
+    channel: Mapped[NotificationChannel] = mapped_column(
+        pg_enum(NotificationChannel, "notification_channel"),
+        nullable=False,
+        server_default=NotificationChannel.PUSH.value,
     )
     payload: Mapped[dict[str, object]] = mapped_column(JSONB, nullable=False)
     scheduled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

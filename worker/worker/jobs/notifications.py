@@ -9,10 +9,17 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from worker.config import Settings, get_settings
-from worker.db.models import NotificationQueue, NotificationStatus, PushSubscription
+from worker.db.models import (
+    NotificationChannel,
+    NotificationQueue,
+    NotificationStatus,
+    PushSubscription,
+    TelegramLink,
+)
 from worker.db.session import session_scope
 from worker.push.client import PushOutcome, send_web_push
 from worker.push.schemas import PushPayload
+from worker.telegram.client import send_telegram
 
 logger = logging.getLogger("ginger.worker.notifications")
 
@@ -53,6 +60,9 @@ def _claim_due_ids(session: Session, batch_size: int) -> list[UUID]:
 def _process_one(session: Session, notification_id: UUID, settings: Settings) -> None:
     notification = session.get(NotificationQueue, notification_id)
     if notification is None or notification.status != NotificationStatus.PENDING:
+        return
+    if notification.channel == NotificationChannel.TELEGRAM:
+        _process_telegram(session, notification, settings)
         return
 
     subscriptions = list(
@@ -112,6 +122,40 @@ def _process_one(session: Session, notification_id: UUID, settings: Settings) ->
         notification.status = NotificationStatus.FAILED
     else:
         notification.status = NotificationStatus.PENDING
+
+
+def _fail(notification: NotificationQueue, error: str) -> None:
+    notification.status = NotificationStatus.FAILED
+    notification.attempts = min(notification.attempts + 1, MAX_ATTEMPTS)
+    notification.last_error = error
+
+
+def _process_telegram(
+    session: Session, notification: NotificationQueue, settings: Settings
+) -> None:
+    """Второй канал — Telegram-бот (решение 15.09). Чат, заблокировавший бота, отвязывается."""
+    link = session.get(TelegramLink, notification.user_id)
+    if link is None or link.chat_id is None:
+        _fail(notification, "telegram_not_linked")
+        return
+    try:
+        payload = PushPayload.model_validate(notification.payload).model_dump(exclude_none=True)
+    except Exception:
+        _fail(notification, "invalid_payload")
+        return
+
+    result = send_telegram(chat_id=link.chat_id, payload=payload, settings=settings)
+    if result.outcome == PushOutcome.SUCCESS:
+        notification.status = NotificationStatus.SENT
+        notification.sent_at = datetime.now(UTC)
+        notification.last_error = None
+        return
+    if result.outcome == PushOutcome.GONE:
+        session.delete(link)
+    notification.attempts = min(notification.attempts + 1, MAX_ATTEMPTS)
+    notification.last_error = result.error or "telegram_failed"
+    retry = result.outcome == PushOutcome.RETRYABLE and notification.attempts < MAX_ATTEMPTS
+    notification.status = NotificationStatus.PENDING if retry else NotificationStatus.FAILED
 
 
 def process_notification_queue_with_sender(

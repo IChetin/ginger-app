@@ -27,6 +27,7 @@ EXPECTED_TABLES = {
     "collector_runs",
     "collector_snapshots",
     "tournament_changes",
+    "telegram_links",
     "chip_request_events",
     "chip_request_items",
     "chip_requests",

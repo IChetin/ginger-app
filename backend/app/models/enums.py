@@ -49,6 +49,15 @@ class NotificationType(str, Enum):
     NEW_THREAD_MESSAGE = "new_thread_message"
     # Ginger APP: ручная рассылка из админки (ТЗ §4.2б).
     BROADCAST = "broadcast"
+    # Ginger APP: ответ менеджера игроку в диалоге (в Telegram — всегда, пушем — по настройке).
+    THREAD_REPLY = "thread_reply"
+
+
+class NotificationChannel(str, Enum):
+    """Куда уходит уведомление: пуш приложения или Telegram-бот (второй канал, 15.09)."""
+
+    PUSH = "push"
+    TELEGRAM = "telegram"
 
 
 class ReminderKind(str, Enum):
