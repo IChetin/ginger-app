@@ -73,7 +73,11 @@ function Read-XpTournament {
     # Название: крупная строка слева от метки MTT-...; кириллицу читает только русский распознаватель.
     $ruName = $ru | Where-Object { $_.Y -ge 305 -and $_.Y -le 332 -and $_.X -lt 350 } | Sort-Object W -Descending | Select-Object -First 1
     $enName = $en | Where-Object { $_.Y -ge 305 -and $_.Y -le 332 } | Sort-Object W -Descending | Select-Object -First 1
-    $name = if ($ruName -and $ruName.Text -match '[Ѐ-ӿ]{3}') { $ruName.Text } elseif ($enName) { $enName.Text } else { $null }
+    # Английский распознаватель пишет кириллицу кашей со сменой регистра внутри слова («AnxeCTVIB»),
+    # русский — наоборот, латиницу кириллицей («гмин кгчоскоит»). Русский берём только в первом случае.
+    $enText = if ($enName) { $enName.Text } else { '' }
+    $enLooksCyrillic = $enText -cmatch '[a-z][A-Z]'
+    $name = if ($ruName -and $enLooksCyrillic -and $ruName.Text -match '[Ѐ-ӿ]{3}') { $ruName.Text } elseif ($enName) { $enText } elseif ($ruName) { $ruName.Text } else { $null }
     if ($name) {
         $name = ($name -replace '\s*MTT-\S+', '' -replace '[^\p{L}\p{N}\s\-\+\.]', '' -replace '\s{2,}', ' ').Trim()
     }
@@ -95,6 +99,8 @@ function Read-XpTournament {
             default { $gameType = 'other' }
         }
     }
+    # Метка MTT-... читается не всегда; у клубов союза по умолчанию NLH.
+    if (-not $gameType) { $gameType = 'nlh' }
 
     $buyinRaw = Get-XpCell $en 'Buy.?in' left
     $parts = @([regex]::Matches(($buyinRaw -replace '(?<=\d)[Oo]|[Oo](?=\d)', '0'), '\d+(?:\.\d+)?') | ForEach-Object { [decimal]$_.Value })
@@ -110,7 +116,12 @@ function Read-XpTournament {
     $guarantee = $null
     if ($description -match $script:CyrGuarantee) {
         $rub = [decimal](($Matches[1]) -replace '\s', '')
-        if ($rub -ge 1000) { $guarantee = $rub / $script:XpRubPerChip }
+        if ($rub -ge 10000) { $guarantee = $rub / $script:XpRubPerChip }
+    }
+    # «1 000 000 рублей» OCR часто рвёт — тогда гарантия из имени: «SHR 1 MLN GTD», «BOUNTY MAGIC 500K».
+    if ($null -eq $guarantee -and $name -match '(\d+(?:[.,]\d+)?)\s*(K|MLN|M)\b') {
+        $multiplier = if ($Matches[2] -eq 'K') { 1000 } else { 1000000 }
+        $guarantee = [decimal]($Matches[1] -replace ',', '.') * $multiplier / $script:XpRubPerChip
     }
 
     $lateReg = if ($all -match 'Late Registration:\s*Level\s*(\d+)') { [int]$Matches[1] } else { $null }
@@ -153,10 +164,25 @@ function ConvertTo-XpCollected {
     $fields = 'starts_at', 'name', 'buyin', 'guarantee', 'bounty_kind', 'game_type', 'start_stack',
         'level_minutes', 'late_reg_levels', 'structure', 'rebuy_terms', 'addon_terms', 'bounty_share',
         'early_bird_bonus', 'early_bird_levels'
+    # Параметры приёмник применяет к сетке сам — поэтому мусор OCR отсекаем здесь, до отправки.
+    $sane = @{
+        buyin = { param($v) $v -ge 0 -and $v -le 100000 }
+        guarantee = { param($v) $v -ge 1 -and $v -le 10000000 }
+        start_stack = { param($v) $v -ge 500 -and $v -le 10000000 }
+        level_minutes = { param($v) "$v" -match '^\d{1,2}(/\d{1,2}){0,3}$' }
+        late_reg_levels = { param($v) $v -ge 1 -and $v -le 40 }
+        bounty_share = { param($v) $v -ge 1 -and $v -le 100 }
+        early_bird_levels = { param($v) $v -ge 1 -and $v -le 50 }
+        structure = { param($v) "$v".Length -le 32 }
+        rebuy_terms = { param($v) "$v".Length -le 32 }
+        addon_terms = { param($v) "$v".Length -le 32 }
+    }
     $out = [ordered]@{}
     foreach ($field in $fields) {
         $value = $Item.$field
-        if ($null -ne $value -and "$value" -ne '') { $out[$field] = $value }
+        if ($null -eq $value -or "$value" -eq '') { continue }
+        if ($sane.ContainsKey($field) -and -not (& $sane[$field] $value)) { continue }
+        $out[$field] = $value
     }
     [pscustomobject]$out
 }
@@ -177,9 +203,14 @@ function Test-XpClubLobby {
 }
 
 function Invoke-XPokerMttPass {
-    param([int]$MaxCards = 60, [int]$MaxScrolls = 15)
+    param([int]$MaxCards = 60, [int]$MaxScrolls = 15, [switch]$FromTop)
     $dir = Join-Path $env:TEMP 'desk\xpoker'
     New-Item -ItemType Directory -Force $dir | Out-Null
+    if ($FromTop) {
+        # Лента могла остаться прокрученной — сначала в самый верх.
+        for ($i = 0; $i -lt 8; $i++) { Invoke-WindowPostDrag -Match $script:XpMatch -X 222 -Y 480 -ToX 222 -ToY 720 -Steps 12; Start-Sleep -Milliseconds 500 }
+        Start-Sleep -Seconds 2
+    }
     $seen = @{}
     $items = New-Object System.Collections.Generic.List[object]
     $opened = 0
