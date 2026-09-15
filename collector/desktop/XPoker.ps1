@@ -26,7 +26,7 @@
 
 $script:XpMatch = 'X-Poker'
 $script:XpRubPerChip = 100          # Ginger+: 1 фишка = 100 руб. (clubs.chip_value)
-$script:XpListTop = 460             # лента карточек — между фильтрами и нижним меню
+$script:XpListTop = 365             # лента карточек — между фильтрами и нижним меню
 $script:XpListBottom = 725
 $script:XpSafeRight = 395           # правее — плавающие кнопки клуба («+» создаёт стол)
 $script:XpBack = @{ X = 24; Y = 34 }
