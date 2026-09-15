@@ -1,4 +1,4 @@
-# Отправка прохода сборщика в приёмник на сервере (POST /api/v1/collector/...).
+﻿# Отправка прохода сборщика в приёмник на сервере (POST /api/v1/collector/...).
 #
 # По умолчанию — сухой прогон: печатает, что уйдёт. Отправка — только с -Apply и токеном
 # из переменной окружения COLLECTOR_TOKEN (ставит Иван; сюда секрет не пишем).
@@ -67,8 +67,11 @@ function Send-CollectorSnapshot {
         return ($body | ConvertTo-Json -Depth 6)
     }
 
+    # Токен — из переменной окружения или из файла профиля (кладёт Иван; в репозиторий не попадает).
     $token = $env:COLLECTOR_TOKEN
-    if (-not $token) { throw 'Set $env:COLLECTOR_TOKEN first (Ivan)' }
+    $tokenFile = Join-Path $env:USERPROFILE '.ginger\collector_token'
+    if (-not $token -and (Test-Path $tokenFile)) { $token = (Get-Content $tokenFile -Raw).Trim() }
+    if (-not $token) { throw "No collector token: set `$env:COLLECTOR_TOKEN or create $tokenFile (Ivan)" }
     $api = "$BaseUrl/api/v1/collector"
     $run = Invoke-CollectorApi POST "$api/runs" @{ kind = 'mtt'; app = $App } $token
     try {
