@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     auth_token_ip_hourly_limit: int = 20
     # Сборщик лобби (телефон + скрипт) ходит с этим токеном; пусто — приём данных выключен.
     collector_token: str = ""
+    # Минимальная сборка фронта (VITE_APP_BUILD, «20260915171400»). Клиент старее получает 426
+    # и перезагружается. Ставит deploy.sh --force-update; пусто — проверка выключена.
+    min_client_build: str = ""
     frontend_base_url: str = "http://localhost:5173"
 
     # Email adapter: mock (dev/test) | smtp | postbox

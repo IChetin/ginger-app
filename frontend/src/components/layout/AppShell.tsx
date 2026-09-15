@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { MobileLayoutHint } from "@/components/layout/MobileLayoutHint";
 import { ScrollToTop } from "@/components/layout/ScrollToTop";
+import { RouteHints } from "@/features/hints/RouteHints";
 import { useMe } from "@/features/auth/hooks";
 import { useUnreadDialogs } from "@/features/threads/hooks";
 
@@ -21,6 +22,7 @@ export function AppShell() {
       >
         <Outlet />
         <BottomNav dialogsUnread={dialogsUnread} />
+        <RouteHints />
       </div>
     </div>
   );

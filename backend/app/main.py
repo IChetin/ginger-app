@@ -123,11 +123,39 @@ class OriginGuardMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
+class ClientBuildMiddleware(BaseHTTPMiddleware):
+    """Устаревшая сборка приложения получает 426 и перезагружается (флаг минимальной версии).
+
+    Сравниваются номера сборок вида «20260915171400». Запросы без заголовка (старые клиенты
+    до этого флага, скрипты) пропускаются: их обновит проверка service worker.
+    """
+
+    async def dispatch(
+        self,
+        request: Request,
+        call_next: RequestResponseEndpoint,
+    ) -> Response:
+        minimum = get_settings().min_client_build
+        build = request.headers.get("x-client-build", "")
+        if (
+            minimum
+            and build.isdigit()
+            and request.url.path.startswith("/api/")
+            and request.url.path != "/api/v1/health"
+            and int(build) < int(minimum)
+        ):
+            return _error_response(
+                426, "client_outdated", "Приложение обновилось — загружаем новую версию"
+            )
+        return await call_next(request)
+
+
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
     app.add_middleware(OriginGuardMiddleware)
+    app.add_middleware(ClientBuildMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins_list,

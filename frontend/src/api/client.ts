@@ -18,6 +18,8 @@ import type {
   VapidPublicKeyResponse,
 } from "@/api/types/push";
 import type { Tournament, TournamentsParams } from "@/api/types/tournaments";
+import { APP_BUILD } from "@/lib/appBuild";
+import { forceClientUpdate } from "@/lib/forceUpdate";
 
 export type ApiRequestHeaders = HeadersInit;
 
@@ -127,6 +129,9 @@ async function apiRequest<T>(
   if (init.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
+  if (APP_BUILD) {
+    headers.set("X-Client-Build", APP_BUILD);
+  }
 
   const response = await fetch(path, {
     ...init,
@@ -135,7 +140,12 @@ async function apiRequest<T>(
   });
 
   if (!response.ok) {
-    throw await parseError(response);
+    const error = await parseError(response);
+    // Сервер требует сборку новее — обновляемся, не дожидаясь проверки service worker.
+    if (error.status === 426 && error.code === "client_outdated") {
+      void forceClientUpdate();
+    }
+    throw error;
   }
 
   if (options.allowEmpty || response.status === 204) {
@@ -182,7 +192,12 @@ async function apiPostForm<T>(
     credentials: "include",
   });
   if (!response.ok) {
-    throw await parseError(response);
+    const error = await parseError(response);
+    // Сервер требует сборку новее — обновляемся, не дожидаясь проверки service worker.
+    if (error.status === 426 && error.code === "client_outdated") {
+      void forceClientUpdate();
+    }
+    throw error;
   }
   return (await response.json()) as T;
 }
