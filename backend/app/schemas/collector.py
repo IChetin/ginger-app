@@ -21,6 +21,16 @@ from app.models.enums import (
 _LINK_PREFIXES = ("https://", "http://", "pppoker://", "xpoker://", "poker21://", "suprema://")
 
 
+def validate_app_link(value: str | None) -> str | None:
+    """Диплинк турнира или стола: в приложение или на https-страницу."""
+    if value is None:
+        return None
+    cleaned = value.strip()
+    if not cleaned.lower().startswith(_LINK_PREFIXES):
+        raise ValueError("Ссылка должна вести в приложение или на https")
+    return cleaned
+
+
 def _require_timezone(value: datetime) -> datetime:
     if value.tzinfo is None:
         raise ValueError("Время — с часовым поясом")
@@ -51,16 +61,7 @@ class CollectedTournament(BaseModel):
     app_link: str | None = Field(default=None, max_length=500)
 
     _aware = field_validator("starts_at")(_require_timezone)
-
-    @field_validator("app_link")
-    @classmethod
-    def _link(cls, value: str | None) -> str | None:
-        if value is None:
-            return None
-        cleaned = value.strip()
-        if not cleaned.lower().startswith(_LINK_PREFIXES):
-            raise ValueError("Ссылка должна вести в приложение или на https")
-        return cleaned
+    _link = field_validator("app_link")(validate_app_link)
 
 
 class RunStart(BaseModel):

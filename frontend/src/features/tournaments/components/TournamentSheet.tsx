@@ -267,7 +267,7 @@ function SheetBody({ tournament }: { tournament: Tournament }) {
       <TournamentSatellites tournament={tournament} />
       <SheetReminders tournament={tournament} />
 
-      <OpenInApp tournament={tournament} />
+      <OpenInApp club={club} appLink={tournament.app_link} subject="турнир" />
     </>
   );
 }

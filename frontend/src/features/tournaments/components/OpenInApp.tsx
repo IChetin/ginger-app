@@ -1,36 +1,42 @@
 import { useState } from "react";
 
-import type { Tournament } from "@/api/types/tournaments";
+import type { TournamentClub } from "@/api/types/tournaments";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { APP_LABELS } from "@/features/tournaments/lib/format";
 
 /**
- * Переход в приложение из карточки турнира. PPPoker даёт диплинк на каждый созданный турнир —
- * его приносит сборщик; X-Poker, Poker21 и Suprema диплинков не дают — там ID клуба.
+ * Переход в приложение из карточки турнира или стола. PPPoker даёт диплинк на каждый созданный
+ * турнир и стол — его приносит сборщик; X-Poker, Poker21 и Suprema диплинков не дают — там ID клуба.
  */
-export function OpenInApp({ tournament }: { tournament: Tournament }) {
+export function OpenInApp({
+  club,
+  appLink,
+  subject,
+}: {
+  club: TournamentClub;
+  appLink: string | null | undefined;
+  subject: "турнир" | "стол";
+}) {
   const confirm = useConfirm();
   const [copied, setCopied] = useState(false);
-  const { club } = tournament;
   const appLabel = APP_LABELS[club.app];
 
-  if (tournament.app_link) {
-    const link = tournament.app_link;
+  if (appLink) {
     return (
       <button
         type="button"
         onClick={async () => {
           const ok = await confirm({
             title: `Перейти в ${appLabel}?`,
-            description: `Откроется турнир в клубе ${club.name}.`,
+            description: `Откроется ${subject} в клубе ${club.name}.`,
             confirmLabel: "Перейти",
             cancelLabel: "Отмена",
           });
-          if (ok) window.location.href = link;
+          if (ok) window.location.href = appLink;
         }}
         className="bg-gold-grad text-ink-ongold shadow-sheen-glow mt-4 flex h-12 w-full items-center justify-center rounded-md text-[15px] font-bold"
       >
-        Открыть турнир в {appLabel}
+        Открыть {subject} в {appLabel}
       </button>
     );
   }
@@ -67,7 +73,7 @@ export function OpenInApp({ tournament }: { tournament: Tournament }) {
 
   return (
     <p className="text-ink-3 mt-4 text-center text-[12.5px]">
-      Турнир в клубе {club.name} · {appLabel}
+      {subject === "турнир" ? "Турнир" : "Стол"} в клубе {club.name} · {appLabel}
     </p>
   );
 }

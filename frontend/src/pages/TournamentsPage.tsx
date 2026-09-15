@@ -10,6 +10,7 @@ import {
 } from "react";
 
 import type { ScheduleView, Tournament } from "@/api/types/tournaments";
+import { ScheduleTabs } from "@/components/layout/ScheduleTabs";
 import { useMe } from "@/features/auth/hooks";
 import {
   AppIcon,
@@ -39,10 +40,11 @@ import {
 import { pluralRu } from "@/lib/plural";
 import { cn } from "@/lib/utils";
 
-const RANGE_OPTIONS: { value: RangeKey; label: string }[] = [
-  { value: "day", label: "24 часа" },
-  { value: "3days", label: "3 дня" },
-  { value: "week", label: "Неделя" },
+// Коротко на кнопке: рядом с «Турниры | Кэш» полные «24 часа / Неделя» съедают счётчик турниров.
+const RANGE_OPTIONS: { value: RangeKey; label: string; title: string }[] = [
+  { value: "day", label: "24ч", title: "24 часа" },
+  { value: "3days", label: "3д", title: "3 дня" },
+  { value: "week", label: "7д", title: "Неделя" },
 ];
 
 function toggle<T>(list: T[], value: T): T[] {
@@ -385,7 +387,7 @@ export function TournamentsPage() {
         className="border-line bg-bg/90 sticky top-0 z-20 border-b backdrop-blur-[14px]"
       >
         <div className="flex items-center gap-2 px-3 pt-2 pb-1.5">
-          <h1 className="text-[16px] font-extrabold tracking-tight">Турниры</h1>
+          <ScheduleTabs active="tournaments" />
           <span
             aria-live="polite"
             className="text-ink-3 num min-w-0 flex-1 truncate text-[11.5px] font-semibold"
@@ -404,6 +406,8 @@ export function TournamentsPage() {
                 key={option.value}
                 type="button"
                 role="tab"
+                aria-label={option.title}
+                title={option.title}
                 aria-selected={filters.range === option.value}
                 onClick={() => update({ range: option.value })}
                 className={cn(

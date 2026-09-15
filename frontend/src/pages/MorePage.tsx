@@ -49,6 +49,7 @@ export function MorePage() {
           subtitle="Все клубы, фильтры"
           icon="🏆"
         />
+        <Row to="/cash" title="Кэш-столы" subtitle="Где сейчас идёт игра" icon="♠" />
         <Row to="/clubs" title="Клубы" subtitle="ID, курсы, как зайти" icon="♣" />
         {player.data ? (
           <Row to="/referral" title="Пригласить друга" subtitle="Ссылка и QR" icon="🦊" />

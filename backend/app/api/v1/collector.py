@@ -6,7 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import require_collector
+from app.schemas.cash import CashSnapshotIn, CashSnapshotResult
 from app.schemas.collector import RunFinish, RunRead, RunStart, SnapshotIn, SnapshotResult
+from app.services import cash as cash_service
 from app.services import collector as collector_service
 
 # Приём данных от сборщика лобби: телефон со скриптом, постоянный токен, без сессии человека.
@@ -29,6 +31,12 @@ async def create_run(body: RunStart, db: Db) -> RunRead:
 async def add_snapshot(run_id: UUID, body: SnapshotIn, db: Db) -> SnapshotResult:
     """Лобби одного клуба: турниры сверяются с сеткой сразу."""
     return await collector_service.ingest_snapshot(db, run_id, body)
+
+
+@router.post("/runs/{run_id}/cash", response_model=CashSnapshotResult)
+async def add_cash_snapshot(run_id: UUID, body: CashSnapshotIn, db: Db) -> CashSnapshotResult:
+    """Список кэш-столов одного клуба: столы обновляются, пропавшие закрываются."""
+    return await cash_service.ingest_cash_snapshot(db, run_id, body)
 
 
 @router.post("/runs/{run_id}/finish", response_model=RunRead)

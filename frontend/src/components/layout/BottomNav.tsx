@@ -56,7 +56,7 @@ const items: NavItem[] = [
     to: "/more",
     label: "Ещё",
     icon: IconMore,
-    sections: ["/more", "/tournaments", "/clubs", "/profile", "/referral", "/offline"],
+    sections: ["/more", "/tournaments", "/cash", "/clubs", "/profile", "/referral", "/offline"],
   },
 ];
 

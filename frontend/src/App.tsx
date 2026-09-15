@@ -23,6 +23,7 @@ import { AdminWinsPage } from "@/pages/admin/AdminWinsPage";
 import { AdminThreadPage } from "@/pages/admin/AdminThreadPage";
 import { AdminThreadsPage } from "@/pages/admin/AdminThreadsPage";
 import { AdminUsersPage } from "@/pages/admin/AdminUsersPage";
+import { CashPage } from "@/pages/CashPage";
 import { ChipAccountsPage } from "@/pages/ChipAccountsPage";
 import { ChipRequestPage } from "@/pages/ChipRequestPage";
 import { ChipsPage } from "@/pages/ChipsPage";
@@ -53,6 +54,7 @@ export function AppRoutes() {
         {/* Витрина клуба открыта без входа: главная с лентой, расписание, клубы, «Ещё». */}
         <Route path="/" element={<PlayerHomePage />} />
         <Route path="/tournaments" element={<TournamentsPage />} />
+        <Route path="/cash" element={<CashPage />} />
         <Route path="/clubs" element={<ClubsPage />} />
         <Route path="/more" element={<MorePage />} />
         <Route element={<AuthGuard />}>
