@@ -83,7 +83,7 @@ function Read-PpListCards {
         $infoLines = @(& $near 41 12 260 600 | Sort-Object X)
         $info = ($infoLines.Text -join ' ')
         # The coin icon before the guarantee is read as a glued glyph: "7400+0", "-7500+500", "-z 564+36", "o900+0", "$200".
-        if ($info -notmatch 'Start|Registration') { $info = $info -replace '^\s*(?:-?[7z]|[^\d\s])\s*', '' }
+        if ($info -notmatch 'Start|Registration') { $info = $info -replace '^\s*(?:-?[57z]|[^\d\s])\s*', '' }
         $startsAt = $null; $guarantee = $null; $status = 'unknown'
         if ($info -match 'Start\s*Time:?\s*(\d{2})\s*/\s*(\d)\s?(\d)\s+(\d{1,2}):(\d{2})') {
             $now = Get-Date
