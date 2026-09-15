@@ -3,6 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import type { Tournament } from "@/api/types/tournaments";
 import { formatMoney, formatStartShort } from "@/features/tournaments/lib/format";
 import { fetchTournamentSatellites } from "@/features/tournaments/liveApi";
+import { pluralRu } from "@/lib/plural";
+
+/** Ближайшие сателлиты: у воскресного турнира их набирается десяток за неделю. */
+const SHOWN = 5;
 
 /**
  * «Попасть дешевле»: сателлиты на турнир — только в карточке турнира. В списке метка «SAT»
@@ -24,7 +28,7 @@ export function TournamentSatellites({ tournament }: { tournament: Tournament })
         Попасть дешевле · сателлиты
       </h3>
       <ul className="border-line rounded-md border">
-        {query.data.map((item) => (
+        {query.data.slice(0, SHOWN).map((item) => (
           <li
             key={item.id}
             className="border-line flex items-center gap-2 border-t px-3 py-2 text-[13px] first:border-t-0"
@@ -46,6 +50,12 @@ export function TournamentSatellites({ tournament }: { tournament: Tournament })
           </li>
         ))}
       </ul>
+      {query.data.length > SHOWN ? (
+        <p className="text-ink-3 mt-1 text-center text-[11.5px]">
+          и ещё {query.data.length - SHOWN}{" "}
+          {pluralRu(query.data.length - SHOWN, "сателлит", "сателлита", "сателлитов")} до старта
+        </p>
+      ) : null}
     </section>
   );
 }
