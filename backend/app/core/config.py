@@ -49,6 +49,8 @@ class Settings(BaseSettings):
     # Short-lived proof after register OTP verify (before password+nickname).
     register_token_ttl_seconds: int = 1800
     auth_token_ip_hourly_limit: int = 20
+    # Сборщик лобби (телефон + скрипт) ходит с этим токеном; пусто — приём данных выключен.
+    collector_token: str = ""
     frontend_base_url: str = "http://localhost:5173"
 
     # Email adapter: mock (dev/test) | smtp | postbox

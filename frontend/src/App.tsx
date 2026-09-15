@@ -8,6 +8,7 @@ import { LoginPage as AdminLoginPage } from "@/features/admin/LoginPage";
 import { AuthGuard } from "@/features/auth/AuthGuard";
 import { ProfilePage } from "@/features/auth/ProfilePage";
 import { AdminChipRequestPage } from "@/pages/admin/AdminChipRequestPage";
+import { AdminCollectorPage } from "@/pages/admin/AdminCollectorPage";
 import { AdminChipRequestsPage } from "@/pages/admin/AdminChipRequestsPage";
 import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
 import { AdminGridImportPage } from "@/pages/admin/AdminGridImportPage";
@@ -84,6 +85,7 @@ export function AppRoutes() {
             <Route path="users" element={<AdminUsersPage />} />
           </Route>
           <Route path="grids" element={<AdminGridImportPage />} />
+          <Route path="collector" element={<AdminCollectorPage />} />
           <Route path="chips" element={<AdminChipRequestsPage />} />
           <Route path="chips/:requestId" element={<AdminChipRequestPage />} />
           <Route path="players" element={<AdminPlayersPage />} />

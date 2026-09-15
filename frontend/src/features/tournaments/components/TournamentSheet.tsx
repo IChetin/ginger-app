@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 
 import type { ReminderKind, Tournament } from "@/api/types/tournaments";
 import { BellIcon, ReminderHints } from "@/features/tournaments/components/ReminderBell";
+import { OpenInApp } from "@/features/tournaments/components/OpenInApp";
 import {
   LivePlate,
   TournamentSatellites,
@@ -162,16 +163,14 @@ function withTerms(cost: string | null, terms: string | null, tournament: Tourna
 
 /**
  * Карточка турнира по тапу: формат и параметры, которых нет в строке таблицы, и переход
- * в клуб. Переход подтверждает родитель — он же знает ссылку клуба.
+ * в приложение — по диплинку старта или по ID клуба.
  */
 export function TournamentSheet({
   tournament,
   onOpenChange,
-  onOpenApp,
 }: {
   tournament: Tournament | null;
   onOpenChange: (open: boolean) => void;
-  onOpenApp?: (tournament: Tournament) => void;
 }) {
   const open = tournament !== null;
   return (
@@ -185,7 +184,7 @@ export function TournamentSheet({
             className="border-line-strong bg-surface max-h-[88vh] w-full max-w-[420px] overflow-y-auto rounded-t-lg border border-b-0 px-5 pt-2.5 pb-[calc(20px+env(safe-area-inset-bottom))] outline-none"
           >
             <div className="bg-line-strong mx-auto mb-3.5 h-1 w-9 rounded-full" />
-            {tournament ? <SheetBody tournament={tournament} onOpenApp={onOpenApp} /> : null}
+            {tournament ? <SheetBody tournament={tournament} /> : null}
           </Drawer.Popup>
         </Drawer.Viewport>
       </Drawer.Portal>
@@ -193,13 +192,7 @@ export function TournamentSheet({
   );
 }
 
-function SheetBody({
-  tournament,
-  onOpenApp,
-}: {
-  tournament: Tournament;
-  onOpenApp?: (tournament: Tournament) => void;
-}) {
+function SheetBody({ tournament }: { tournament: Tournament }) {
   const { club } = tournament;
   const guarantee = formatMoney(tournament.guarantee, club);
   const lateReg = tournament.late_reg_closes_at
@@ -274,19 +267,7 @@ function SheetBody({
       <TournamentSatellites tournament={tournament} />
       <SheetReminders tournament={tournament} />
 
-      {onOpenApp ? (
-        <button
-          type="button"
-          onClick={() => onOpenApp(tournament)}
-          className="bg-gold-grad text-ink-ongold shadow-sheen-glow mt-4 flex h-12 w-full items-center justify-center rounded-md text-[15px] font-bold"
-        >
-          Открыть клуб в {appLabel}
-        </button>
-      ) : (
-        <p className="text-ink-3 mt-4 text-center text-[12.5px]">
-          Ссылка на клуб в {appLabel} скоро появится
-        </p>
-      )}
+      <OpenInApp tournament={tournament} />
     </>
   );
 }

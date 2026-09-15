@@ -88,6 +88,7 @@ class PokerApp(str, Enum):
     PPPOKER = "pppoker"
     XPOKER = "xpoker"
     POKER21 = "poker21"
+    SUPREMA = "suprema"
     OTHER = "other"
 
 
@@ -145,3 +146,30 @@ class ChipRequestStatus(str, Enum):
     COMPLETED = "completed"
     REJECTED = "rejected"
     EXPIRED = "expired"
+
+
+class CollectorRunKind(str, Enum):
+    """Проход сборщика по лобби: утром турниры, вечером кэш-столы."""
+
+    MTT = "mtt"
+    CASH = "cash"
+
+
+class CollectorRunStatus(str, Enum):
+    RUNNING = "running"
+    OK = "ok"
+    FAILED = "failed"
+
+
+class TournamentChangeKind(str, Enum):
+    """Что сборщик нашёл в лобби и что требует решения человека."""
+
+    NEW = "new"  # в лобби есть, в сетке нет
+    MISSING = "missing"  # в сетке есть, в лобби нет
+    CHANGED = "changed"  # бай-ин, гарантия, формат, игра или имя отличаются
+
+
+class TournamentChangeStatus(str, Enum):
+    PENDING = "pending"
+    APPLIED = "applied"
+    DISMISSED = "dismissed"

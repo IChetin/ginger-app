@@ -7,6 +7,7 @@ export const APP_LABELS: Record<PokerApp, string> = {
   pppoker: "PPPoker",
   xpoker: "X-Poker",
   poker21: "Poker21+",
+  suprema: "Suprema",
   other: "Другое",
 };
 

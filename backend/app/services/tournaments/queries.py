@@ -156,6 +156,7 @@ async def list_tournaments(
                     id=item.club.id,
                     name=item.club.name,
                     slug=item.club.slug,
+                    app_club_id=item.club.app_club_id,
                     app=item.club.app,
                     chip_value=item.club.chip_value,
                     chip_currency_code=item.club.chip_currency_code,

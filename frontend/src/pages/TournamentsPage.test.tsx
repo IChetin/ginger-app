@@ -145,7 +145,7 @@ describe("TournamentsPage", () => {
     expect(within(sheet).getByText("20 000")).toBeInTheDocument();
     expect(within(sheet).getByText("15/12/12 мин")).toBeInTheDocument();
     expect(within(sheet).getByText("10 уровней")).toBeInTheDocument();
-    expect(within(sheet).getByText(/Ссылка на клуб в PPPoker скоро появится/)).toBeInTheDocument();
+    expect(within(sheet).getByText(/Турнир в клубе .+ · PPPoker/)).toBeInTheDocument();
   });
 
   it("сателлитов в выдаче нет, цена фильтрует на месте, выбор запоминается", async () => {

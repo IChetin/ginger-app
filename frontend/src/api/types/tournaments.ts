@@ -1,4 +1,4 @@
-export type PokerApp = "pppoker" | "xpoker" | "poker21" | "other";
+export type PokerApp = "pppoker" | "xpoker" | "poker21" | "suprema" | "other";
 export type BountyKind = "none" | "ko" | "pko" | "mystery";
 export type GameType = "nlh" | "plo" | "plo5" | "mixed" | "other";
 export type DayPeriod = "day" | "evening" | "night";
@@ -14,6 +14,8 @@ export interface TournamentClub {
   chip_currency_code: string | null;
   /** Символ перед суммой; USDT приходит как «$». */
   currency_symbol: string | null;
+  /** ID клуба в приложении: без диплинка игрок входит по нему. */
+  app_club_id?: string | null;
 }
 
 export interface Tournament {
@@ -59,6 +61,8 @@ export interface Tournament {
   has_addon: boolean;
   /** До какого момента ещё можно получить бонус Early Bird. */
   early_bird_closes_at?: string | null;
+  /** Диплинк на этот старт в приложении (PPPoker), обновляет сборщик. */
+  app_link?: string | null;
 }
 
 /** Колокольчик: за 5 минут до старта или до конца поздней регистрации (ответ 11.7). */

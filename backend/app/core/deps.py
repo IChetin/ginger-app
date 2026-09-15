@@ -1,3 +1,4 @@
+import hmac
 from collections.abc import Awaitable, Callable
 from typing import Annotated
 from uuid import UUID
@@ -69,3 +70,15 @@ require_admin = require_roles(UserRole.ADMIN)
 def get_session_id_from_request(request: Request) -> UUID | None:
     settings = get_settings()
     return parse_session_id(request.cookies.get(settings.session_cookie_name))
+
+
+async def require_collector(request: Request) -> None:
+    """Сборщик лобби ходит с постоянным токеном из настроек, а не с сессией человека."""
+    settings = get_settings()
+    if not settings.collector_token:
+        raise ForbiddenError("Сборщик не настроен")
+    scheme, _, token = request.headers.get("authorization", "").partition(" ")
+    if scheme.lower() != "bearer" or not hmac.compare_digest(
+        token.strip().encode(), settings.collector_token.encode()
+    ):
+        raise UnauthorizedError("Неверный токен сборщика")

@@ -36,7 +36,8 @@ async def test_migration_created_tables_and_native_enums(db_session: AsyncSessio
 
     # Сверено с базой после удаления модели Day2 (миграция c4e2f7a9b1d3).
     assert table_count == len(Base.metadata.tables)
-    assert enum_count == 17
+    # +4 enum сборщика лобби (миграция i0a8e3c7d1f9).
+    assert enum_count == 21
 
 
 async def test_reference_seeds_are_idempotent(db_session: AsyncSession) -> None:

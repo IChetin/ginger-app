@@ -166,6 +166,9 @@ class Tournament(UUIDPrimaryKeyMixin, TimestampMixin, TournamentFieldsMixin, Bas
     )
     # Правлен вручную поверх шаблона — повторное разворачивание его не трогает.
     is_detached: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
+    # Ссылка в приложение на этот старт (диплинк PPPoker). Живёт у старта, а не у шаблона:
+    # под каждый созданный турнир она своя; сборщик обновляет её каждое утро.
+    app_link: Mapped[str | None] = mapped_column(String(500))
 
     club: Mapped["Club"] = relationship(back_populates="tournaments")
     template: Mapped["TournamentTemplate | None"] = relationship(back_populates="tournaments")

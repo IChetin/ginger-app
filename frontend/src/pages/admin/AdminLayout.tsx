@@ -160,6 +160,13 @@ function SidebarNav({ showUsers, onNavigate }: { showUsers: boolean; onNavigate?
         </NavIcon>
         Сетки клубов
       </NavLink>
+      <NavLink to="/admin/collector" className={navClass} onClick={onNavigate}>
+        <NavIcon>
+          <rect x="7" y="3" width="10" height="18" rx="2" />
+          <path d="M11 18h2M3 9v6M21 9v6" />
+        </NavIcon>
+        Сборщик
+      </NavLink>
       <NavLink to="/admin/wins" className={navClass} onClick={onNavigate}>
         <NavIcon>
           <path d="M8 4h8v4a4 4 0 0 1-8 0z" />

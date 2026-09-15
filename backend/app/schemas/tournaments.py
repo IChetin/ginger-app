@@ -100,6 +100,8 @@ class TournamentClub(BaseModel):
     chip_currency_code: str | None
     # Символ перед суммой: USDT показываем как «$» (решение Ивана 2026-09-13).
     currency_symbol: str | None
+    # ID клуба в приложении — для приложений без диплинков игрок входит по нему.
+    app_club_id: str | None = None
 
 
 class TournamentRead(TournamentFields):
@@ -116,6 +118,7 @@ class TournamentRead(TournamentFields):
     has_addon: bool
     # До какого момента действует Early Bird: старт + N уровней с перерывами, как у поздней реги.
     early_bird_closes_at: datetime | None = None
+    app_link: str | None = None
 
 
 class TemplateDeleteResult(BaseModel):
