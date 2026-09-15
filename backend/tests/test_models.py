@@ -32,6 +32,7 @@ EXPECTED_TABLES = {
     "chip_requests",
     "clubs",
     "currencies",
+    "editor_picks",
     "fx_rates",
     "invites",
     "notification_queue",

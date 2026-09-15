@@ -17,6 +17,7 @@ import {
   minutesAgo,
   type CashFilters,
 } from "@/features/cash/lib";
+import { EditorsPick } from "@/features/picks/EditorsPick";
 import { AppIcon } from "@/features/tournaments/components/TournamentCard";
 import { useNow } from "@/features/tournaments/hooks";
 import { formatMoney } from "@/features/tournaments/lib/format";
@@ -283,6 +284,8 @@ export function CashPage() {
           ))}
         </div>
       </header>
+
+      <EditorsPick kind="cash" onSelectTable={setSelected} />
 
       {query.isPending ? (
         <div className="space-y-1.5 px-3 pt-3" data-testid="cash-loading">

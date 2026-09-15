@@ -11,6 +11,7 @@ import { AdminChipRequestPage } from "@/pages/admin/AdminChipRequestPage";
 import { AdminCollectorPage } from "@/pages/admin/AdminCollectorPage";
 import { AdminChipRequestsPage } from "@/pages/admin/AdminChipRequestsPage";
 import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
+import { AdminEditorPicksPage } from "@/pages/admin/AdminEditorPicksPage";
 import { AdminGridImportPage } from "@/pages/admin/AdminGridImportPage";
 import { AdminInvitesPage } from "@/pages/admin/AdminInvitesPage";
 import { AdminLayout } from "@/pages/admin/AdminLayout";
@@ -88,6 +89,7 @@ export function AppRoutes() {
           </Route>
           <Route path="grids" element={<AdminGridImportPage />} />
           <Route path="collector" element={<AdminCollectorPage />} />
+          <Route path="editor-picks" element={<AdminEditorPicksPage />} />
           <Route path="chips" element={<AdminChipRequestsPage />} />
           <Route path="chips/:requestId" element={<AdminChipRequestPage />} />
           <Route path="players" element={<AdminPlayersPage />} />

@@ -13,6 +13,7 @@ from app.models.collector import CollectorRun, CollectorSnapshot, TournamentChan
 from app.models.crm import Broadcast
 from app.models.feed import PlayerWin
 from app.models.notifications import NotificationQueue
+from app.models.picks import EditorPick
 from app.models.players import Invite, Player, PlayerAccount
 from app.models.references import Currency, FxRate, Organizer
 from app.models.threads import Thread, ThreadMessage
@@ -32,6 +33,7 @@ __all__ = [
     "ChipRequestItem",
     "Club",
     "Currency",
+    "EditorPick",
     "FxRate",
     "Invite",
     "NotificationQueue",

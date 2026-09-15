@@ -130,7 +130,7 @@ describe("TournamentsPage", () => {
 
     // Гостю по умолчанию — таблица, как и новым игрокам.
     expect(await screen.findAllByTestId("tournament-row")).toHaveLength(2);
-    expect(screen.getByRole("heading", { name: "Турниры" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "MTT" })).toBeInTheDocument();
   });
 
   it("тап по турниру открывает карточку с параметрами", async () => {

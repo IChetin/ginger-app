@@ -43,13 +43,8 @@ export function MorePage() {
     <div className="bg-bg min-h-full px-3 pt-3 pb-4" data-testid="more-page">
       <h1 className="text-[20px] font-extrabold tracking-tight">Ещё</h1>
       <nav className="border-line bg-surface mt-2 rounded-md border" aria-label="Разделы">
-        <Row
-          to="/tournaments"
-          title="Расписание турниров"
-          subtitle="Все клубы, фильтры"
-          icon="🏆"
-        />
-        <Row to="/cash" title="Кэш-столы" subtitle="Где сейчас идёт игра" icon="♠" />
+        <Row to="/tournaments" title="MTT" subtitle="Расписание турниров всех клубов" icon="🏆" />
+        <Row to="/cash" title="CASH" subtitle="Где сейчас идёт игра" icon="♠" />
         <Row to="/clubs" title="Клубы" subtitle="ID, курсы, как зайти" icon="♣" />
         {player.data ? (
           <Row to="/referral" title="Пригласить друга" subtitle="Ссылка и QR" icon="🦊" />

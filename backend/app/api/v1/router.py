@@ -9,6 +9,7 @@ from app.api.v1 import (
     feed,
     health,
     notifications,
+    picks,
     push,
     threads,
 )
@@ -21,6 +22,7 @@ api_router.include_router(notifications.router)
 api_router.include_router(push.router)
 api_router.include_router(clubs.router)
 api_router.include_router(cash.router)
+api_router.include_router(picks.router)
 api_router.include_router(collector.router)
 api_router.include_router(feed.router)
 api_router.include_router(chips.router)

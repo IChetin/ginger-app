@@ -167,6 +167,12 @@ function SidebarNav({ showUsers, onNavigate }: { showUsers: boolean; onNavigate?
         </NavIcon>
         Сборщик
       </NavLink>
+      <NavLink to="/admin/editor-picks" className={navClass} onClick={onNavigate}>
+        <NavIcon>
+          <path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" />
+        </NavIcon>
+        Editor&apos;s Pick
+      </NavLink>
       <NavLink to="/admin/wins" className={navClass} onClick={onNavigate}>
         <NavIcon>
           <path d="M8 4h8v4a4 4 0 0 1-8 0z" />

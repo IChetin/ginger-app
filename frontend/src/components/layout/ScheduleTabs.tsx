@@ -3,11 +3,14 @@ import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { key: "tournaments", to: "/tournaments", label: "Турниры" },
-  { key: "cash", to: "/cash", label: "Кэш" },
+  { key: "tournaments", to: "/tournaments", label: "MTT" },
+  { key: "cash", to: "/cash", label: "CASH" },
 ] as const;
 
-/** «Турниры | Кэш» вместо заголовка: текущий раздел — заголовок страницы, соседний — ссылка. */
+/**
+ * «MTT | CASH» вместо заголовка: текущий раздел — заголовок страницы, соседний — ссылка.
+ * Названия разделов — только по-английски (решение Ивана 15.09): так их зовут игроки.
+ */
 export function ScheduleTabs({ active }: { active: (typeof TABS)[number]["key"] }) {
   return (
     <nav aria-label="Расписание" className="flex shrink-0 items-baseline gap-2.5">

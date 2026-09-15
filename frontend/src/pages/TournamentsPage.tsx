@@ -12,6 +12,7 @@ import {
 import type { ScheduleView, Tournament } from "@/api/types/tournaments";
 import { ScheduleTabs } from "@/components/layout/ScheduleTabs";
 import { useMe } from "@/features/auth/hooks";
+import { EditorsPick } from "@/features/picks/EditorsPick";
 import {
   AppIcon,
   LateRegCountdown,
@@ -443,6 +444,7 @@ export function TournamentsPage() {
         </div>
       </header>
 
+      <EditorsPick kind="mtt" onSelectTournament={setSelected} />
       <LiveEvents onSelect={setSelected} />
 
       {query.isPending ? (

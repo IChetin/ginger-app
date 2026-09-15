@@ -55,8 +55,8 @@ describe("CashPage", () => {
     renderWithProviders(<CashPage />, { route: "/cash" });
 
     expect(await screen.findByText("Fox Den")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Кэш" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Турниры" })).toHaveAttribute("href", "/tournaments");
+    expect(screen.getByRole("heading", { name: "CASH" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "MTT" })).toHaveAttribute("href", "/tournaments");
     expect(screen.getByText("3 стола · только что")).toBeInTheDocument();
     expect(screen.getByText("NLH · 2")).toBeInTheDocument();
     expect(screen.getByText("+3")).toBeInTheDocument();

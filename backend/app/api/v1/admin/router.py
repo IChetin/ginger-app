@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from app.api.v1.admin import chips, clubs, collector, crm, references, users, wins
+from app.api.v1.admin import chips, clubs, collector, crm, picks, references, users, wins
 from app.api.v1.admin import threads as admin_threads
 from app.core.deps import require_editor
 
@@ -17,3 +17,4 @@ router.include_router(users.router)
 router.include_router(wins.router)
 router.include_router(crm.router)
 router.include_router(collector.router)
+router.include_router(picks.router)
