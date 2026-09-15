@@ -1,10 +1,10 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
 
-import type { CashTable } from "@/api/types/cash";
+import type { CashGame } from "@/api/types/cash";
 import { ScheduleTabs } from "@/components/layout/ScheduleTabs";
-import { fetchCashTables } from "@/features/cash/api";
-import { CashTableSheet } from "@/features/cash/CashTableSheet";
+import { fetchCashGames } from "@/features/cash/api";
+import { CashGameSheet } from "@/features/cash/CashGameSheet";
 import {
   CASH_GAMES,
   EMPTY_CASH_FILTERS,
@@ -15,16 +15,16 @@ import {
   groupByGame,
   latestSeen,
   minutesAgo,
+  totalTables,
   type CashFilters,
 } from "@/features/cash/lib";
-import { EditorsPick } from "@/features/picks/EditorsPick";
+import { EditorsPickChip } from "@/features/picks/EditorsPick";
 import { AppIcon } from "@/features/tournaments/components/TournamentCard";
 import { useNow } from "@/features/tournaments/hooks";
-import { formatMoney } from "@/features/tournaments/lib/format";
 import { pluralRu } from "@/lib/plural";
 import { cn } from "@/lib/utils";
 
-const STORAGE_KEY = "ginger.cash.filters.v1";
+const STORAGE_KEY = "ginger.cash.filters.v2";
 
 function readStoredFilters(): CashFilters {
   try {
@@ -38,13 +38,14 @@ function readStoredFilters(): CashFilters {
       stakes: Array.isArray(stored.stakes)
         ? stored.stakes.filter((tier) => STAKE_TIERS.some((option) => option.value === tier))
         : [],
+      picked: stored.picked === true,
     };
   } catch {
     return EMPTY_CASH_FILTERS;
   }
 }
 
-/** Фильтр запоминается между заходами, как у турниров. */
+/** Фильтр запоминается между заходами, как у MTT. */
 function useCashFilters() {
   const [filters, setFilters] = useState<CashFilters>(readStoredFilters);
   const update = useCallback((patch: Partial<CashFilters>) => {
@@ -89,39 +90,6 @@ function Chip({
   );
 }
 
-/** «5/6» и шкала мест: полный стол — жёлтым и с очередью, пустой — приглушённо. */
-function Seats({ table }: { table: CashTable }) {
-  const { seated, table_size: size, waiting } = table;
-  if (seated === null) return <span className="text-ink-3">—</span>;
-  const full = size !== null && seated >= size;
-  return (
-    <span className="inline-flex flex-col items-end leading-tight">
-      <span
-        className={cn(
-          "num font-bold tabular-nums",
-          full ? "text-warn" : seated === 0 ? "text-ink-3" : "text-ink",
-        )}
-      >
-        {size ? `${seated}/${size}` : seated}
-        {waiting ? <span className="text-warn ml-0.5 text-[10px]">+{waiting}</span> : null}
-      </span>
-      {size ? (
-        <span className="mt-0.5 flex gap-[2px]" aria-hidden="true">
-          {Array.from({ length: size }).map((_, index) => (
-            <span
-              key={index}
-              className={cn(
-                "h-[3px] w-[4px] rounded-[1px]",
-                index < seated ? (full ? "bg-warn" : "bg-gold") : "bg-surface-3",
-              )}
-            />
-          ))}
-        </span>
-      ) : null}
-    </span>
-  );
-}
-
 function selectOnEnter(event: KeyboardEvent, select: () => void) {
   if (event.key === "Enter" || event.key === " ") {
     event.preventDefault();
@@ -129,112 +97,110 @@ function selectOnEnter(event: KeyboardEvent, select: () => void) {
   }
 }
 
-function CashTableView({
+/** Одна строка — клуб и лимит: сколько столов открыто. Группы — по игре. */
+function CashView({
   groups,
   onSelect,
 }: {
-  groups: [string, CashTable[]][];
-  onSelect: (table: CashTable) => void;
+  groups: [string, CashGame[]][];
+  onSelect: (game: CashGame) => void;
 }) {
   const headCell = "bg-bg py-1.5 border-line border-b";
   return (
-    <table className="w-full table-fixed border-separate border-spacing-0 text-[12px]">
+    <table className="w-full table-fixed border-separate border-spacing-0 text-[12.5px]">
       <colgroup>
         <col />
-        <col className="w-[84px]" />
-        <col className="w-[56px]" />
-        <col className="w-[62px]" />
+        <col className="w-[110px]" />
+        <col className="w-[72px]" />
       </colgroup>
       <thead>
         <tr className="text-ink-3 text-[9.5px] font-bold uppercase">
-          <th className={cn(headCell, "pl-3 text-left")}>Стол</th>
-          <th className={cn(headCell, "text-right")}>Блайнды</th>
-          <th className={cn(headCell, "text-right")}>Игроки</th>
-          <th className={cn(headCell, "pr-3 text-right")}>Вход</th>
+          <th className={cn(headCell, "pl-3 text-left")}>Клуб</th>
+          <th className={cn(headCell, "text-right")}>Лимит</th>
+          <th className={cn(headCell, "pr-3 text-right")}>Столов</th>
         </tr>
       </thead>
-      {groups.map(([game, items]) => (
-        <tbody key={game}>
-          <tr>
-            <th
-              colSpan={4}
-              scope="colgroup"
-              className="bg-surface-2 text-ink-2 border-line border-b px-3 py-1 text-left text-[10.5px] font-bold"
-            >
-              {GAME_LABELS[game as CashTable["game_type"]]} · {items.length}
-            </th>
-          </tr>
-          {items.map((table) => {
-            const cell = "border-line border-b py-1.5";
-            const select = () => onSelect(table);
-            return (
-              <tr
-                key={table.id}
-                data-testid="cash-row"
-                tabIndex={0}
-                aria-label={`Подробнее: ${table.name}, ${table.club.name}`}
-                className="hover:bg-surface cursor-pointer"
-                onClick={select}
-                onKeyDown={(event) => selectOnEnter(event, select)}
+      {groups.map(([type, items]) => {
+        const tables = totalTables(items);
+        return (
+          <tbody key={type}>
+            <tr>
+              <th
+                colSpan={3}
+                scope="colgroup"
+                className="bg-surface-2 text-ink-2 border-line border-b px-3 py-1 text-left text-[10.5px] font-bold"
               >
-                <td className={cn(cell, "min-w-0 pr-2 pl-3")}>
-                  <div className="flex min-w-0 items-center gap-1.5">
-                    <AppIcon app={table.club.app} className="h-3.5 w-3.5 shrink-0" />
-                    <span className="min-w-0">
-                      <span className="text-ink block truncate font-semibold">{table.name}</span>
-                      <span className="text-ink-3 block truncate text-[10.5px]">
-                        {table.club.name}
+                {GAME_LABELS[type as CashGame["game_type"]]} · {tables}{" "}
+                {pluralRu(tables, "стол", "стола", "столов")}
+              </th>
+            </tr>
+            {items.map((game) => {
+              const cell = "border-line border-b py-2";
+              const select = () => onSelect(game);
+              return (
+                <tr
+                  key={game.id}
+                  data-testid="cash-row"
+                  tabIndex={0}
+                  aria-label={`Подробнее: ${game.club.name}, ${GAME_LABELS[game.game_type]} ${formatBlinds(game)}`}
+                  className="hover:bg-surface cursor-pointer"
+                  onClick={select}
+                  onKeyDown={(event) => selectOnEnter(event, select)}
+                >
+                  <td className={cn(cell, "min-w-0 pr-2 pl-3")}>
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <AppIcon app={game.club.app} className="h-3.5 w-3.5 shrink-0" />
+                      <span className="text-ink min-w-0 truncate font-semibold">
+                        {game.club.name}
                       </span>
-                    </span>
-                  </div>
-                </td>
-                <td
-                  className={cn(
-                    cell,
-                    "num text-ink overflow-hidden text-right font-bold whitespace-nowrap",
-                  )}
-                >
-                  {formatBlinds(table)}
-                </td>
-                <td className={cn(cell, "text-right")}>
-                  <Seats table={table} />
-                </td>
-                <td
-                  className={cn(
-                    cell,
-                    "num text-ink-2 overflow-hidden pr-3 pl-1 text-right font-semibold whitespace-nowrap",
-                  )}
-                >
-                  {formatMoney(table.min_buyin, table.club) ?? "—"}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      ))}
+                      {game.is_editor_pick ? (
+                        <span className="text-gold shrink-0 text-[11px]" title="Editor's Pick">
+                          ★
+                        </span>
+                      ) : null}
+                    </div>
+                  </td>
+                  <td
+                    className={cn(
+                      cell,
+                      "num text-ink overflow-hidden text-right font-bold whitespace-nowrap",
+                    )}
+                  >
+                    {formatBlinds(game)}
+                  </td>
+                  <td className={cn(cell, "num text-ink pr-3 text-right font-bold tabular-nums")}>
+                    {game.tables}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        );
+      })}
     </table>
   );
 }
 
 /**
- * Кэш-столы по образцу лобби GG: где сейчас идёт игра и за какими ставками. Данные — вечерний
- * сборщик раз в 15–20 минут; столы старше 45 минут сервер не отдаёт.
+ * CASH по образцу лобби GG, упрощённо: игра, лимит и сколько столов открыто в каждом клубе.
+ * Данные — вечерний сборщик раз в 15–20 минут; старше 45 минут сервер не отдаёт.
  */
 export function CashPage() {
   const { filters, update, reset } = useCashFilters();
   const now = useNow(30_000);
   const query = useQuery({
-    queryKey: ["cash-tables"],
-    queryFn: ({ signal }) => fetchCashTables(signal),
+    queryKey: ["cash-games"],
+    queryFn: ({ signal }) => fetchCashGames(signal),
     placeholderData: keepPreviousData,
     refetchInterval: 60_000,
   });
-  const [selected, setSelected] = useState<CashTable | null>(null);
+  const [selected, setSelected] = useState<CashGame | null>(null);
 
   const visible = useMemo(() => applyCashFilters(query.data ?? [], filters), [query.data, filters]);
   const groups = useMemo(() => groupByGame(visible), [visible]);
+  const tables = totalTables(visible);
   const updated = latestSeen(query.data ?? []);
-  const hasFilters = filters.games.length > 0 || filters.stakes.length > 0;
+  const hasFilters = filters.games.length > 0 || filters.stakes.length > 0 || filters.picked;
 
   return (
     <div className="bg-bg min-h-full pb-4" data-testid="cash-page">
@@ -246,7 +212,7 @@ export function CashPage() {
             className="text-ink-3 num min-w-0 flex-1 truncate text-right text-[11.5px] font-semibold"
           >
             {query.isSuccess
-              ? `${visible.length} ${pluralRu(visible.length, "стол", "стола", "столов")}${
+              ? `${tables} ${pluralRu(tables, "стол", "стола", "столов")}${
                   updated ? ` · ${minutesAgo(updated, now)}` : ""
                 }`
               : ""}
@@ -263,6 +229,11 @@ export function CashPage() {
               ✕
             </button>
           ) : null}
+          <EditorsPickChip
+            kind="cash"
+            active={filters.picked}
+            onToggle={() => update({ picked: !filters.picked })}
+          />
           {CASH_GAMES.map((game) => (
             <Chip
               key={game}
@@ -285,17 +256,15 @@ export function CashPage() {
         </div>
       </header>
 
-      <EditorsPick kind="cash" onSelectTable={setSelected} />
-
       {query.isPending ? (
         <div className="space-y-1.5 px-3 pt-3" data-testid="cash-loading">
           {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="bg-surface h-[40px] rounded-md" />
+            <div key={index} className="bg-surface h-[36px] rounded-md" />
           ))}
         </div>
       ) : query.isError ? (
         <div className="border-line bg-surface mx-3 mt-3 rounded-md border px-4 py-6 text-center">
-          <p className="text-ink text-[14px] font-semibold">Не удалось загрузить столы</p>
+          <p className="text-ink text-[14px] font-semibold">Не удалось загрузить кэш</p>
           <button
             type="button"
             onClick={() => void query.refetch()}
@@ -307,7 +276,11 @@ export function CashPage() {
       ) : visible.length === 0 ? (
         <div className="border-line-gold bg-surface mx-3 mt-3 rounded-md border border-dashed px-4 py-6 text-center">
           <p className="text-ink text-[15px] font-bold">
-            {hasFilters ? "Столов не найдено" : "Сейчас столов нет"}
+            {filters.picked
+              ? "Подборка на сегодня ещё не готова"
+              : hasFilters
+                ? "Ничего не найдено"
+                : "Сейчас столов нет"}
           </p>
           <p className="text-ink-2 mt-1 text-[13px]">
             {hasFilters
@@ -316,18 +289,18 @@ export function CashPage() {
           </p>
         </div>
       ) : (
-        <CashTableView groups={groups} onSelect={setSelected} />
+        <CashView groups={groups} onSelect={setSelected} />
       )}
 
-      <CashTableSheet
-        table={selected}
+      <CashGameSheet
+        game={selected}
         onOpenChange={(open) => {
           if (!open) setSelected(null);
         }}
       />
 
       <p className="text-ink-3 px-4 pt-4 text-center text-[11px]">
-        Столы обновляются раз в 15–20 минут · суммы в деньгах клуба
+        Обновляется раз в 15–20 минут · лимиты в деньгах клуба
       </p>
     </div>
   );

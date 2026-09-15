@@ -1,7 +1,7 @@
-"""Ginger APP: Editor's Pick — подборка турниров и столов
+"""Ginger APP: Editor's Pick — отбор турниров и кэш-лимитов для фильтра
 
-Решение Ивана 15.09: плашка сверху MTT и CASH с турнирами и столами, которые он считает
-интересными своей аудитории, и объяснением по знаку (?).
+Решение Ивана 15.09: «★ Editor's Pick» — ещё один фильтр на MTT и CASH, в выдачу попадает
+только отобранное. MTT — клуб и часть названия, CASH — клуб, игра и лимит.
 
 Revision ID: k2c0a5e9f3b1
 Revises: j1b9f4d8e2a0
@@ -22,6 +22,8 @@ down_revision: str | None = "j1b9f4d8e2a0"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
+_GAME_TYPE = postgresql.ENUM(name="game_type", create_type=False)
+
 
 def upgrade() -> None:
     op.create_table(
@@ -39,7 +41,9 @@ def upgrade() -> None:
             sa.ForeignKey("clubs.id", ondelete="CASCADE"),
             nullable=False,
         ),
-        sa.Column("match", sa.String(160), nullable=False),
+        sa.Column("match", sa.String(160), nullable=True),
+        sa.Column("game_type", _GAME_TYPE, nullable=True),
+        sa.Column("big_blind", sa.Numeric(12, 2), nullable=True),
         sa.Column("note", sa.String(200), nullable=True),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("sort_order", sa.Integer(), nullable=False, server_default=sa.text("0")),
@@ -49,7 +53,10 @@ def upgrade() -> None:
         sa.Column(
             "updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
         ),
-        sa.CheckConstraint("kind IN ('mtt', 'cash')", name="ck_editor_picks_kind_known"),
+        sa.CheckConstraint(
+            "(kind = 'mtt' AND match IS NOT NULL) OR (kind = 'cash' AND game_type IS NOT NULL)",
+            name="ck_editor_picks_target_complete",
+        ),
     )
     op.create_index("ix_editor_picks_kind_sort", "editor_picks", ["kind", "sort_order"])
 

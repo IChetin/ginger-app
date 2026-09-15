@@ -13,11 +13,23 @@ import {
 } from "@/features/tournaments/lib/format";
 import { cn } from "@/lib/utils";
 
+/** Иконка приложения; пока официальной нет (Suprema) — буква на плашке, чтобы строки не съезжали. */
 export function AppIcon({ app, className }: { app: PokerApp; className: string }) {
   const src = APP_ICONS[app];
-  return src ? (
-    <img src={src} alt="" aria-hidden="true" className={cn("rounded-[22%]", className)} />
-  ) : null;
+  if (src) {
+    return <img src={src} alt="" aria-hidden="true" className={cn("rounded-[22%]", className)} />;
+  }
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "bg-surface-3 text-ink-2 inline-flex items-center justify-center rounded-[22%] text-[8px] leading-none font-extrabold",
+        className,
+      )}
+    >
+      {app.slice(0, 1).toUpperCase()}
+    </span>
+  );
 }
 
 /** Живой отсчёт поздней регистрации — свой тик, чтобы не перерисовывать весь список. */

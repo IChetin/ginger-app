@@ -1,4 +1,7 @@
-"""Editor's Pick: подборка турниров и столов от Ивана — плашка сверху MTT и CASH."""
+"""Editor's Pick: отбор турниров и кэш-лимитов для фильтра «★ Editor's Pick» на MTT и CASH.
+
+Здесь только сами пики и сопоставление; флаги в выдачу проставляют списки турниров и кэша.
+"""
 
 from __future__ import annotations
 
@@ -11,21 +14,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import NotFoundError
+from app.models.cash import CashGame
 from app.models.clubs import Club
 from app.models.picks import EditorPick
-from app.schemas.cash import CashTableRead
-from app.schemas.picks import (
-    EditorPickAdminRead,
-    EditorPickCreate,
-    EditorPickRead,
-    EditorPickUpdate,
-    PickKind,
-)
-from app.schemas.tournaments import TournamentRead
-from app.services.cash import list_cash_tables
-from app.services.tournaments.queries import list_tournaments
+from app.models.tournaments import Tournament
+from app.schemas.picks import EditorPickAdminRead, EditorPickCreate, EditorPickUpdate, PickKind
 
-# Турнир-пик показываем, если он стартует в ближайшую неделю: дальше — игроку не к спеху.
+# Горизонт счётчика «стартов за неделю» в админке: MTT-отбор обновляется раз в неделю.
 MTT_HORIZON = timedelta(days=7)
 
 
@@ -33,68 +28,77 @@ def _norm(value: str | None) -> str:
     return re.sub(r"[^0-9a-zа-яё]+", "", (value or "").lower())
 
 
-def _tournament_matches(pick: EditorPick, item: TournamentRead) -> bool:
-    needle = _norm(pick.match)
-    return item.club.id == pick.club_id and any(
-        needle in _norm(name) for name in (item.lobby_name, item.name)
+async def active_picks(session: AsyncSession, kind: PickKind) -> list[EditorPick]:
+    return list(
+        await session.scalars(
+            select(EditorPick)
+            .where(EditorPick.kind == kind, EditorPick.is_active.is_(True))
+            .order_by(EditorPick.sort_order, EditorPick.created_at)
+        )
     )
 
 
-def _table_matches(pick: EditorPick, table: CashTableRead) -> bool:
-    return table.club.id == pick.club_id and _norm(pick.match) in _norm(table.name)
-
-
-async def _picks(session: AsyncSession, *, active_only: bool) -> list[EditorPick]:
-    query = (
-        select(EditorPick)
-        .options(selectinload(EditorPick.club))
-        .order_by(EditorPick.kind, EditorPick.sort_order, EditorPick.created_at)
-    )
-    if active_only:
-        query = query.where(EditorPick.is_active.is_(True))
-    return list(await session.scalars(query))
-
-
-async def _candidates(
-    session: AsyncSession, now: datetime, kinds: set[str]
-) -> tuple[list[TournamentRead], list[CashTableRead]]:
-    tournaments = (
-        await list_tournaments(session, starts_from=now, starts_to=now + MTT_HORIZON)
-        if "mtt" in kinds
-        else []
-    )
-    tables = await list_cash_tables(session, now=now) if "cash" in kinds else []
-    return tournaments, tables
-
-
-async def list_public_picks(
-    session: AsyncSession, *, kind: PickKind, now: datetime
-) -> list[EditorPickRead]:
-    picks = [pick for pick in await _picks(session, active_only=True) if pick.kind == kind]
-    if not picks:
-        return []
-    tournaments, tables = await _candidates(session, now, {kind})
-    result: list[EditorPickRead] = []
+def match_tournament(picks: list[EditorPick], tournament: Tournament) -> EditorPick | None:
+    names = {_norm(tournament.name), _norm(tournament.lobby_name)} - {""}
     for pick in picks:
-        if kind == "mtt":
-            # Выдача уже по времени старта — первый подходящий и есть ближайший.
-            upcoming = next((t for t in tournaments if _tournament_matches(pick, t)), None)
-            if upcoming is not None:
-                result.append(
-                    EditorPickRead(id=pick.id, kind="mtt", note=pick.note, tournament=upcoming)
-                )
-        else:
-            matched = [table for table in tables if _table_matches(pick, table)]
-            if matched:
-                result.append(
-                    EditorPickRead(id=pick.id, kind="cash", note=pick.note, tables=matched)
-                )
-    return result
+        needle = _norm(pick.match)
+        if pick.club_id == tournament.club_id and needle and any(needle in n for n in names):
+            return pick
+    return None
+
+
+def match_cash(picks: list[EditorPick], game: CashGame) -> EditorPick | None:
+    for pick in picks:
+        if (
+            pick.club_id == game.club_id
+            and pick.game_type is game.game_type
+            and (pick.big_blind is None or pick.big_blind == game.big_blind)
+        ):
+            return pick
+    return None
 
 
 async def list_admin_picks(session: AsyncSession, *, now: datetime) -> list[EditorPickAdminRead]:
-    picks = await _picks(session, active_only=False)
-    tournaments, tables = await _candidates(session, now, {pick.kind for pick in picks})
+    from app.services.cash import FRESH_FOR
+
+    picks = list(
+        await session.scalars(
+            select(EditorPick)
+            .options(selectinload(EditorPick.club))
+            .order_by(EditorPick.kind, EditorPick.sort_order, EditorPick.created_at)
+        )
+    )
+    club_ids = {pick.club_id for pick in picks}
+    tournaments = (
+        list(
+            await session.scalars(
+                select(Tournament).where(
+                    Tournament.club_id.in_(club_ids),
+                    Tournament.starts_at >= now,
+                    Tournament.starts_at < now + MTT_HORIZON,
+                )
+            )
+        )
+        if club_ids
+        else []
+    )
+    games = (
+        list(
+            await session.scalars(
+                select(CashGame).where(
+                    CashGame.club_id.in_(club_ids), CashGame.seen_at >= now - FRESH_FOR
+                )
+            )
+        )
+        if club_ids
+        else []
+    )
+
+    def matched(pick: EditorPick) -> int:
+        if pick.kind == "mtt":
+            return sum(1 for item in tournaments if match_tournament([pick], item))
+        return sum(game.tables for game in games if match_cash([pick], game))
+
     return [
         EditorPickAdminRead(
             id=pick.id,
@@ -102,13 +106,13 @@ async def list_admin_picks(session: AsyncSession, *, now: datetime) -> list[Edit
             club_id=pick.club_id,
             club_name=pick.club.name,
             match=pick.match,
+            game_type=pick.game_type,
+            big_blind=pick.big_blind,
             note=pick.note,
             is_active=pick.is_active,
             sort_order=pick.sort_order,
             created_at=pick.created_at,
-            matched_now=sum(1 for t in tournaments if _tournament_matches(pick, t))
-            if pick.kind == "mtt"
-            else sum(1 for table in tables if _table_matches(pick, table)),
+            matched_now=matched(pick),
         )
         for pick in picks
     ]
@@ -120,7 +124,9 @@ async def create_pick(session: AsyncSession, body: EditorPickCreate) -> uuid.UUI
     pick = EditorPick(
         kind=body.kind,
         club_id=body.club_id,
-        match=body.match.strip(),
+        match=body.match.strip() if body.match else None,
+        game_type=body.game_type,
+        big_blind=body.big_blind,
         note=(body.note or "").strip() or None,
         sort_order=body.sort_order,
     )
@@ -134,8 +140,6 @@ async def update_pick(session: AsyncSession, pick_id: uuid.UUID, body: EditorPic
     if pick is None:
         raise NotFoundError("Пик не найден")
     changes = body.model_dump(exclude_unset=True)
-    if "match" in changes and changes["match"] is not None:
-        pick.match = changes["match"].strip()
     if "note" in changes:
         pick.note = (changes["note"] or "").strip() or None
     if changes.get("is_active") is not None:

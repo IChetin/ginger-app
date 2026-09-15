@@ -47,7 +47,7 @@ async def test_reference_seeds_are_idempotent(db_session: AsyncSession) -> None:
     assert await db_session.scalar(select(func.count()).select_from(Currency)) == 5
     # Союзы Ginger APP: NUTS, Black Sea, Poker21, ProSto.
     assert await db_session.scalar(select(func.count()).select_from(Organizer)) == 4
-    assert await db_session.scalar(select(func.count()).select_from(Club)) == 6
+    assert await db_session.scalar(select(func.count()).select_from(Club)) == 7
 
 
 async def test_club_seed_does_not_resurrect_deleted_clubs(db_session: AsyncSession) -> None:
@@ -64,4 +64,4 @@ async def test_club_seed_does_not_resurrect_deleted_clubs(db_session: AsyncSessi
     await db_session.flush()
 
     await seed_reference_data(db_session)
-    assert await db_session.scalar(select(func.count()).select_from(Club)) == 5
+    assert await db_session.scalar(select(func.count()).select_from(Club)) == 6

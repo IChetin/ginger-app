@@ -12,7 +12,7 @@ import {
 import type { ScheduleView, Tournament } from "@/api/types/tournaments";
 import { ScheduleTabs } from "@/components/layout/ScheduleTabs";
 import { useMe } from "@/features/auth/hooks";
-import { EditorsPick } from "@/features/picks/EditorsPick";
+import { EditorsPickChip } from "@/features/picks/EditorsPick";
 import {
   AppIcon,
   LateRegCountdown,
@@ -285,6 +285,11 @@ function TableView({ groups, now, onSelect, stickyTop }: ViewProps & { stickyTop
                 <td className={cn(cell, "min-w-0 pr-2")}>
                   <div className="flex min-w-0 items-center gap-1.5">
                     <AppIcon app={item.club.app} className="h-3.5 w-3.5 shrink-0" />
+                    {item.is_editor_pick ? (
+                      <span className="text-gold shrink-0 text-[11px]" title="Editor's Pick">
+                        ★
+                      </span>
+                    ) : null}
                     <span
                       className={cn(
                         "min-w-0 truncate",
@@ -377,7 +382,7 @@ export function TournamentsPage() {
     [query.data, filters, now],
   );
   const groups = useMemo(() => groupByDay(visible), [visible]);
-  const hasFilters = filters.prices.length > 0;
+  const hasFilters = filters.prices.length > 0 || filters.picked;
   const [selected, setSelected] = useState<Tournament | null>(null);
 
   return (
@@ -432,6 +437,11 @@ export function TournamentsPage() {
               ✕
             </button>
           ) : null}
+          <EditorsPickChip
+            kind="mtt"
+            active={filters.picked}
+            onToggle={() => update({ picked: !filters.picked })}
+          />
           {PRICE_TIERS.map((tier) => (
             <Chip
               key={tier.value}
@@ -444,7 +454,6 @@ export function TournamentsPage() {
         </div>
       </header>
 
-      <EditorsPick kind="mtt" onSelectTournament={setSelected} />
       <LiveEvents onSelect={setSelected} />
 
       {query.isPending ? (
@@ -466,7 +475,9 @@ export function TournamentsPage() {
         </div>
       ) : visible.length === 0 ? (
         <div className="border-line-gold bg-surface mx-3 mt-3 rounded-md border border-dashed px-4 py-6 text-center">
-          <p className="text-ink text-[15px] font-bold">Турниров не найдено</p>
+          <p className="text-ink text-[15px] font-bold">
+            {filters.picked ? "Подборка этой недели ещё не готова" : "Турниров не найдено"}
+          </p>
           <p className="text-ink-2 mt-1 text-[13px]">
             {hasFilters ? "Попробуйте ослабить фильтры" : "Расписание ещё не загружено"}
           </p>

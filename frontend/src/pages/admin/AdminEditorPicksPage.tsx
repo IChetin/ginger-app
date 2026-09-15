@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 
+import type { GameType } from "@/api/types/tournaments";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { fetchAdminClubs } from "@/features/admin/clubs/api";
+import { CASH_GAMES, GAME_LABELS } from "@/features/cash/lib";
 import {
   createPick,
   deletePick,
@@ -20,6 +22,12 @@ const KIND_LABEL: Record<PickKind, string> = { mtt: "MTT", cash: "CASH" };
 
 const fieldClass =
   "border-line-strong bg-surface text-ink h-10 w-full rounded-md border px-3 text-[14px] outline-none focus:border-line-gold";
+
+function pickTitle(pick: EditorPickAdmin): string {
+  if (pick.kind === "mtt") return `«${pick.match ?? ""}»`;
+  const game = pick.game_type ? GAME_LABELS[pick.game_type] : "";
+  return pick.big_blind ? `${game} · ББ ${Number(pick.big_blind)} фиш.` : `${game} · все лимиты`;
+}
 
 function PickRow({
   pick,
@@ -42,7 +50,7 @@ function PickRow({
       )}
     >
       <div className="flex items-baseline gap-2">
-        <p className="text-ink min-w-0 flex-1 truncate text-[14px] font-bold">«{pick.match}»</p>
+        <p className="text-ink min-w-0 flex-1 truncate text-[14px] font-bold">{pickTitle(pick)}</p>
         <span
           className={cn(
             "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold",
@@ -50,10 +58,10 @@ function PickRow({
           )}
         >
           {unmatched
-            ? "сейчас не видно"
+            ? "сейчас пусто"
             : pick.kind === "mtt"
               ? `стартов за неделю: ${pick.matched_now}`
-              : `открыто столов: ${pick.matched_now}`}
+              : `столов сейчас: ${pick.matched_now}`}
         </span>
       </div>
       <p className="text-ink-3 text-[12px]">{pick.club_name}</p>
@@ -81,8 +89,9 @@ function PickRow({
 }
 
 /**
- * Editor's Pick: турниры и столы, которые Иван поднимает наверх MTT и CASH. Пик — клуб и
- * фрагмент названия: так он переживает перезаливку сеток и появление новых столов.
+ * Editor's Pick: отбор для фильтра «★ Editor's Pick» на MTT и CASH. MTT — клуб и часть
+ * названия турнира (все его старты), CASH — клуб, игра и лимит. MTT обновляется раз в неделю,
+ * CASH — раз в день.
  */
 export function AdminEditorPicksPage() {
   const queryClient = useQueryClient();
@@ -93,17 +102,21 @@ export function AdminEditorPicksPage() {
   const [kind, setKind] = useState<PickKind>("mtt");
   const [clubId, setClubId] = useState("");
   const [match, setMatch] = useState("");
+  const [gameType, setGameType] = useState<GameType>("nlh");
+  const [bigBlind, setBigBlind] = useState("");
   const [note, setNote] = useState("");
 
   const onSaved = (data: EditorPickAdmin[]) => {
     queryClient.setQueryData(PICKS_KEY, data);
-    void queryClient.invalidateQueries({ queryKey: ["editor-picks"] });
+    void queryClient.invalidateQueries({ queryKey: ["tournaments"] });
+    void queryClient.invalidateQueries({ queryKey: ["cash-games"] });
   };
   const create = useMutation({
     mutationFn: createPick,
     onSuccess: (data) => {
       onSaved(data);
       setMatch("");
+      setBigBlind("");
       setNote("");
     },
   });
@@ -114,10 +127,22 @@ export function AdminEditorPicksPage() {
   });
   const remove = useMutation({ mutationFn: deletePick, onSuccess: onSaved });
 
+  const ready = Boolean(clubId) && (kind === "cash" || match.trim().length >= 2);
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (!clubId || match.trim().length < 2) return;
-    create.mutate({ kind, club_id: clubId, match: match.trim(), note: note.trim() || null });
+    if (!ready) return;
+    const noteValue = note.trim() || null;
+    create.mutate(
+      kind === "mtt"
+        ? { kind, club_id: clubId, match: match.trim(), note: noteValue }
+        : {
+            kind,
+            club_id: clubId,
+            game_type: gameType,
+            big_blind: bigBlind.trim().replace(",", ".") || undefined,
+            note: noteValue,
+          },
+    );
   };
 
   const busy = create.isPending || change.isPending || remove.isPending;
@@ -126,8 +151,8 @@ export function AdminEditorPicksPage() {
     <div className="mx-auto w-full max-w-[720px] px-3 py-4" data-testid="admin-editor-picks">
       <h1 className="text-[20px] font-extrabold">Editor&apos;s Pick</h1>
       <p className="text-ink-2 mt-0.5 text-[13px]">
-        Турниры и столы на плашке сверху MTT и CASH. Пик — клуб и часть названия: игрок увидит
-        ближайший старт турнира или открытые сейчас столы с таким названием.
+        Отбор для фильтра «★ Editor&apos;s Pick». MTT — клуб и часть названия турнира: в фильтр
+        попадут все его старты. CASH — клуб, игра и лимит.
       </p>
 
       <form
@@ -155,7 +180,7 @@ export function AdminEditorPicksPage() {
             </button>
           ))}
         </div>
-        <label className="text-ink-2 text-[12px] font-semibold">
+        <label className="text-ink-2 text-[12px] font-semibold sm:col-span-2">
           Клуб
           <select
             className={cn(fieldClass, "mt-1")}
@@ -170,29 +195,58 @@ export function AdminEditorPicksPage() {
             ))}
           </select>
         </label>
-        <label className="text-ink-2 text-[12px] font-semibold">
-          {kind === "mtt" ? "Часть названия турнира" : "Часть названия стола"}
-          <input
-            className={cn(fieldClass, "mt-1")}
-            value={match}
-            maxLength={160}
-            placeholder={kind === "mtt" ? "Dream River" : "Fox Den"}
-            onChange={(event) => setMatch(event.target.value)}
-          />
-        </label>
+        {kind === "mtt" ? (
+          <label className="text-ink-2 text-[12px] font-semibold sm:col-span-2">
+            Часть названия турнира
+            <input
+              className={cn(fieldClass, "mt-1")}
+              value={match}
+              maxLength={160}
+              placeholder="Dream River"
+              onChange={(event) => setMatch(event.target.value)}
+            />
+          </label>
+        ) : (
+          <>
+            <label className="text-ink-2 text-[12px] font-semibold">
+              Игра
+              <select
+                className={cn(fieldClass, "mt-1")}
+                value={gameType}
+                onChange={(event) => setGameType(event.target.value as GameType)}
+              >
+                {CASH_GAMES.map((game) => (
+                  <option key={game} value={game}>
+                    {GAME_LABELS[game]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-ink-2 text-[12px] font-semibold">
+              Большой блайнд, фишки (пусто — все лимиты)
+              <input
+                className={cn(fieldClass, "mt-1")}
+                value={bigBlind}
+                inputMode="decimal"
+                placeholder="0.5"
+                onChange={(event) => setBigBlind(event.target.value)}
+              />
+            </label>
+          </>
+        )}
         <label className="text-ink-2 text-[12px] font-semibold sm:col-span-2">
-          Почему выбрано — строка на плашке
+          Почему выбрано — строка в карточке
           <input
             className={cn(fieldClass, "mt-1")}
             value={note}
             maxLength={200}
-            placeholder="Гарантия ×300 к бай-ину"
+            placeholder={kind === "mtt" ? "Гарантия ×300 к бай-ину" : "Самая живая игра клуба"}
             onChange={(event) => setNote(event.target.value)}
           />
         </label>
         <button
           type="submit"
-          disabled={busy || !clubId || match.trim().length < 2}
+          disabled={busy || !ready}
           className="bg-gold-grad text-ink-ongold h-10 rounded-md px-4 text-[14px] font-bold disabled:opacity-40 sm:col-span-2"
         >
           Добавить в Editor&apos;s Pick
@@ -219,7 +273,7 @@ export function AdminEditorPicksPage() {
                   onDelete={async () => {
                     const ok = await confirm({
                       title: "Убрать из Editor's Pick?",
-                      description: `«${pick.match}» · ${pick.club_name}`,
+                      description: `${pickTitle(pick)} · ${pick.club_name}`,
                       confirmLabel: "Удалить",
                       cancelLabel: "Отмена",
                     });

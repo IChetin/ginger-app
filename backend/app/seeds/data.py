@@ -183,4 +183,14 @@ CLUBS: Final[list[ClubSeed]] = [
         chip_currency_code="RUB",
         schedule_source_url=PRIVATE_G_SHEET_CSV,
     ),
+    # Suprema: ID и курс — от Ивана 15.09; сетка — ручной CSV со скрина союза.
+    _club(
+        8,
+        "Ginger S",
+        "ginger-s",
+        "suprema",
+        app_club_id="19640",
+        chip_value="1",
+        chip_currency_code="USDT",
+    ),
 ]

@@ -119,6 +119,9 @@ class TournamentRead(TournamentFields):
     # До какого момента действует Early Bird: старт + N уровней с перерывами, как у поздней реги.
     early_bird_closes_at: datetime | None = None
     app_link: str | None = None
+    # Отобран в Editor's Pick (фильтр «★ Editor's Pick»); заметка — почему.
+    is_editor_pick: bool = False
+    editor_pick_note: str | None = None
 
 
 class TemplateDeleteResult(BaseModel):

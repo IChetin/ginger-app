@@ -183,6 +183,42 @@ describe("TournamentsPage", () => {
     expect(Object.keys(params).sort()).toEqual(["from", "to"]);
     expect(
       JSON.parse(window.localStorage.getItem("ginger.tournaments.filters.v2") ?? "{}"),
-    ).toEqual({ range: "day", prices: ["high"] });
+    ).toEqual({ range: "day", prices: ["high"], picked: false });
+  });
+
+  it("Free и Editor's Pick — фильтры на месте, заметка пика в карточке", async () => {
+    fetchCurrentUser.mockResolvedValue({ ...user, schedule_view: "table" });
+    const freeroll = tournament({
+      id: "t5",
+      name: "FREEROLL",
+      buyin: "0.00",
+      buyin_rub: null,
+      guarantee: "50.00",
+    });
+    const picked = tournament({
+      id: "t6",
+      name: "PICKED PKO",
+      is_editor_pick: true,
+      editor_pick_note: "Гарантия ×300 к бай-ину",
+    });
+    fetchTournaments.mockResolvedValue([running, freeroll, picked]);
+    renderWithProviders(<AppRoutes />, { route: "/tournaments" });
+
+    expect(await screen.findAllByTestId("tournament-row")).toHaveLength(3);
+    expect(screen.queryByRole("button", { name: "1–3 тыс. ₽" })).toBeNull();
+
+    await userEvent.click(screen.getByRole("button", { name: "Free" }));
+    expect(screen.getAllByTestId("tournament-row")).toHaveLength(1);
+    expect(screen.getByText("FREEROLL")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Free" }));
+
+    await userEvent.click(screen.getByRole("button", { name: /Editor's Pick/, pressed: false }));
+    const rows = screen.getAllByTestId("tournament-row");
+    expect(rows).toHaveLength(1);
+    await userEvent.click(within(rows[0]).getByText("PICKED PKO"));
+    const sheet = await screen.findByTestId("tournament-sheet");
+    expect(within(sheet).getByTestId("editors-pick-plate")).toHaveTextContent(
+      "Гарантия ×300 к бай-ину",
+    );
   });
 });

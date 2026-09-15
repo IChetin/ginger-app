@@ -1,7 +1,7 @@
-"""Кэш-столы: вечерний сборщик присылает список столов клуба, игрок видит, где идёт игра.
+"""Кэш-игры: вечерний сборщик присылает лимиты клуба и число столов, игрок видит, где игра.
 
-Решение Ивана 15.09: сборщик смотрит только экран списка столов, в стол заходит лишь за
-диплинком PPPoker. Стол — снимок, а не расписание: пропал из лобби — закрыт.
+Решения Ивана 15.09: сборщик смотрит только экран списка столов, в стол заходит лишь за
+диплинком PPPoker; игроков и места не показываем — их не обновить честно.
 """
 
 from __future__ import annotations
@@ -15,31 +15,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import AppError, NotFoundError
-from app.models.cash import CashTable
+from app.models.cash import CashGame
 from app.models.clubs import Club
 from app.models.collector import CollectorRun, CollectorSnapshot
-from app.models.enums import ClubBlock, CollectorRunKind, CollectorRunStatus
-from app.schemas.cash import CashSnapshotIn, CashSnapshotResult, CashTableRead
+from app.models.enums import ClubBlock, CollectorRunKind, CollectorRunStatus, GameType
+from app.schemas.cash import CashGameRead, CashSnapshotIn, CashSnapshotResult
 from app.schemas.tournaments import TournamentClub
 from app.services.clubs import rub_per_chip
+from app.services.picks import active_picks, match_cash
 
-# Проход раз в 15–20 минут: стол, не виденный 45 минут, пропустил два прохода подряд —
+# Проход раз в 15–20 минут: лимит, не виденный 45 минут, пропустил два прохода подряд —
 # сборщик сломался или вечер кончился. Устаревшее игроку не показываем.
 FRESH_FOR = timedelta(minutes=45)
+_CENT = Decimal("0.01")
 
-_FIELDS = (
-    "name",
-    "game_type",
-    "small_blind",
-    "big_blind",
-    "ante",
-    "table_size",
-    "seated",
-    "waiting",
-    "min_buyin",
-    "max_buyin",
-    "app_link",
-)
+
+def _key(game_type: GameType, small_blind: Decimal, big_blind: Decimal) -> tuple[str, ...]:
+    return (game_type.value, str(small_blind.quantize(_CENT)), str(big_blind.quantize(_CENT)))
 
 
 async def ingest_cash_snapshot(
@@ -51,7 +43,7 @@ async def ingest_cash_snapshot(
     if run.status is not CollectorRunStatus.RUNNING:
         raise AppError("run_finished", "Проход уже завершён", 409)
     if run.kind is not CollectorRunKind.CASH:
-        raise AppError("run_kind_mismatch", "Столы присылаются в проходе вида cash", 422)
+        raise AppError("run_kind_mismatch", "Кэш присылается в проходе вида cash", 422)
     club = await session.scalar(select(Club).where(Club.slug == body.club_slug))
     if club is None:
         raise NotFoundError("Клуб не найден")
@@ -66,42 +58,45 @@ async def ingest_cash_snapshot(
             captured_at=now,
             window_from=now,
             window_to=now,
-            payload={"tables": [table.model_dump(mode="json") for table in body.tables]},
+            payload={"games": [game.model_dump(mode="json") for game in body.games]},
             summary={},
         )
     )
 
     existing = {
-        table.table_key: table
-        for table in await session.scalars(select(CashTable).where(CashTable.club_id == club.id))
+        _key(game.game_type, game.small_blind, game.big_blind): game
+        for game in await session.scalars(select(CashGame).where(CashGame.club_id == club.id))
     }
     result = CashSnapshotResult()
-    for incoming in body.tables:
-        values = incoming.model_dump(include=set(_FIELDS))
-        table = existing.pop(incoming.table_key, None)
-        if table is None:
+    for incoming in body.games:
+        game = existing.pop(
+            _key(incoming.game_type, incoming.small_blind, incoming.big_blind), None
+        )
+        if game is None:
             session.add(
-                CashTable(
+                CashGame(
                     club_id=club.id,
-                    table_key=incoming.table_key,
+                    game_type=incoming.game_type,
+                    small_blind=incoming.small_blind,
+                    big_blind=incoming.big_blind,
+                    tables=incoming.tables,
+                    app_link=incoming.app_link,
                     first_seen_at=now,
                     seen_at=now,
-                    **values,
                 )
             )
             result.added += 1
             continue
+        game.tables = incoming.tables
         # За диплинком сборщик заходит в стол не каждый проход — пустая ссылка известную не стирает.
-        if values["app_link"] is None:
-            values.pop("app_link")
-        for field, value in values.items():
-            setattr(table, field, value)
-        table.seen_at = now
+        if incoming.app_link:
+            game.app_link = incoming.app_link
+        game.seen_at = now
         result.updated += 1
 
     if existing:
         await session.execute(
-            delete(CashTable).where(CashTable.id.in_([table.id for table in existing.values()]))
+            delete(CashGame).where(CashGame.id.in_([game.id for game in existing.values()]))
         )
         result.closed = len(existing)
 
@@ -114,40 +109,50 @@ def _to_rub(chips: Decimal, rate: Decimal | None) -> Decimal | None:
     return None if rate is None else (chips * rate).quantize(Decimal("1"))
 
 
-async def list_cash_tables(session: AsyncSession, *, now: datetime) -> list[CashTableRead]:
-    tables = list(
+async def list_cash_games(session: AsyncSession, *, now: datetime) -> list[CashGameRead]:
+    games = list(
         await session.scalars(
-            select(CashTable)
-            .join(Club, Club.id == CashTable.club_id)
-            .options(selectinload(CashTable.club).selectinload(Club.chip_currency))
+            select(CashGame)
+            .join(Club, Club.id == CashGame.club_id)
+            .options(selectinload(CashGame.club).selectinload(Club.chip_currency))
             .where(
-                CashTable.seen_at >= now - FRESH_FOR,
+                CashGame.seen_at >= now - FRESH_FOR,
                 Club.is_visible.is_(True),
                 Club.block == ClubBlock.ONLINE,
             )
-            .order_by(Club.sort_order, CashTable.big_blind, CashTable.name)
+            .order_by(Club.sort_order, CashGame.game_type, CashGame.big_blind)
         )
     )
-    clubs = list({table.club_id: table.club for table in tables}.values())
+    clubs = list({game.club_id: game.club for game in games}.values())
     rates = await rub_per_chip(session, clubs)
-    return [
-        CashTableRead(
-            id=table.id,
-            club=TournamentClub(
-                id=table.club.id,
-                name=table.club.name,
-                slug=table.club.slug,
-                app=table.club.app,
-                app_club_id=table.club.app_club_id,
-                chip_value=table.club.chip_value,
-                chip_currency_code=table.club.chip_currency_code,
-                currency_symbol=table.club.chip_currency.symbol
-                if table.club.chip_currency
-                else None,
-            ),
-            seen_at=table.seen_at,
-            big_blind_rub=_to_rub(table.big_blind, rates.get(table.club_id)),
-            **{field: getattr(table, field) for field in _FIELDS},
+    picks = await active_picks(session, "cash")
+    result: list[CashGameRead] = []
+    for game in games:
+        pick = match_cash(picks, game)
+        result.append(
+            CashGameRead(
+                id=game.id,
+                club=TournamentClub(
+                    id=game.club.id,
+                    name=game.club.name,
+                    slug=game.club.slug,
+                    app=game.club.app,
+                    app_club_id=game.club.app_club_id,
+                    chip_value=game.club.chip_value,
+                    chip_currency_code=game.club.chip_currency_code,
+                    currency_symbol=game.club.chip_currency.symbol
+                    if game.club.chip_currency
+                    else None,
+                ),
+                game_type=game.game_type,
+                small_blind=game.small_blind,
+                big_blind=game.big_blind,
+                tables=game.tables,
+                app_link=game.app_link,
+                seen_at=game.seen_at,
+                big_blind_rub=_to_rub(game.big_blind, rates.get(game.club_id)),
+                is_editor_pick=pick is not None,
+                editor_pick_note=pick.note if pick else None,
+            )
         )
-        for table in tables
-    ]
+    return result

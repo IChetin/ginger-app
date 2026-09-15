@@ -23,37 +23,33 @@ if TYPE_CHECKING:
     from app.models.clubs import Club
 
 
-class CashTable(UUIDPrimaryKeyMixin, Base):
-    """Кэш-стол, как его видел сборщик в лобби клуба (вечерний проход раз в 15–20 минут).
+class CashGame(UUIDPrimaryKeyMixin, Base):
+    """Кэш-игра в клубе: игра и лимит, сколько столов открыто — по списку столов в лобби.
 
-    Не расписание, а снимок: стол живёт, пока сборщик его видит. Пропал из лобби — строка
-    удаляется; сборщик замолчал — игроку стол не показываем по давности `seen_at`.
-    Суммы — в фишках клуба.
+    Решение Ивана 15.09: игроков и занятые места сборщик честно не обновит, поэтому
+    показываем только игру, лимит и число столов. Лимит пропал из лобби — строка удаляется;
+    сборщик замолчал — игроку не показываем по давности `seen_at`. Суммы — в фишках клуба.
     """
 
-    __tablename__ = "cash_tables"
+    __tablename__ = "cash_games"
     __table_args__ = (
-        UniqueConstraint("club_id", "table_key", name="uq_cash_tables_club_table_key"),
-        Index("ix_cash_tables_seen_at", "seen_at"),
-        CheckConstraint("big_blind > 0 AND small_blind >= 0", name="blinds_positive"),
+        UniqueConstraint(
+            "club_id", "game_type", "small_blind", "big_blind", name="uq_cash_games_club_limit"
+        ),
+        Index("ix_cash_games_seen_at", "seen_at"),
+        CheckConstraint(
+            "big_blind > 0 AND small_blind >= 0 AND tables > 0", name="values_positive"
+        ),
     )
 
     club_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("clubs.id", ondelete="CASCADE"), nullable=False
     )
-    # Как сборщик узнаёт стол между проходами: ID стола в лобби, а без него — имя с блайндами.
-    table_key: Mapped[str] = mapped_column(String(64), nullable=False)
-    name: Mapped[str] = mapped_column(String(80), nullable=False)
     game_type: Mapped[GameType] = mapped_column(pg_enum(GameType, "game_type"), nullable=False)
     small_blind: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     big_blind: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
-    ante: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
-    table_size: Mapped[int | None] = mapped_column(SmallInteger)
-    seated: Mapped[int | None] = mapped_column(SmallInteger)
-    waiting: Mapped[int | None] = mapped_column(SmallInteger)
-    min_buyin: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
-    max_buyin: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
-    # Диплинк на стол есть только у PPPoker; у остальных игрок входит по ID клуба.
+    tables: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    # Диплинк на один из столов лимита — только у PPPoker; у остальных вход по ID клуба.
     app_link: Mapped[str | None] = mapped_column(String(500))
     first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

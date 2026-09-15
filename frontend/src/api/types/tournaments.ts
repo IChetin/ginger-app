@@ -63,6 +63,9 @@ export interface Tournament {
   early_bird_closes_at?: string | null;
   /** Диплинк на этот старт в приложении (PPPoker), обновляет сборщик. */
   app_link?: string | null;
+  /** Отобран в Editor's Pick — фильтр «★ Editor's Pick»; заметка — почему. */
+  is_editor_pick?: boolean;
+  editor_pick_note?: string | null;
 }
 
 /** Колокольчик: за 5 минут до старта или до конца поздней регистрации (ответ 11.7). */

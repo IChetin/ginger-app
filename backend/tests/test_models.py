@@ -23,7 +23,7 @@ EXPECTED_TABLES = {
     "attachments",
     "auth_tokens",
     "broadcasts",
-    "cash_tables",
+    "cash_games",
     "collector_runs",
     "collector_snapshots",
     "tournament_changes",

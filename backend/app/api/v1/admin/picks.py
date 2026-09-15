@@ -21,7 +21,7 @@ async def list_picks(db: Db) -> list[EditorPickAdminRead]:
 
 @router.post("", response_model=list[EditorPickAdminRead], status_code=status.HTTP_201_CREATED)
 async def create_pick(body: EditorPickCreate, db: Db) -> list[EditorPickAdminRead]:
-    """Добавить пик; в ответ — список со счётчиком совпадений: сразу видно, ловит ли фрагмент."""
+    """Добавить в отбор; в ответ — список со счётчиком: сразу видно, ловит ли условие."""
     await picks_service.create_pick(db, body)
     return await picks_service.list_admin_picks(db, now=datetime.now(UTC))
 

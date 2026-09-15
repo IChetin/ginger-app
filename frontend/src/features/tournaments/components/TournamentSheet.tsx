@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 
 import type { ReminderKind, Tournament } from "@/api/types/tournaments";
+import { EditorsPickPlate } from "@/features/picks/EditorsPick";
 import { BellIcon, ReminderHints } from "@/features/tournaments/components/ReminderBell";
 import { OpenInApp } from "@/features/tournaments/components/OpenInApp";
 import {
@@ -221,6 +222,9 @@ function SheetBody({ tournament }: { tournament: Tournament }) {
         ))}
       </div>
 
+      {tournament.is_editor_pick ? (
+        <EditorsPickPlate note={tournament.editor_pick_note ?? null} />
+      ) : null}
       <LivePlate tournament={tournament} />
       <EarlyBird tournament={tournament} />
 

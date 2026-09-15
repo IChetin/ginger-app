@@ -17,6 +17,7 @@ from app.models.enums import ClubBlock, PokerApp, TournamentStatus
 from app.models.tournaments import Tournament
 from app.schemas.tournaments import LiveEventRead, TournamentClub, TournamentRead
 from app.services.clubs import rub_per_chip
+from app.services.picks import active_picks, match_tournament
 from app.services.tournaments.late_reg import late_reg_close_offset
 from app.services.tournaments.schedule_sync import MSK
 
@@ -130,6 +131,7 @@ async def list_tournaments(
 
     clubs = list({item.club.id: item.club for item in tournaments}.values())
     rates = await rub_per_chip(session, clubs)
+    picks = await active_picks(session, "mtt")
     by_rub = buyin_rub_min is not None or buyin_rub_max is not None
 
     result: list[TournamentRead] = []
@@ -168,6 +170,8 @@ async def list_tournaments(
                 guarantee_rub=_to_rub(item.guarantee, rate),
                 has_addon=item.addon_cost is not None or item.addon_terms is not None,
                 early_bird_closes_at=_early_bird_closes_at(item),
+                is_editor_pick=(pick := match_tournament(picks, item)) is not None,
+                editor_pick_note=pick.note if pick else None,
             )
         )
     return result

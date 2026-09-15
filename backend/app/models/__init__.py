@@ -1,6 +1,6 @@
 from app.models.auth import AuthToken, OtpCode, PushSubscription, Session, User
 from app.models.base import Base
-from app.models.cash import CashTable
+from app.models.cash import CashGame
 from app.models.chips import (
     Attachment,
     ChipRequest,
@@ -24,7 +24,7 @@ __all__ = [
     "AuthToken",
     "Base",
     "Broadcast",
-    "CashTable",
+    "CashGame",
     "CollectorRun",
     "CollectorSnapshot",
     "TournamentChange",
