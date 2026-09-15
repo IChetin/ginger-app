@@ -37,10 +37,21 @@ function Send-CollectorSnapshot {
             $item.starts_at = ([DateTimeOffset]$item.starts_at).ToString('yyyy-MM-ddTHH:mm:sszzz')
         }
     }
-    $future = @($items | Where-Object { $_.status -eq 'future' -and $_.starts_at -and $_.name })
+    $future = @($items | Where-Object { $_.starts_at -and $_.name -and $_.status -ne 'running' })
     if (-not $future.Count) { throw 'No future tournaments in the pass' }
 
-    $tournaments = @($future | ForEach-Object { ConvertTo-XpCollected $_ })
+    # Проход PPPoker (лента, есть max_entries) отдаёт только ядро: старт, имя, бай-ин, гарантия, игра, баунти.
+    # Длину уровня из ленты («8 min») не шлём — приёмник сам пишет параметры в сетку и затёр бы «15/12/12».
+    $isPpPass = [bool]($items | Where-Object { $_.PSObject.Properties.Name -contains 'max_entries' } | Select-Object -First 1)
+    $tournaments = @($future | ForEach-Object {
+        if ($isPpPass) {
+            $core = [ordered]@{ starts_at = $_.starts_at; name = $_.name; buyin = $_.buyin; bounty_kind = $_.bounty_kind; game_type = $_.game_type }
+            if ($_.guarantee -ge 1) { $core.guarantee = $_.guarantee }
+            [pscustomobject]$core
+        } else {
+            ConvertTo-XpCollected $_
+        }
+    })
     $starts = $future | ForEach-Object { [DateTimeOffset]::Parse($_.starts_at, [Globalization.CultureInfo]::InvariantCulture) }
     $windowFrom = [DateTimeOffset](Get-Date).AddMinutes(10)
     $windowTo = ($starts | Measure-Object -Maximum).Maximum
