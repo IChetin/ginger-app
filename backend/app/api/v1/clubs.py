@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.exceptions import AppError
+from app.core.rate_limit import ScheduleViewer
 from app.models.auth import User
 from app.models.enums import PokerApp
 from app.schemas.clubs import ClubBrief
@@ -20,6 +21,7 @@ from app.schemas.tournaments import (
 )
 from app.services import clubs as clubs_service
 from app.services.tournaments import reminders as reminders_service
+from app.services.tournaments.guest import guest_range, tournaments_for_guest
 from app.services.tournaments.queries import (
     DayPeriod,
     list_highlights,
@@ -44,33 +46,44 @@ async def list_clubs(db: Annotated[AsyncSession, Depends(get_db)]) -> list[ClubB
 @router.get("/tournaments/highlights", response_model=list[TournamentRead])
 async def get_highlights(
     db: Annotated[AsyncSession, Depends(get_db)],
+    viewer: ScheduleViewer,
     per_day: Annotated[int, Query(ge=1, le=20)] = 5,
     days: Annotated[int, Query(ge=1, le=14)] = 7,
 ) -> list[TournamentRead]:
-    """Витрина для новых: крупнейшие гарантии каждого дня. Без входа, как и всё расписание."""
+    """Витрина: крупнейшие гарантии каждого дня. Гостю — только ближайшие сутки и без деталей."""
     start = datetime.now(UTC)
-    return await list_highlights(
+    if viewer is None:
+        days = 1
+    items = await list_highlights(
         db, starts_from=start, starts_to=start + timedelta(days=days), per_day=per_day
     )
+    return items if viewer is not None else tournaments_for_guest(items)
 
 
 @router.get("/tournaments/live", response_model=list[LiveEventRead])
-async def get_live_events(db: Annotated[AsyncSession, Depends(get_db)]) -> list[LiveEventRead]:
-    """Путь в живые серии: STEP-сателлиты и турниры серии, отдельно от онлайн-расписания."""
+async def get_live_events(
+    db: Annotated[AsyncSession, Depends(get_db)], viewer: ScheduleViewer
+) -> list[LiveEventRead]:
+    """Путь в живые серии: STEP-сателлиты и турниры серии. Только для игроков клуба."""
+    if viewer is None:
+        return []
     return await list_live_events(db, now=datetime.now(UTC))
 
 
 @router.get("/tournaments/{tournament_id}/satellites", response_model=list[TournamentRead])
 async def get_satellites(
-    tournament_id: UUID, db: Annotated[AsyncSession, Depends(get_db)]
+    tournament_id: UUID, db: Annotated[AsyncSession, Depends(get_db)], viewer: ScheduleViewer
 ) -> list[TournamentRead]:
-    """Сателлиты на турнир — для карточки турнира: «попасть дешевле»."""
+    """Сателлиты на турнир — для карточки турнира: «попасть дешевле». Только для игроков."""
+    if viewer is None:
+        return []
     return await list_satellites(db, tournament_id, now=datetime.now(UTC))
 
 
 @router.get("/tournaments", response_model=list[TournamentRead])
 async def get_tournaments(
     db: Annotated[AsyncSession, Depends(get_db)],
+    viewer: ScheduleViewer,
     starts_from: Annotated[datetime | None, Query(alias="from")] = None,
     starts_to: Annotated[datetime | None, Query(alias="to")] = None,
     app: Annotated[list[PokerApp] | None, Query()] = None,
@@ -80,15 +93,18 @@ async def get_tournaments(
     buyin_rub_max: Annotated[Decimal | None, Query(ge=0)] = None,
 ) -> list[TournamentRead]:
     """Ближайшие турниры. По умолчанию — сутки от текущего момента (ТЗ §8а.3: фильтр
-    не обязателен, сначала показываем ближайшее по времени). Открыто всем без входа
-    (решение Ивана 14.09): расписание — витрина клуба."""
-    start = _aware(starts_from) or datetime.now(UTC)
+    не обязателен, сначала показываем ближайшее по времени). Гость видит витрину: ближайшие
+    сутки и строку турнира без деталей (решение Ивана 15.09 — защита базы)."""
+    now = datetime.now(UTC)
+    start = _aware(starts_from) or now
     end = _aware(starts_to) or start + timedelta(days=1)
+    if viewer is None:
+        start, end = guest_range(end, now)
     if end <= start:
         raise AppError("invalid_range", "Конец периода раньше начала", 422)
     if end - start > _MAX_RANGE:
         raise AppError("range_too_long", "Период не больше 15 дней", 422)
-    return await list_tournaments(
+    items = await list_tournaments(
         db,
         starts_from=start,
         starts_to=end,
@@ -98,6 +114,7 @@ async def get_tournaments(
         buyin_rub_min=buyin_rub_min,
         buyin_rub_max=buyin_rub_max,
     )
+    return items if viewer is not None else tournaments_for_guest(items)
 
 
 def _aware(moment: datetime | None) -> datetime | None:

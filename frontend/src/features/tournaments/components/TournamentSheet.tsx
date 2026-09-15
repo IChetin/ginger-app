@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 
 import type { ReminderKind, Tournament } from "@/api/types/tournaments";
+import { useMe } from "@/features/auth/hooks";
 import { EditorsPickPlate } from "@/features/picks/EditorsPick";
 import { BellIcon, ReminderHints } from "@/features/tournaments/components/ReminderBell";
 import { OpenInApp } from "@/features/tournaments/components/OpenInApp";
@@ -109,6 +110,25 @@ function SheetReminders({ tournament }: { tournament: Tournament }) {
       </div>
       <p className="text-ink-3 mt-1 text-center text-[11px]">Пуш придёт за 5 минут</p>
       <ReminderHints hint={reminder.hint} error={reminder.error} />
+    </div>
+  );
+}
+
+/** Гостю сервер деталей турнира не отдаёт — сказать, где они. */
+function GuestDetailsHint() {
+  const { data: user, isFetched } = useMe();
+  if (!isFetched || user) return null;
+  return (
+    <div
+      data-testid="guest-details-hint"
+      className="border-line-gold bg-gold-soft mt-3 rounded-md border px-3 py-2 text-[13px]"
+    >
+      <span className="text-ink">
+        Стек, уровни, ребаи и аддоны, Editor&apos;s Pick и сателлиты — для игроков клуба.{" "}
+      </span>
+      <Link to="/login" className="text-gold font-bold">
+        Войти
+      </Link>
     </div>
   );
 }
@@ -235,6 +255,7 @@ function SheetBody({ tournament }: { tournament: Tournament }) {
         <Stat label="Поздняя рег." value={lateReg ?? "—"} />
       </div>
 
+      <GuestDetailsHint />
       <dl className="mt-3">
         <Param
           label="Стартовый стек"

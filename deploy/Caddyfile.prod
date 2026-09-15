@@ -13,6 +13,8 @@
 	}
 
 	handle /api/* {
+		# Данные API не индексируются и не идут на обучение ИИ (правила: /terms).
+		header X-Robots-Tag "noindex, nofollow, noai, noimageai"
 		# Скриншоты и картинки в тредах — до 10 МБ, с запасом на multipart.
 		request_body {
 			max_size 12MB

@@ -46,6 +46,7 @@ export function MorePage() {
         <Row to="/tournaments" title="MTT" subtitle="Расписание турниров всех клубов" icon="🏆" />
         <Row to="/cash" title="CASH" subtitle="Где сейчас идёт игра" icon="♠" />
         <Row to="/clubs" title="Клубы" subtitle="ID, курсы, как зайти" icon="♣" />
+        <Row to="/terms" title="Правила" subtitle="Условия использования сервиса" icon="§" />
         {player.data ? (
           <Row to="/referral" title="Пригласить друга" subtitle="Ссылка и QR" icon="🦊" />
         ) : null}

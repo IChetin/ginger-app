@@ -12,6 +12,7 @@ import {
 import type { ScheduleView, Tournament } from "@/api/types/tournaments";
 import { ScheduleTabs } from "@/components/layout/ScheduleTabs";
 import { useMe } from "@/features/auth/hooks";
+import { rateLimitMessage, useGuestGate } from "@/features/auth/useGuestGate";
 import { EditorsPickChip } from "@/features/picks/EditorsPick";
 import {
   AppIcon,
@@ -369,20 +370,25 @@ function useElementHeight<T extends HTMLElement>() {
 export function TournamentsPage() {
   const { data: user } = useMe();
   const { filters, update, reset } = useTournamentFilters();
-  const query = useTournaments(filters);
+  const gate = useGuestGate();
+  // Гостю сервер отдаёт только ближайшие сутки — и переключатель показывает сутки.
+  const range: RangeKey = gate.isGuest ? "day" : filters.range;
+  const query = useTournaments({ range }, gate.ready);
   const now = useScheduleNow(query.data);
   const view: ScheduleView = user?.schedule_view ?? "table";
   const [headerRef, headerHeight] = useElementHeight<HTMLElement>();
 
+  // Сохранённый с прошлого входа Editor's Pick гостю не применяем: флагов сервер ему не отдаёт.
+  const picked = filters.picked && !gate.isGuest;
   const visible = useMemo(
     () =>
-      applyTournamentFilters(query.data ?? [], filters).filter(
+      applyTournamentFilters(query.data ?? [], { ...filters, picked }).filter(
         (item) => tournamentPhase(item, now).kind !== "closed",
       ),
-    [query.data, filters, now],
+    [query.data, filters, picked, now],
   );
   const groups = useMemo(() => groupByDay(visible), [visible]);
-  const hasFilters = filters.prices.length > 0 || filters.picked;
+  const hasFilters = filters.prices.length > 0 || picked;
   const [selected, setSelected] = useState<Tournament | null>(null);
 
   return (
@@ -414,11 +420,15 @@ export function TournamentsPage() {
                 role="tab"
                 aria-label={option.title}
                 title={option.title}
-                aria-selected={filters.range === option.value}
-                onClick={() => update({ range: option.value })}
+                aria-selected={range === option.value}
+                onClick={() =>
+                  gate.isGuest && option.value !== "day"
+                    ? void gate.requireLogin("Расписание на 3 и 7 дней")
+                    : update({ range: option.value })
+                }
                 className={cn(
                   "h-6 rounded-full px-2.5 text-[11.5px] font-bold",
-                  filters.range === option.value ? "bg-surface-3 text-ink" : "text-ink-3",
+                  range === option.value ? "bg-surface-3 text-ink" : "text-ink-3",
                 )}
               >
                 {option.label}
@@ -439,8 +449,13 @@ export function TournamentsPage() {
           ) : null}
           <EditorsPickChip
             kind="mtt"
-            active={filters.picked}
-            onToggle={() => update({ picked: !filters.picked })}
+            active={picked}
+            locked={gate.isGuest}
+            onToggle={() =>
+              gate.isGuest
+                ? void gate.requireLogin("Editor's Pick")
+                : update({ picked: !filters.picked })
+            }
           />
           {PRICE_TIERS.map((tier) => (
             <Chip
@@ -464,7 +479,9 @@ export function TournamentsPage() {
         </div>
       ) : query.isError ? (
         <div className="border-line bg-surface mx-3 mt-3 rounded-md border px-4 py-6 text-center">
-          <p className="text-ink text-[14px] font-semibold">Не удалось загрузить турниры</p>
+          <p className="text-ink text-[14px] font-semibold">
+            {rateLimitMessage(query.error) ?? "Не удалось загрузить турниры"}
+          </p>
           <button
             type="button"
             onClick={() => void query.refetch()}
@@ -476,7 +493,7 @@ export function TournamentsPage() {
       ) : visible.length === 0 ? (
         <div className="border-line-gold bg-surface mx-3 mt-3 rounded-md border border-dashed px-4 py-6 text-center">
           <p className="text-ink text-[15px] font-bold">
-            {filters.picked ? "Подборка этой недели ещё не готова" : "Турниров не найдено"}
+            {picked ? "Подборка этой недели ещё не готова" : "Турниров не найдено"}
           </p>
           <p className="text-ink-2 mt-1 text-[13px]">
             {hasFilters ? "Попробуйте ослабить фильтры" : "Расписание ещё не загружено"}

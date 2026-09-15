@@ -44,6 +44,7 @@ import { LoginPage } from "@/pages/LoginPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { PrivacyPage } from "@/pages/PrivacyPage";
 import { RegisterPage } from "@/pages/RegisterPage";
+import { TermsPage } from "@/pages/TermsPage";
 
 // Android присылает предложение установки рано — ловим его до экрана установки.
 listenInstallPrompt();
@@ -79,6 +80,7 @@ export function AppRoutes() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/install" element={<InstallPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
       <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route path="/admin" element={<AdminGuard />}>
         <Route element={<AdminLayout />}>

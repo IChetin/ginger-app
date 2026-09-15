@@ -1,5 +1,6 @@
 import { Drawer } from "@base-ui/react/drawer";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import { cn } from "@/lib/utils";
 
@@ -12,15 +13,17 @@ const EXPLANATION: Record<PickKind, string> = {
 
 /**
  * Фильтр «★ Editor's Pick» со знаком (?): в выдаче остаётся только отобранное Иваном.
- * По (?) — карточка с объяснением, что это за подборка.
+ * Гостю чип виден с замком — тизер: подборка доступна после входа (решение 15.09).
  */
 export function EditorsPickChip({
   kind,
   active,
+  locked = false,
   onToggle,
 }: {
   kind: PickKind;
   active: boolean;
+  locked?: boolean;
   onToggle: () => void;
 }) {
   const [help, setHelp] = useState(false);
@@ -39,6 +42,11 @@ export function EditorsPickChip({
       >
         <span aria-hidden="true">★</span>
         Editor&apos;s Pick
+        {locked ? (
+          <span aria-hidden="true" data-testid="editors-pick-lock" className="text-[10px]">
+            🔒
+          </span>
+        ) : null}
       </button>
       <button
         type="button"
@@ -63,13 +71,27 @@ export function EditorsPickChip({
               <Drawer.Description className="text-ink-2 mt-2 text-[14px] leading-snug">
                 {EXPLANATION[kind]}
               </Drawer.Description>
-              <button
-                type="button"
-                onClick={() => setHelp(false)}
-                className="border-line-strong text-ink mt-4 h-11 w-full rounded-md border text-[14px] font-bold"
-              >
-                Понятно
-              </button>
+              {locked ? (
+                <>
+                  <p className="text-gold mt-3 text-[13.5px] font-bold">
+                    🔒 Доступно игрокам клуба после входа.
+                  </p>
+                  <Link
+                    to="/login"
+                    className="bg-gold-grad text-ink-ongold mt-4 flex h-11 w-full items-center justify-center rounded-md text-[14px] font-bold"
+                  >
+                    Войти
+                  </Link>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setHelp(false)}
+                  className="border-line-strong text-ink mt-4 h-11 w-full rounded-md border text-[14px] font-bold"
+                >
+                  Понятно
+                </button>
+              )}
             </Drawer.Popup>
           </Drawer.Viewport>
         </Drawer.Portal>

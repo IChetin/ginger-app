@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState, type KeyboardEvent, type ReactNode } fr
 
 import type { CashGame } from "@/api/types/cash";
 import { ScheduleTabs } from "@/components/layout/ScheduleTabs";
+import { rateLimitMessage, useGuestGate } from "@/features/auth/useGuestGate";
 import { fetchCashGames } from "@/features/cash/api";
 import { CashGameSheet } from "@/features/cash/CashGameSheet";
 import {
@@ -187,6 +188,7 @@ function CashView({
  */
 export function CashPage() {
   const { filters, update, reset } = useCashFilters();
+  const gate = useGuestGate();
   const now = useNow(30_000);
   const query = useQuery({
     queryKey: ["cash-games"],
@@ -196,11 +198,16 @@ export function CashPage() {
   });
   const [selected, setSelected] = useState<CashGame | null>(null);
 
-  const visible = useMemo(() => applyCashFilters(query.data ?? [], filters), [query.data, filters]);
+  // Сохранённый с прошлого входа Editor's Pick гостю не применяем: флагов сервер ему не отдаёт.
+  const picked = filters.picked && !gate.isGuest;
+  const visible = useMemo(
+    () => applyCashFilters(query.data ?? [], { ...filters, picked }),
+    [query.data, filters, picked],
+  );
   const groups = useMemo(() => groupByGame(visible), [visible]);
   const tables = totalTables(visible);
   const updated = latestSeen(query.data ?? []);
-  const hasFilters = filters.games.length > 0 || filters.stakes.length > 0 || filters.picked;
+  const hasFilters = filters.games.length > 0 || filters.stakes.length > 0 || picked;
 
   return (
     <div className="bg-bg min-h-full pb-4" data-testid="cash-page">
@@ -231,8 +238,13 @@ export function CashPage() {
           ) : null}
           <EditorsPickChip
             kind="cash"
-            active={filters.picked}
-            onToggle={() => update({ picked: !filters.picked })}
+            active={picked}
+            locked={gate.isGuest}
+            onToggle={() =>
+              gate.isGuest
+                ? void gate.requireLogin("Editor's Pick")
+                : update({ picked: !filters.picked })
+            }
           />
           {CASH_GAMES.map((game) => (
             <Chip
@@ -264,7 +276,9 @@ export function CashPage() {
         </div>
       ) : query.isError ? (
         <div className="border-line bg-surface mx-3 mt-3 rounded-md border px-4 py-6 text-center">
-          <p className="text-ink text-[14px] font-semibold">Не удалось загрузить кэш</p>
+          <p className="text-ink text-[14px] font-semibold">
+            {rateLimitMessage(query.error) ?? "Не удалось загрузить кэш"}
+          </p>
           <button
             type="button"
             onClick={() => void query.refetch()}
@@ -276,7 +290,7 @@ export function CashPage() {
       ) : visible.length === 0 ? (
         <div className="border-line-gold bg-surface mx-3 mt-3 rounded-md border border-dashed px-4 py-6 text-center">
           <p className="text-ink text-[15px] font-bold">
-            {filters.picked
+            {picked
               ? "Подборка на сегодня ещё не готова"
               : hasFilters
                 ? "Ничего не найдено"

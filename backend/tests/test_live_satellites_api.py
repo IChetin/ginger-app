@@ -13,8 +13,10 @@ pytestmark = pytest.mark.integration
 
 
 async def test_live_path_leaves_schedule_and_satellites_show_on_target(
-    client: AsyncClient, seeded_db: None, db_session: AsyncSession
+    admin_client: AsyncClient, db_session: AsyncSession
 ) -> None:
+    # LIVE и сателлиты — только для вошедших (решение 15.09); гостю отдаются пустыми.
+    client = admin_client
     club = await db_session.scalar(select(Club).where(Club.slug == "ginger-plus"))
     assert club is not None
     now = datetime.now(UTC)

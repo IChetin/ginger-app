@@ -97,9 +97,10 @@ export function useTournamentFilters() {
   return { filters, update, reset: () => update(EMPTY_FILTERS) };
 }
 
-export function useTournaments(filters: Pick<TournamentFilters, "range">) {
+export function useTournaments(filters: Pick<TournamentFilters, "range">, enabled = true) {
   return useQuery({
     queryKey: ["tournaments", filters.range],
+    enabled,
     queryFn: ({ signal }) => {
       const now = new Date();
       const to = new Date(now.getTime() + RANGE_HOURS[filters.range] * 3600_000);
