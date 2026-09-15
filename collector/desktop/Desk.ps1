@@ -30,6 +30,9 @@ public static class DeskWin {
     [DllImport("user32.dll")] public static extern void mouse_event(uint flags, int dx, int dy, int data, IntPtr extra);
     [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint pid);
     [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
+    [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+    [DllImport("user32.dll")] public static extern IntPtr ChildWindowFromPointEx(IntPtr hWnd, POINT pt, uint flags);
+    [DllImport("user32.dll")] public static extern int MapWindowPoints(IntPtr from, IntPtr to, ref POINT pt, uint count);
     [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
     [StructLayout(LayoutKind.Sequential)] public struct POINT { public int X, Y; }
 }
@@ -116,6 +119,25 @@ function Invoke-WindowClick {
     [DeskWin]::mouse_event(0x0002, 0, 0, 0, [IntPtr]::Zero)  # LEFTDOWN
     Start-Sleep -Milliseconds 60
     [DeskWin]::mouse_event(0x0004, 0, 0, 0, [IntPtr]::Zero)  # LEFTUP
+}
+
+function Invoke-WindowPostClick {
+    # Клик сообщениями прямо в окно: курсор и фокус Ивана не трогаются, окно может быть за другими
+    # (но не свёрнуто). Работает не во всех движках — проверять снимком.
+    param([Parameter(Mandatory)][string]$Match, [int]$X, [int]$Y)
+    $window = Get-DeskWindow -Match $Match
+    $point = New-Object DeskWin+POINT
+    $point.X = $X; $point.Y = $Y
+    # Рисует часто дочернее окно движка — сообщение шлём ему, в его координатах.
+    $target = [DeskWin]::ChildWindowFromPointEx($window.Handle, $point, 0x0001)  # CWP_SKIPINVISIBLE
+    if ($target -eq [IntPtr]::Zero) { $target = $window.Handle }
+    if ($target -ne $window.Handle) { [void][DeskWin]::MapWindowPoints($window.Handle, $target, [ref]$point, 1) }
+    $lParam = [IntPtr](($point.Y -shl 16) -bor ($point.X -band 0xFFFF))
+    [void][DeskWin]::PostMessage($target, 0x0200, [IntPtr]::Zero, $lParam)  # WM_MOUSEMOVE
+    Start-Sleep -Milliseconds 40
+    [void][DeskWin]::PostMessage($target, 0x0201, [IntPtr]1, $lParam)       # WM_LBUTTONDOWN
+    Start-Sleep -Milliseconds 90
+    [void][DeskWin]::PostMessage($target, 0x0202, [IntPtr]::Zero, $lParam)  # WM_LBUTTONUP
 }
 
 function Invoke-WindowScroll {
