@@ -50,7 +50,8 @@ function Get-DeskWindows {
             $procId = 0
             [void][DeskWin]::GetWindowThreadProcessId($hWnd, [ref]$procId)
             $name = (Get-Process -Id $procId -ErrorAction SilentlyContinue).ProcessName
-            if ($title -and ("$title $name" -match $Match)) {
+            # Совпадение по заголовку ИЛИ по имени процесса — так работают и якоря: '^PPPoker$'.
+            if ($title -and (($title.Trim() -match $Match) -or ($name -match $Match))) {
                 $rect = New-Object DeskWin+RECT
                 [void][DeskWin]::GetClientRect($hWnd, [ref]$rect)
                 $found.Add([pscustomobject]@{
@@ -68,7 +69,8 @@ function Get-DeskWindows {
 function Get-DeskWindow {
     param([Parameter(Mandatory)][string]$Match)
     $window = Get-DeskWindows -Match $Match | Sort-Object { $_.Width * $_.Height } -Descending | Select-Object -First 1
-    if (-not $window) { throw "Окно '$Match' не найдено" }
+    # Сообщение по-английски: Windows PowerShell 5.1 читает файл без BOM не в UTF-8.
+    if (-not $window) { throw "Window '$Match' not found" }
     if ([DeskWin]::IsIconic($window.Handle)) { [void][DeskWin]::ShowWindow($window.Handle, 9) }
     $window
 }
