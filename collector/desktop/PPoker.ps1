@@ -80,7 +80,10 @@ function Read-PpListCards {
         elseif ($stat -match '^\D*(\d+)\s') { $entries = [int]$Matches[1] }
         if ($stat -match '(\d{1,2})\s*min') { $levelMinutes = [int]$Matches[1] }
 
-        $info = ((& $near 41 12 260 600).Text -join ' ')
+        $infoLines = @(& $near 41 12 260 600 | Sort-Object X)
+        $info = ($infoLines.Text -join ' ')
+        # The coin icon before the guarantee is read as a glued glyph: "7400+0", "-7500+500", "-z 564+36", "o900+0", "$200".
+        if ($info -notmatch 'Start|Registration') { $info = $info -replace '^\s*(?:-?[7z]|[^\d\s])\s*', '' }
         $startsAt = $null; $guarantee = $null; $status = 'unknown'
         if ($info -match 'Start\s*Time:?\s*(\d{2})\s*/\s*(\d)\s?(\d)\s+(\d{1,2}):(\d{2})') {
             $now = Get-Date
@@ -136,7 +139,7 @@ function Test-PpParseSaved {
 }
 
 function Invoke-PPokerMttPass {
-    param([int]$MaxPages = 30, [int]$ShotsPerPage = 3, [switch]$FromTop)
+    param([int]$MaxPages = 30, [int]$ShotsPerPage = 5, [switch]$FromTop)
     $dir = Join-Path $env:TEMP 'desk\pp'
     New-Item -ItemType Directory -Force $dir | Out-Null
     if ($FromTop) {
@@ -160,7 +163,7 @@ function Invoke-PPokerMttPass {
             $path = Join-Path $dir ("list-{0:D2}-{1}.png" -f $page, $shot)
             Save-PpShot -Path $path
             foreach ($card in Read-PpListCards $path) { if (Merge-PpCard $cards $card) { $new++ } }
-            if ($shot -lt $ShotsPerPage - 1) { Start-Sleep -Milliseconds 2800 }
+            if ($shot -lt $ShotsPerPage - 1) { Start-Sleep -Milliseconds 2500 }
         }
         if ($new -eq 0) { $idle++ } else { $idle = 0 }
         if ($idle -ge 2) { break }
