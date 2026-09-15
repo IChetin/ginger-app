@@ -28,12 +28,20 @@ function Send-CollectorSnapshot {
         [string]$BaseUrl = 'https://lisa52.com',
         [switch]$Apply
     )
-    $items = @(Get-Content $JsonPath -Raw -Encoding UTF8 | ConvertFrom-Json)
+    # Windows PowerShell 5.1: ConvertFrom-Json отдаёт массив одним объектом (раскрываем конвейером)
+    # и сам превращает ISO-даты в DateTime — возвращаем им строку с часовым поясом.
+    $parsed = Get-Content $JsonPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    $items = @($parsed | ForEach-Object { $_ })
+    foreach ($item in $items) {
+        if ($item.starts_at -is [datetime]) {
+            $item.starts_at = ([DateTimeOffset]$item.starts_at).ToString('yyyy-MM-ddTHH:mm:sszzz')
+        }
+    }
     $future = @($items | Where-Object { $_.status -eq 'future' -and $_.starts_at -and $_.name })
     if (-not $future.Count) { throw 'No future tournaments in the pass' }
 
     $tournaments = @($future | ForEach-Object { ConvertTo-XpCollected $_ })
-    $starts = $future | ForEach-Object { [DateTimeOffset]::Parse($_.starts_at) }
+    $starts = $future | ForEach-Object { [DateTimeOffset]::Parse($_.starts_at, [Globalization.CultureInfo]::InvariantCulture) }
     $windowFrom = [DateTimeOffset](Get-Date).AddMinutes(10)
     $windowTo = ($starts | Measure-Object -Maximum).Maximum
     $body = [ordered]@{
