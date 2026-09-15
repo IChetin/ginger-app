@@ -172,3 +172,15 @@ export function groupByDay<T extends { starts_at: string }>(items: T[]): [string
   }
   return [...groups.entries()];
 }
+
+const shortDayFormat = new Intl.DateTimeFormat("ru-RU", {
+  timeZone: MSK,
+  weekday: "short",
+  day: "numeric",
+  month: "short",
+});
+
+/** «пт, 19 сент., 19:00» — для коротких списков: сателлиты, путь в живую серию. */
+export function formatStartShort(iso: string): string {
+  return `${shortDayFormat.format(new Date(iso))}, ${formatTimeMsk(iso)}`;
+}

@@ -75,6 +75,12 @@ class TournamentFieldsMixin:
     early_bird_levels: Mapped[int | None] = mapped_column(SmallInteger)
     has_jackpot: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
     is_promoted: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
+    # Путь в живую серию (он-офф турниры X-Poker): название события, его даты и номер шага.
+    # Такой турнир не попадает в онлайн-расписание, а живёт в блоке LIVE; шаг пустой — это
+    # сам турнир серии, куда ведут билеты.
+    live_event: Mapped[str | None] = mapped_column(String(160))
+    live_dates: Mapped[str | None] = mapped_column(String(64))
+    live_step: Mapped[int | None] = mapped_column(SmallInteger)
     notes: Mapped[str | None] = mapped_column(Text)
 
 

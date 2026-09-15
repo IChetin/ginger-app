@@ -34,6 +34,9 @@ class TournamentFields(BaseModel):
     early_bird_bonus: str | None = Field(default=None, max_length=64)
     early_bird_levels: int | None = Field(default=None, ge=1, le=50)
     has_jackpot: bool = False
+    live_event: str | None = Field(default=None, max_length=160)
+    live_dates: str | None = Field(default=None, max_length=64)
+    live_step: int | None = Field(default=None, ge=1, le=5)
     notes: str | None = None
 
 
@@ -130,3 +133,12 @@ class TournamentRemindersUpdate(BaseModel):
     """Какие колокольчики должны стоять на турнире; пустой список снимает все."""
 
     kinds: list[ReminderKind] = Field(default_factory=list, max_length=2)
+
+
+class LiveEventRead(BaseModel):
+    """Живая серия: шаги-сателлиты и сам турнир серии, отдельно от онлайн-расписания."""
+
+    title: str
+    dates: str | None
+    club: TournamentClub
+    items: list[TournamentRead]

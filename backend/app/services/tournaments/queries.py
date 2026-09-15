@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime, time, timedelta
 from decimal import Decimal
 from enum import StrEnum
+from uuid import UUID
 
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,7 +15,7 @@ from app.core.config import get_settings
 from app.models.clubs import Club
 from app.models.enums import ClubBlock, PokerApp, TournamentStatus
 from app.models.tournaments import Tournament
-from app.schemas.tournaments import TournamentClub, TournamentRead
+from app.schemas.tournaments import LiveEventRead, TournamentClub, TournamentRead
 from app.services.clubs import rub_per_chip
 from app.services.tournaments.late_reg import late_reg_close_offset
 from app.services.tournaments.schedule_sync import MSK
@@ -96,6 +97,7 @@ async def list_tournaments(
     buyin_rub_max: Decimal | None = None,
     include_cancelled: bool = False,
     include_minor_satellites: bool = False,
+    live: bool = False,
 ) -> list[TournamentRead]:
     statement = (
         select(Tournament)
@@ -116,6 +118,10 @@ async def list_tournaments(
     )
     if not include_cancelled:
         statement = statement.where(Tournament.status == TournamentStatus.SCHEDULED)
+    # Путь в живые серии живёт отдельным блоком LIVE и в онлайн-расписание не попадает.
+    statement = statement.where(
+        Tournament.live_event.is_not(None) if live else Tournament.live_event.is_(None)
+    )
     if apps:
         statement = statement.where(Club.app.in_(apps))
     if club_ids:
@@ -192,3 +198,58 @@ async def list_highlights(
         result.extend(items[:per_day])
     result.sort(key=lambda item: item.starts_at)
     return result
+
+
+LIVE_LOOKAHEAD = timedelta(days=45)
+
+
+async def list_live_events(session: AsyncSession, *, now: datetime) -> list[LiveEventRead]:
+    """Путь в живые серии (он-офф турниры X-Poker), сгруппированный по событию.
+
+    Шаги и сам турнир серии идут по времени; события — по ближайшему шагу.
+    """
+    items = await list_tournaments(
+        session,
+        starts_from=now,
+        starts_to=now + LIVE_LOOKAHEAD,
+        include_minor_satellites=True,
+        live=True,
+    )
+    groups: dict[tuple[UUID, str], LiveEventRead] = {}
+    for item in items:
+        if item.live_event is None:
+            continue
+        key = (item.club.id, item.live_event)
+        group = groups.get(key)
+        if group is None:
+            group = LiveEventRead(title=item.live_event, dates=None, club=item.club, items=[])
+            groups[key] = group
+        group.dates = group.dates or item.live_dates
+        group.items.append(item)
+    return sorted(groups.values(), key=lambda group: group.items[0].starts_at)
+
+
+async def list_satellites(
+    session: AsyncSession, tournament_id: UUID, *, now: datetime
+) -> list[TournamentRead]:
+    """Сателлиты на турнир для карточки «попасть дешевле» — мелкие тоже, здесь они к месту.
+
+    Цель сателлита сравнивается и с именем с афиши, и с именем из лобби, без учёта регистра.
+    """
+    target = await session.scalar(select(Tournament).where(Tournament.id == tournament_id))
+    if target is None or target.starts_at <= now:
+        return []
+    names = {name.strip().lower() for name in (target.name, target.lobby_name) if name}
+    items = await list_tournaments(
+        session,
+        starts_from=now,
+        starts_to=target.starts_at,
+        include_minor_satellites=True,
+    )
+    return [
+        item
+        for item in items
+        if item.club.id == target.club_id
+        and item.satellite_target is not None
+        and item.satellite_target.strip().lower() in names
+    ]

@@ -13,13 +13,20 @@ from app.models.auth import User
 from app.models.enums import PokerApp
 from app.schemas.clubs import ClubBrief
 from app.schemas.tournaments import (
+    LiveEventRead,
     TournamentRead,
     TournamentReminderRead,
     TournamentRemindersUpdate,
 )
 from app.services import clubs as clubs_service
 from app.services.tournaments import reminders as reminders_service
-from app.services.tournaments.queries import DayPeriod, list_highlights, list_tournaments
+from app.services.tournaments.queries import (
+    DayPeriod,
+    list_highlights,
+    list_live_events,
+    list_satellites,
+    list_tournaments,
+)
 
 router = APIRouter(tags=["clubs"])
 
@@ -45,6 +52,20 @@ async def get_highlights(
     return await list_highlights(
         db, starts_from=start, starts_to=start + timedelta(days=days), per_day=per_day
     )
+
+
+@router.get("/tournaments/live", response_model=list[LiveEventRead])
+async def get_live_events(db: Annotated[AsyncSession, Depends(get_db)]) -> list[LiveEventRead]:
+    """Путь в живые серии: STEP-сателлиты и турниры серии, отдельно от онлайн-расписания."""
+    return await list_live_events(db, now=datetime.now(UTC))
+
+
+@router.get("/tournaments/{tournament_id}/satellites", response_model=list[TournamentRead])
+async def get_satellites(
+    tournament_id: UUID, db: Annotated[AsyncSession, Depends(get_db)]
+) -> list[TournamentRead]:
+    """Сателлиты на турнир — для карточки турнира: «попасть дешевле»."""
+    return await list_satellites(db, tournament_id, now=datetime.now(UTC))
 
 
 @router.get("/tournaments", response_model=list[TournamentRead])

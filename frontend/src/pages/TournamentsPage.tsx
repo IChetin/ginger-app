@@ -16,6 +16,7 @@ import {
   LateRegCountdown,
   TournamentCard,
 } from "@/features/tournaments/components/TournamentCard";
+import { LiveEvents } from "@/features/tournaments/components/LiveEvents";
 import { TournamentSheet } from "@/features/tournaments/components/TournamentSheet";
 import {
   PRICE_TIERS,
@@ -437,6 +438,8 @@ export function TournamentsPage() {
           ))}
         </div>
       </header>
+
+      <LiveEvents onSelect={setSelected} />
 
       {query.isPending ? (
         <div className="space-y-1.5 px-3 pt-3" data-testid="tournaments-loading">

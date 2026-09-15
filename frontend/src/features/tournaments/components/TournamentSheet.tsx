@@ -4,6 +4,10 @@ import { Link } from "react-router-dom";
 
 import type { ReminderKind, Tournament } from "@/api/types/tournaments";
 import { BellIcon, ReminderHints } from "@/features/tournaments/components/ReminderBell";
+import {
+  LivePlate,
+  TournamentSatellites,
+} from "@/features/tournaments/components/TournamentSatellites";
 import { useNow } from "@/features/tournaments/hooks";
 import { useReminderToggle } from "@/features/tournaments/useReminderToggle";
 import { cn } from "@/lib/utils";
@@ -224,6 +228,7 @@ function SheetBody({
         ))}
       </div>
 
+      <LivePlate tournament={tournament} />
       <EarlyBird tournament={tournament} />
 
       <div className="mt-3 grid grid-cols-2 gap-1.5">
@@ -266,6 +271,7 @@ function SheetBody({
         <Param label="Заметка" value={tournament.notes} />
       </dl>
 
+      <TournamentSatellites tournament={tournament} />
       <SheetReminders tournament={tournament} />
 
       {onOpenApp ? (

@@ -43,6 +43,10 @@ export interface Tournament {
   /** Бонус Early Bird: «+50% фишек» — тем, кто сел до конца early_bird_levels уровней. */
   early_bird_bonus: string | null;
   early_bird_levels: number | null;
+  /** Путь в живую серию (X-Poker): событие, даты, шаг; шаг пустой — сам турнир серии. */
+  live_event?: string | null;
+  live_dates?: string | null;
+  live_step?: number | null;
   has_jackpot: boolean;
   notes: string | null;
   club: TournamentClub;
@@ -58,6 +62,14 @@ export interface Tournament {
 }
 
 /** Колокольчик: за 5 минут до старта или до конца поздней регистрации (ответ 11.7). */
+/** Живая серия: шаги пути и сам турнир серии, отдельно от онлайн-расписания. */
+export interface LiveEvent {
+  title: string;
+  dates: string | null;
+  club: TournamentClub;
+  items: Tournament[];
+}
+
 export type ReminderKind = "start" | "late_reg";
 
 export interface TournamentReminder {

@@ -55,6 +55,9 @@ COPIED_FIELDS: tuple[str, ...] = (
     "early_bird_bonus",
     "early_bird_levels",
     "has_jackpot",
+    "live_event",
+    "live_dates",
+    "live_step",
     "is_promoted",
     "notes",
 )

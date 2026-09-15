@@ -32,6 +32,9 @@
     early_bird_bonus  бонус Early Bird: «+50% фишек»
     early_bird_levels до конца какого уровня действует бонус: 1
     jackpot           да — турнир участвует в джекпоте
+    live_event        живая серия, куда ведёт турнир: «APC45 Main Event» — турнир уходит в LIVE
+    live_dates        даты серии словами: «8–11 октября»
+    live_step         номер шага пути (1, 2); пусто — сам турнир серии
     notes     заметка
 """
 
@@ -261,6 +264,9 @@ def parse_manual_csv(data: bytes, *, today: date | None = None) -> TemplateParse
             early_bird_bonus=_text(row.get("early_bird_bonus", "")),
             early_bird_levels=_int(row.get("early_bird_levels", "")),
             has_jackpot=_flag(row.get("jackpot", "")),
+            live_event=_text(row.get("live_event", "")),
+            live_dates=_text(row.get("live_dates", "")),
+            live_step=_int(row.get("live_step", "")),
             late_reg_levels=late_reg_levels,
             level_minutes=level_minutes,
             ticket_value=_decimal(row.get("ticket", "")),
