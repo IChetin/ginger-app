@@ -1,0 +1,350 @@
+<title>Сверка лобби Ginger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #f3f5f3;
+    --surface: #ffffff;
+    --ink: #17211d;
+    --muted: #5b6a64;
+    --line: #d7ded9;
+    --line-soft: #e8ece9;
+    --felt: #1d6a4d;
+    --felt-soft: #e1eee7;
+    --warn: #9a6512;
+    --warn-soft: #f7ecd6;
+    --bad: #a93a3a;
+    --bad-soft: #f6e1e0;
+    --skip: #6b7571;
+    --skip-soft: #eceeed;
+    --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+    --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0f1513;
+      --surface: #151d1a;
+      --ink: #e2e9e5;
+      --muted: #93a39c;
+      --line: #2a3632;
+      --line-soft: #1f2926;
+      --felt: #58b88f;
+      --felt-soft: #173427;
+      --warn: #e0a94e;
+      --warn-soft: #33280f;
+      --bad: #e08080;
+      --bad-soft: #3a1c1c;
+      --skip: #9aa5a0;
+      --skip-soft: #222b28;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0f1513;
+    --surface: #151d1a;
+    --ink: #e2e9e5;
+    --muted: #93a39c;
+    --line: #2a3632;
+    --line-soft: #1f2926;
+    --felt: #58b88f;
+    --felt-soft: #173427;
+    --warn: #e0a94e;
+    --warn-soft: #33280f;
+    --bad: #e08080;
+    --bad-soft: #3a1c1c;
+    --skip: #9aa5a0;
+    --skip-soft: #222b28;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .page {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 28px 56px;
+    display: grid;
+    gap: 28px;
+  }
+  header.top { display: grid; gap: 10px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(30px, 5vw, 44px);
+    line-height: 1;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .lede { margin: 0; color: var(--muted); max-width: 68ch; }
+
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+  }
+  .club-sum {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: grid;
+    gap: 10px;
+  }
+  .club-sum h2 {
+    margin: 0;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 22px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .club-sum h2 small { font-family: var(--mono); font-size: 12px; font-weight: 400; color: var(--muted); }
+  .counts { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); }
+  .counts b { font-family: var(--mono); font-weight: 500; color: var(--ink); font-size: 15px; }
+
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--surface); }
+  .seg button {
+    font: inherit;
+    font-size: 13px;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    padding: 5px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: var(--felt); color: var(--surface); }
+  .seg button:focus-visible, .row-note:focus-visible { outline: 2px solid var(--felt); outline-offset: 2px; }
+  .hint { font-size: 13px; color: var(--muted); }
+
+  section.club { display: grid; gap: 10px; }
+  section.club h3 {
+    margin: 0;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 24px;
+  }
+  section.club p.meta { margin: 0; font-size: 13px; color: var(--muted); }
+  .scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; min-width: 1040px; }
+  th, td { padding: 8px 10px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line-soft); }
+  thead th {
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.num, td.time { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.num { text-align: right; }
+  th.num { text-align: right; }
+  td.name { font-weight: 600; min-width: 170px; }
+  td.name .raw { display: block; font-weight: 400; font-size: 12px; color: var(--muted); font-family: var(--mono); }
+  td .sub { display: block; font-size: 12px; color: var(--muted); }
+  tr.is-skip td { color: var(--skip); }
+  tr.is-skip td.name { font-weight: 500; }
+  .empty { color: var(--muted); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip {
+    font-size: 11.5px;
+    line-height: 1.2;
+    padding: 3px 7px;
+    border-radius: 5px;
+    white-space: nowrap;
+  }
+  .chip.ok { background: var(--felt-soft); color: var(--felt); }
+  .chip.warn { background: var(--warn-soft); color: var(--warn); }
+  .chip.bad { background: var(--bad-soft); color: var(--bad); }
+  .chip.skip { background: var(--skip-soft); color: var(--skip); }
+
+  footer.notes { display: grid; gap: 6px; font-size: 13px; color: var(--muted); max-width: 80ch; }
+  footer.notes h4 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 18px; color: var(--ink); }
+  footer.notes ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+
+  @media (max-width: 480px) {
+    .page { padding-inline: 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+
+<div class="page">
+  <header class="top">
+    <div class="eyebrow" id="stamp"></div>
+    <h1>Что сборщик увидел в лобби</h1>
+    <p class="lede">Турниры из X-Poker (Ginger+) и PPPoker (Ginger), распознанные с экрана. Проверь названия, время, бай-ины и гарантии — на сервер ничего не отправлялось. Суммы — в деньгах клуба: у Ginger+ 1 фишка = 100 ₽, у Ginger 1 фишка = $1.</p>
+  </header>
+
+  <div class="summary" id="summary"></div>
+
+  <div class="toolbar">
+    <div class="seg" role="group" aria-label="Какие строки показать">
+      <button type="button" id="filter-all" aria-pressed="true">Все</button>
+      <button type="button" id="filter-check" aria-pressed="false">Требуют проверки</button>
+    </div>
+    <span class="hint" id="filter-hint"></span>
+  </div>
+
+  <div id="clubs"></div>
+
+  <footer class="notes">
+    <h4>Как читать метки</h4>
+    <ul>
+      <li><span class="chip ok">уйдёт на сервер</span> — турнир с временем старта, попадёт в сверку с сеткой.</li>
+      <li><span class="chip skip">уже идёт</span> — к моменту прохода начался; не отправляется, он уже есть в сетке.</li>
+      <li><span class="chip warn">нет старта</span> — в ленте PPPoker не успели прочитать время; не отправляется.</li>
+      <li><span class="chip warn">отсечено: …</span> — значение выглядело как ошибка распознавания и не уйдёт на сервер.</li>
+      <li><span class="chip bad">проверить имя</span> — в начале имени похоже прилипла иконка («PSHR…», «OFREEROLL»).</li>
+    </ul>
+  </footer>
+</div>
+
+<script type="application/json" id="report-data">__DATA__</script>
+<script>
+(function () {
+  var data = JSON.parse(document.getElementById('report-data').textContent);
+  var onlyCheck = false;
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined && text !== null) node.textContent = text;
+    return node;
+  }
+  function chip(kind, text) { return el('span', 'chip ' + kind, text); }
+  function needsCheck(row) {
+    return row.flags.some(function (f) { return f.kind === 'warn' || f.kind === 'bad'; });
+  }
+
+  document.getElementById('stamp').textContent = data.stamp;
+
+  var summary = document.getElementById('summary');
+  data.clubs.forEach(function (club) {
+    var box = el('div', 'club-sum');
+    var h = el('h2', null, club.title);
+    h.appendChild(el('small', null, club.app));
+    box.appendChild(h);
+    var counts = el('div', 'counts');
+    [['уйдёт на сервер', club.counts.send], ['нет старта', club.counts.nostart], ['уже идёт', club.counts.running], ['требуют проверки', club.counts.check]]
+      .forEach(function (pair) {
+        var span = el('span');
+        span.appendChild(el('b', null, String(pair[1])));
+        span.appendChild(document.createTextNode(' ' + pair[0]));
+        counts.appendChild(span);
+      });
+    box.appendChild(counts);
+    summary.appendChild(box);
+  });
+
+  var columns = [
+    ['time', 'Старт, МСК', 'time'],
+    ['name', 'Турнир', 'name'],
+    ['buyin', 'Бай-ин', 'num'],
+    ['guarantee', 'Гарантия', 'num'],
+    ['game', 'Игра / баунти', ''],
+    ['stack', 'Стек', 'num'],
+    ['levels', 'Уровни, мин', 'num'],
+    ['late', 'Поздняя рег.', 'num'],
+    ['extras', 'Ребай / аддон / EB', ''],
+    ['flags', 'Статус', '']
+  ];
+
+  function render() {
+    var host = document.getElementById('clubs');
+    host.textContent = '';
+    var shown = 0, total = 0;
+    data.clubs.forEach(function (club) {
+      var section = el('section', 'club');
+      section.appendChild(el('h3', null, club.title + ' · ' + club.app));
+      section.appendChild(el('p', 'meta', club.meta));
+      var scroll = el('div', 'scroll');
+      scroll.tabIndex = 0;
+      var table = el('table');
+      var thead = el('thead');
+      var tr = el('tr');
+      columns.forEach(function (c) { tr.appendChild(el('th', c[2] === 'num' ? 'num' : '', c[1])); });
+      thead.appendChild(tr);
+      table.appendChild(thead);
+      var tbody = el('tbody');
+      club.rows.forEach(function (row) {
+        total++;
+        if (onlyCheck && !needsCheck(row)) return;
+        shown++;
+        var r = el('tr', row.skip ? 'is-skip' : '');
+        columns.forEach(function (c) {
+          var td = el('td', c[2]);
+          var key = c[0];
+          if (key === 'flags') {
+            var box = el('div', 'chips');
+            row.flags.forEach(function (f) { box.appendChild(chip(f.kind, f.text)); });
+            td.appendChild(box);
+          } else if (key === 'name') {
+            td.textContent = row.name || '—';
+            if (row.rawName && row.rawName !== row.name) td.appendChild(el('span', 'raw', row.rawName));
+          } else if (key === 'buyin' || key === 'guarantee') {
+            var v = row[key];
+            if (!v) { td.appendChild(el('span', 'empty', '—')); }
+            else {
+              td.appendChild(document.createTextNode(v.money));
+              if (v.chips) td.appendChild(el('span', 'sub', v.chips));
+            }
+          } else if (key === 'game') {
+            td.textContent = row.game || '—';
+            if (row.bounty) td.appendChild(el('span', 'sub', row.bounty));
+          } else if (key === 'extras') {
+            if (!row.extras.length) td.appendChild(el('span', 'empty', '—'));
+            row.extras.forEach(function (x) { td.appendChild(el('span', 'sub', x)); });
+          } else {
+            var value = row[key];
+            if (value === null || value === undefined || value === '') td.appendChild(el('span', 'empty', '—'));
+            else td.textContent = value;
+          }
+          r.appendChild(td);
+        });
+        tbody.appendChild(r);
+      });
+      table.appendChild(tbody);
+      scroll.appendChild(table);
+      section.appendChild(scroll);
+      host.appendChild(section);
+    });
+    document.getElementById('filter-hint').textContent = onlyCheck ? ('Показано ' + shown + ' из ' + total) : ('Всего строк: ' + total);
+  }
+
+  function setFilter(check) {
+    onlyCheck = check;
+    document.getElementById('filter-all').setAttribute('aria-pressed', String(!check));
+    document.getElementById('filter-check').setAttribute('aria-pressed', String(check));
+    try { localStorage.setItem('lobby-report-filter', check ? 'check' : 'all'); } catch (e) {}
+    render();
+  }
+  document.getElementById('filter-all').addEventListener('click', function () { setFilter(false); });
+  document.getElementById('filter-check').addEventListener('click', function () { setFilter(true); });
+  var saved = null;
+  try { saved = localStorage.getItem('lobby-report-filter'); } catch (e) {}
+  setFilter(saved === 'check');
+})();
+</script>

@@ -26,6 +26,21 @@ $script:PpWidth = 620
 $script:PpHeight = 1110
 $script:PpListTop = 400
 $script:PpListBottom = 1060
+# Окно PPPoker — во весь экран, приложение нарисовано внутри «окном в окне» и может сдвигаться
+# (15.09 заголовок был на y=48, 16.09 — на y=217). Все снимки и перетаскивания — от этой точки.
+$script:PpOrigin = @{ X = 0; Y = 0 }
+$script:PpTitleAt = @{ X = 62; Y = 48 }     # где заголовок «PPPoker-v228» внутри колонки приложения
+
+function Update-PpOrigin {
+    $raw = Join-Path $env:TEMP 'desk\pp-origin.png'
+    New-Item -ItemType Directory -Force (Split-Path $raw) | Out-Null
+    Save-WindowShot -Match $script:PpMatch -Path $raw | Out-Null
+    $title = Get-OcrLines -Path $raw -Lang en-US -Scale 1 | Where-Object { $_.Text -match 'pppoker' } | Sort-Object Y | Select-Object -First 1
+    [System.IO.File]::Delete($raw)
+    if (-not $title) { return $false }
+    $script:PpOrigin = @{ X = [math]::Max(0, $title.X - $script:PpTitleAt.X); Y = [math]::Max(0, $title.Y - $script:PpTitleAt.Y) }
+    $true
+}
 
 function Save-PpShot {
     param([Parameter(Mandatory)][string]$Path)
@@ -34,11 +49,27 @@ function Save-PpShot {
     $image = [System.Drawing.Image]::FromFile($raw)
     $bitmap = New-Object System.Drawing.Bitmap $script:PpWidth, $script:PpHeight
     $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
-    $rect = New-Object System.Drawing.Rectangle 0, 0, $script:PpWidth, $script:PpHeight
-    $graphics.DrawImage($image, $rect, $rect, [System.Drawing.GraphicsUnit]::Pixel)
+    $target = New-Object System.Drawing.Rectangle 0, 0, $script:PpWidth, $script:PpHeight
+    $source = New-Object System.Drawing.Rectangle $script:PpOrigin.X, $script:PpOrigin.Y, $script:PpWidth, $script:PpHeight
+    $graphics.DrawImage($image, $target, $source, [System.Drawing.GraphicsUnit]::Pixel)
     $graphics.Dispose(); $image.Dispose()
     $bitmap.Save($Path, [System.Drawing.Imaging.ImageFormat]::Png); $bitmap.Dispose()
     [System.IO.File]::Delete($raw)
+}
+
+function Invoke-PpDrag {
+    # Координаты — внутри колонки приложения; PPPoker листается только настоящим курсором.
+    param([int]$X, [int]$Y, [int]$ToX, [int]$ToY, [int]$Steps = 20)
+    Invoke-WindowDrag -Match $script:PpMatch -X ($X + $script:PpOrigin.X) -Y ($Y + $script:PpOrigin.Y) `
+        -ToX ($ToX + $script:PpOrigin.X) -ToY ($ToY + $script:PpOrigin.Y) -Steps $Steps
+}
+
+function Test-PpClubLobby {
+    # Лобби клуба Ginger: на экране его ID. Заодно обновляет положение приложения.
+    if (-not (Update-PpOrigin)) { return $false }
+    $probe = Join-Path $env:TEMP 'desk\pp-lobby.png'
+    Save-PpShot -Path $probe
+    [bool](Get-OcrLines -Path $probe -Lang en-US -Scale 2 | Where-Object { $_.Text -match '1049607' })
 }
 
 function ConvertTo-PpNumber([string]$Text) {
@@ -142,11 +173,12 @@ function Invoke-PPokerMttPass {
     param([int]$MaxPages = 30, [int]$ShotsPerPage = 5, [switch]$FromTop)
     $dir = Join-Path $env:TEMP 'desk\pp'
     New-Item -ItemType Directory -Force $dir | Out-Null
+    if (-not (Test-PpClubLobby)) { Write-Warning 'PPPoker is not in the Ginger club lobby - skip'; return @() }
     if ($FromTop) {
         # PPPoker ignores message drags and wheel (test 15.09) - scroll with the real cursor; pull until the top card stops changing.
         $previous = $null; $same = 0
         for ($i = 0; $i -lt 60 -and $same -lt 2; $i++) {
-            Invoke-WindowDrag -Match $script:PpMatch -X 330 -Y 480 -ToX 330 -ToY 1050 -Steps 20; Start-Sleep -Milliseconds 700
+            Invoke-PpDrag -X 330 -Y 480 -ToX 330 -ToY 1050 -Steps 20; Start-Sleep -Milliseconds 700
             $probe = Join-Path $dir 'top-probe.png'
             Save-PpShot -Path $probe
             $top = (Read-PpListCards $probe | Select-Object -First 1).name
@@ -167,7 +199,8 @@ function Invoke-PPokerMttPass {
         }
         if ($new -eq 0) { $idle++ } else { $idle = 0 }
         if ($idle -ge 2) { break }
-        Invoke-WindowDrag -Match $script:PpMatch -X 330 -Y 1000 -ToX 330 -ToY 560 -Steps 25
+        if (-not (Update-PpOrigin)) { Write-Warning 'PPPoker window lost - stop'; break }
+        Invoke-PpDrag -X 330 -Y 1000 -ToX 330 -ToY 560 -Steps 25
         Start-Sleep -Seconds 2
     }
     $items = @($cards.Values | Sort-Object { if ($_.starts_at) { $_.starts_at } else { 'z' } }, name)
