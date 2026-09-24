@@ -27,3 +27,10 @@ class PushSubscriptionRead(BaseModel):
     device_label: str | None
     created_at: datetime
     last_success_at: datetime | None
+
+
+class PushTestResult(BaseModel):
+    """Куда ушла проверка: сколько устройств подписано на пуши и подключён ли Telegram."""
+
+    devices: int
+    telegram: bool

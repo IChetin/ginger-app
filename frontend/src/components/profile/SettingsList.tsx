@@ -67,6 +67,8 @@ export function SettingsList({
   onScheduleView,
   onPassword,
   onPushChange,
+  onPushTest,
+  pushTesting = false,
   supportUrl,
   staffEntry = null,
 }: {
@@ -82,6 +84,9 @@ export function SettingsList({
   onScheduleView: () => void;
   onPassword: () => void;
   onPushChange: (enabled: boolean) => void;
+  /** Проверка уведомлений: показывается, когда пуши на устройстве включены. */
+  onPushTest?: () => void;
+  pushTesting?: boolean;
 }) {
   return (
     <>
@@ -122,6 +127,26 @@ export function SettingsList({
             <span className="bg-knob shadow-knob pointer-events-none absolute top-[3px] left-[3px] h-[22px] w-[22px] rounded-full transition-transform peer-checked:translate-x-5" />
           </span>
         </label>
+        {pushEnabled && onPushTest ? (
+          <button
+            type="button"
+            className={rowClass}
+            disabled={pushTesting}
+            onClick={onPushTest}
+            data-testid="push-test"
+          >
+            <Icon name="mail" />
+            <span className="text-ink min-w-0 flex-1 text-left text-[14px] leading-[1.35] font-semibold">
+              Проверить уведомления
+              <span className="text-ink-3 mt-px block text-[12px] font-normal">
+                Пришлём тестовое — сразу увидите, доходят ли
+              </span>
+            </span>
+            <span className="text-gold text-[13px] font-bold">
+              {pushTesting ? "Отправляем…" : "Проверить"}
+            </span>
+          </button>
+        ) : null}
       </Group>
 
       <Group title="Оформление">

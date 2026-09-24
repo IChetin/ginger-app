@@ -85,3 +85,47 @@ async def test_push_unavailable_without_key(
     response = await client.get("/api/v1/push/vapid-public-key")
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "push_unavailable"
+
+
+async def test_push_test_goes_through_the_queue(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """«Проверить» в профиле: тестовый пуш встаёт в ту же очередь, что заявки и напоминания."""
+    from app.models.auth import User
+    from app.models.enums import NotificationChannel, NotificationType
+    from app.models.notifications import NotificationQueue
+
+    await seed_reference_data(db_session)
+    await seed_dev_users(db_session)
+    settings = get_settings()
+    await login_as(client, settings.seed_admin_email)
+
+    # Без подписки проверять нечего — честно говорим, что включить.
+    empty = await client.post("/api/v1/push/test")
+    assert empty.status_code == 422
+    assert empty.json()["error"]["code"] == "push_not_subscribed"
+
+    user = await db_session.scalar(select(User).where(User.email == settings.seed_admin_email))
+    assert user is not None
+    db_session.add(
+        PushSubscription(
+            user_id=user.id,
+            endpoint="https://fcm.googleapis.com/fcm/send/test",
+            p256dh="p256dh-key",
+            auth="auth-key",
+        )
+    )
+    await db_session.flush()
+
+    sent = await client.post("/api/v1/push/test")
+    assert sent.status_code == 200, sent.text
+    assert sent.json() == {"devices": 1, "telegram": False}
+    queued = list(
+        await db_session.scalars(
+            select(NotificationQueue).where(NotificationQueue.user_id == user.id)
+        )
+    )
+    assert [(item.type, item.channel) for item in queued] == [
+        (NotificationType.BROADCAST, NotificationChannel.PUSH)
+    ]
+    assert queued[0].payload["title"] == "Проверка уведомлений"

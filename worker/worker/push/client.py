@@ -48,6 +48,9 @@ def send_web_push(
             vapid_private_key=settings.vapid_private_key,
             vapid_claims={"sub": settings.vapid_subject},
             ttl=60 * 60,
+            # Без высокой срочности Android придерживает пуш, пока телефон спит (Doze), —
+            # напоминание «через 5 минут старт» пришло бы после старта.
+            headers={"Urgency": "high"},
         )
         status = getattr(response, "status_code", 201)
         if status and int(status) >= 400:

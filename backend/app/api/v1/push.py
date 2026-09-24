@@ -9,6 +9,7 @@ from app.models.auth import User
 from app.schemas.push import (
     PushSubscribeBody,
     PushSubscriptionRead,
+    PushTestResult,
     PushUnsubscribeBody,
     VapidPublicKeyResponse,
 )
@@ -44,3 +45,16 @@ async def unsubscribe(
 ) -> Response:
     await push_service.delete_subscription(db, user, str(body.endpoint))
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/test", response_model=PushTestResult)
+async def send_test(
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> PushTestResult:
+    """Проверка уведомлений из профиля: тестовый пуш на все устройства и в Telegram.
+
+    Уходит через обычную очередь — значит, проверяется весь путь, которым идут заявки
+    и напоминания, а не обходной.
+    """
+    return await push_service.send_test(db, user)

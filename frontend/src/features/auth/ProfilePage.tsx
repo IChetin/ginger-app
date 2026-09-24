@@ -21,7 +21,9 @@ import {
   useSetPassword,
   useUpdateProfile,
 } from "@/features/auth/hooks";
+import { sendTestPush, showLocalTestNotification } from "@/features/push/api";
 import { usePushSubscription, useSubscribePush, useUnsubscribePush } from "@/features/push/hooks";
+import { ApiError } from "@/api/client";
 import { pushErrorMessage } from "@/features/push/lib/pushErrorMessage";
 import { TelegramBlock } from "@/features/telegram/TelegramBlock";
 import packageJson from "../../../package.json";
@@ -46,6 +48,7 @@ export function ProfilePage() {
   const [scheduleViewOpen, setScheduleViewOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [pushTesting, setPushTesting] = useState(false);
 
   if (!user) {
     return null;
@@ -53,9 +56,36 @@ export function ProfilePage() {
 
   const pushPending = subscribePush.isPending || unsubscribePush.isPending;
 
-  const showToast = (message: string) => {
+  const showToast = (message: string, duration = 4000) => {
     setToast(message);
-    window.setTimeout(() => setToast(null), 4000);
+    window.setTimeout(() => setToast(null), duration);
+  };
+
+  // Проверка уведомлений (прогон 24.09): сначала уведомление с самого телефона — оно
+  // отделяет «телефон не показывает» от «сервер не доставил», потом настоящее, из очереди.
+  const testPush = async () => {
+    setPushTesting(true);
+    try {
+      let local = true;
+      try {
+        await showLocalTestNotification();
+      } catch {
+        local = false;
+      }
+      const result = await sendTestPush();
+      showToast(
+        local
+          ? "Первое уведомление — с телефона. Второе придёт с сервера за 15–30 секунд" +
+              (result.telegram ? " и продублируется в Telegram" : "") +
+              ". Первое есть, а второго нет — напишите менеджеру."
+          : "Телефон не показывает уведомления браузера: Настройки → Приложения → Chrome → Уведомления — включите все, в том числе «Сайты».",
+        10_000,
+      );
+    } catch (error) {
+      showToast(error instanceof ApiError ? error.message : "Не удалось отправить проверку");
+    } finally {
+      setPushTesting(false);
+    }
   };
 
   return (
@@ -91,6 +121,8 @@ export function ProfilePage() {
           changePassword.reset();
           setPasswordOpen(true);
         }}
+        pushTesting={pushTesting}
+        onPushTest={() => void testPush()}
         onPushChange={(enabled) => {
           if (enabled) {
             void subscribePush.mutateAsync().catch((error: unknown) => {

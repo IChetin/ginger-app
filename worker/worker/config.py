@@ -22,7 +22,8 @@ class Settings(BaseSettings):
     # Куда ведёт кнопка «Открыть в Ginger» в сообщении бота.
     frontend_base_url: str = "https://lisa52.com"
     notification_batch_size: int = Field(default=50, ge=1, le=500)
-    notification_job_interval_seconds: int = Field(default=60, ge=10, le=3600)
+    # Очередь уведомлений: игрок ждёт ответа по заявке — полминуты тишины уже много.
+    notification_job_interval_seconds: int = Field(default=15, ge=10, le=3600)
 
     # CBR FX daily job (cron in UTC).
     fx_job_cron: str = "15 1 * * *"

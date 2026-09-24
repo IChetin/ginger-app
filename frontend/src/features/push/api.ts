@@ -1,4 +1,10 @@
-import { ApiError, fetchVapidPublicKey, subscribePush, unsubscribePush } from "@/api/client";
+import {
+  ApiError,
+  apiPost,
+  fetchVapidPublicKey,
+  subscribePush,
+  unsubscribePush,
+} from "@/api/client";
 import type { PushSubscribePayload } from "@/api/types/push";
 import { currentPushEnv, detectPushBlocker, type PushBlocker } from "@/features/push/lib/pushEnv";
 
@@ -170,4 +176,31 @@ export async function unsubscribeFromPushNotifications(): Promise<void> {
     }
   }
   await subscription.unsubscribe();
+}
+
+export interface PushTestResult {
+  devices: number;
+  telegram: boolean;
+}
+
+/** Тестовое уведомление самому себе — через ту же очередь, что заявки и напоминания. */
+export function sendTestPush(): Promise<PushTestResult> {
+  return apiPost<PushTestResult>("/api/v1/push/test");
+}
+
+/**
+ * Уведомление прямо с телефона, без сервера: если его не видно — дело в настройках
+ * телефона или браузера, а не в доставке.
+ */
+export async function showLocalTestNotification(): Promise<void> {
+  const registration = await getServiceWorkerRegistration();
+  if (!registration) {
+    throw new Error("service worker unavailable");
+  }
+  await registration.showNotification("Ginger", {
+    body: "Так выглядят уведомления на этом телефоне",
+    icon: "/icons/icon-192.png",
+    tag: "ginger-local-test",
+    lang: "ru",
+  });
 }

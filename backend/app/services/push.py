@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
 from app.core.exceptions import AppError
 from app.models.auth import PushSubscription, User
-from app.schemas.push import PushSubscribeBody
+from app.models.enums import NotificationType
+from app.schemas.push import PushSubscribeBody, PushTestResult
+from app.services.push_notify import enqueue_push, telegram_linked
 
 
 class PushUnavailableError(AppError):
@@ -71,3 +73,29 @@ async def delete_subscription(
         return
     await session.delete(row)
     await session.flush()
+
+
+async def send_test(session: AsyncSession, user: User) -> PushTestResult:
+    """Тестовое уведомление самому себе — во все каналы, как настоящее."""
+    devices = await session.scalar(
+        select(func.count())
+        .select_from(PushSubscription)
+        .where(PushSubscription.user_id == user.id)
+    )
+    telegram = await telegram_linked(session, user.id)
+    if not devices and not telegram:
+        raise AppError(
+            "push_not_subscribed",
+            "Уведомления на этом устройстве не включены — включите переключатель выше",
+            422,
+        )
+    await enqueue_push(
+        session,
+        user_id=user.id,
+        type=NotificationType.BROADCAST,
+        title="Проверка уведомлений",
+        body="Если вы это видите — уведомления Ginger доходят до телефона.",
+        url="/profile",
+        skip_if_in_app=False,
+    )
+    return PushTestResult(devices=int(devices or 0), telegram=telegram)
