@@ -104,8 +104,12 @@ self.addEventListener("push", (event) => {
         }
       }
 
+      // Иконка с лисой: без неё Android рисует значок браузера, и пуш не отличить
+      // от служебных уведомлений Chrome (прогон 24.09).
       await self.registration.showNotification(payload.title ?? "Ginger", {
         body: payload.body,
+        icon: "/icons/icon-192.png",
+        lang: "ru",
         data: { url: payload.url ?? "/" },
       });
     })(),
