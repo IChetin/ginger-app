@@ -7,7 +7,7 @@ def test_message_escapes_html_and_adds_https_button() -> None:
         {"title": "Фишки <начислены>", "body": "Ginger & Co", "url": "/chips/1"},
         "https://lisa52.com",
     )
-    assert message["text"] == "<b>Фишки &lt;начислены&gt;</b>\nGinger &amp; Co"
+    assert message["text"] == "<b>Фишки &lt;начислены&gt;</b>\n\n👉 Ginger &amp; Co"
     assert message["parse_mode"] == "HTML"
     assert message["reply_markup"] == {
         "inline_keyboard": [[{"text": "Открыть в Ginger", "url": "https://lisa52.com/chips/1"}]]

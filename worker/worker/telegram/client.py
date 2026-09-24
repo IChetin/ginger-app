@@ -18,14 +18,14 @@ API_BASE = "https://api.telegram.org"
 
 
 def build_message(payload: dict[str, Any], base_url: str) -> dict[str, Any]:
-    """Сообщение бота: заголовок жирным, текст, кнопка «Открыть в Ginger».
+    """Сообщение бота: заголовок жирным, пустая строка, текст со стрелкой, кнопка (Иван 24.09).
 
     Кнопка-ссылка в Telegram принимает только https — на локальном стенде её нет.
     """
     title = escape(str(payload.get("title") or "Ginger"))
     body = escape(str(payload.get("body") or ""))
     message: dict[str, Any] = {
-        "text": f"<b>{title}</b>\n{body}" if body else f"<b>{title}</b>",
+        "text": f"<b>{title}</b>\n\n👉 {body}" if body else f"<b>{title}</b>",
         "parse_mode": "HTML",
         "disable_web_page_preview": True,
     }
