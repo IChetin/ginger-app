@@ -231,11 +231,14 @@ export function FeedSections({ now }: { now: Date }) {
   return (
     <div data-testid="feed">
       {posts.length > 0 ? (
-        <div className="mt-5 flex flex-col gap-1.5" data-testid="feed-posts">
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-        </div>
+        <>
+          <SectionTitle>Новости</SectionTitle>
+          <div className="flex flex-col gap-1.5" data-testid="feed-posts">
+            {posts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))}
+          </div>
+        </>
       ) : null}
 
       {main ? (
