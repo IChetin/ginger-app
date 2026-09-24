@@ -54,6 +54,8 @@ class NotificationType(str, Enum):
     # Ginger APP: самостоятельная регистрация — менеджеру о новичке, игроку об открытии доступа.
     NEW_PLAYER = "new_player"
     PLAYER_APPROVED = "player_approved"
+    # Менеджеру: игрок отменил заявку — фишки по ней не отправлять.
+    CHIP_REQUEST_CANCELLED = "chip_request_cancelled"
 
 
 class NotificationChannel(str, Enum):
@@ -161,6 +163,8 @@ class ChipRequestStatus(str, Enum):
     COMPLETED = "completed"
     REJECTED = "rejected"
     EXPIRED = "expired"
+    # Игрок отменил сам — ошибся клубом или суммой (решение Ивана 24.09).
+    CANCELLED = "cancelled"
 
 
 class CollectorRunKind(str, Enum):

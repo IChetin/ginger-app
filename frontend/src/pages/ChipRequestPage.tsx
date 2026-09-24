@@ -4,8 +4,9 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ApiError } from "@/api/client";
 import type { ChipRequest } from "@/api/types/chips";
 import { screenshotUrl } from "@/features/chips/api";
+import { useConfirm } from "@/components/ui/ConfirmDialog";
 import { StatusBadge } from "@/features/chips/components/RequestRow";
-import { useChipRequest, useUploadScreenshot } from "@/features/chips/hooks";
+import { useCancelChipRequest, useChipRequest, useUploadScreenshot } from "@/features/chips/hooks";
 import { compressImage } from "@/features/chips/lib/compressImage";
 import {
   findPhone,
@@ -126,6 +127,84 @@ function Waiting({
       </div>
       {children}
     </Box>
+  );
+}
+
+const CANCELLABLE: ChipRequest["status"][] = ["sent", "accepted", "awaiting_payment"];
+
+/**
+ * Изменить или отменить заявку (Иван, 24.09): ошибся клубом или суммой — исправляется в
+ * любой момент, пока оплата не отправлена. «Изменить» — отмена плюс новая заявка с теми же
+ * клубами и суммами, открытая для правки. После скриншота оплаты — только через менеджера.
+ */
+function ChangeOrCancel({ request, repeatUrl }: { request: ChipRequest; repeatUrl: string }) {
+  const navigate = useNavigate();
+  const confirm = useConfirm();
+  const cancel = useCancelChipRequest(request.id);
+
+  if (request.status === "paid") {
+    return (
+      <p className="text-ink-3 mt-2 text-[12.5px]" data-testid="cancel-via-manager">
+        Оплата уже отправлена — изменить или отменить заявку можно через менеджера: напишите ему
+        ниже, он вернёт деньги.
+      </p>
+    );
+  }
+  if (!CANCELLABLE.includes(request.status)) return null;
+
+  const run = async (change: boolean) => {
+    const ok = await confirm(
+      change
+        ? {
+            title: "Изменить заявку?",
+            description:
+              "Эта заявка отменится, и откроется новая с теми же клубами и суммами — поправьте и отправьте.",
+            confirmLabel: "Изменить",
+            cancelLabel: "Не надо",
+          }
+        : {
+            title: "Отменить заявку?",
+            description: "Менеджер увидит отмену и не будет отправлять фишки.",
+            confirmLabel: "Отменить заявку",
+            cancelLabel: "Не надо",
+            variant: "danger",
+          },
+    );
+    if (!ok) return;
+    try {
+      await cancel.mutateAsync();
+      if (change) navigate(repeatUrl);
+    } catch {
+      // ошибка — под кнопками
+    }
+  };
+
+  return (
+    <div className="mt-2" data-testid="change-or-cancel">
+      <div className="flex gap-1.5">
+        <button
+          type="button"
+          disabled={cancel.isPending}
+          onClick={() => void run(true)}
+          className="border-line-strong bg-surface text-ink h-10 flex-1 rounded-md border text-[14px] font-bold disabled:opacity-45"
+        >
+          Изменить
+        </button>
+        <button
+          type="button"
+          disabled={cancel.isPending}
+          onClick={() => void run(false)}
+          className="text-danger border-danger/35 h-10 flex-1 rounded-md border text-[14px] font-bold disabled:opacity-45"
+        >
+          Отменить
+        </button>
+      </div>
+      {cancel.isError ? (
+        <p role="alert" className="text-danger mt-1 text-[12.5px] font-semibold">
+          {cancel.error instanceof ApiError ? cancel.error.message : "Не удалось отменить"}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -359,6 +438,13 @@ export function ChipRequestPage() {
           <p className="text-ink-2 text-[12.5px]">Заявку можно повторить в один тап.</p>
         </Box>
       ) : null}
+      {request.status === "cancelled" ? (
+        <Box>
+          <p className="text-ink text-[14px] font-bold">Заявка отменена</p>
+          <p className="text-ink-2 text-[12.5px]">Можно отправить заново — в один тап.</p>
+        </Box>
+      ) : null}
+      <ChangeOrCancel request={request} repeatUrl={repeatUrl} />
       {withdrawal && request.withdrawal_requisites ? (
         <Box>
           <p className="text-ink-3 text-[12px] font-semibold">Реквизиты для вывода</p>

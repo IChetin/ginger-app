@@ -10,6 +10,7 @@ import { renderWithProviders } from "@/test/render";
 const fetchCurrentUser = vi.fn();
 const fetchChipRequest = vi.fn();
 const uploadScreenshot = vi.fn();
+const cancelChipRequest = vi.fn();
 
 vi.mock("@/api/client", async () => {
   const actual = await vi.importActual<typeof import("@/api/client")>("@/api/client");
@@ -22,6 +23,7 @@ vi.mock("@/features/chips/api", async () => {
     ...actual,
     fetchChipRequest: (id: string) => fetchChipRequest(id),
     uploadScreenshot: (id: string, file: Blob, name: string) => uploadScreenshot(id, file, name),
+    cancelChipRequest: (id: string) => cancelChipRequest(id),
   };
 });
 
@@ -123,6 +125,28 @@ describe("ChipRequestPage", () => {
     expect(await screen.findByTestId("request-waiting")).toHaveTextContent(
       "Ожидайте — заявка отправлена менеджеру",
     );
+  });
+
+  it("заявку до оплаты можно отменить", async () => {
+    fetchChipRequest.mockResolvedValue(request({ status: "sent", payment_deadline_at: null }));
+    cancelChipRequest.mockResolvedValue(
+      request({ status: "cancelled", payment_deadline_at: null }),
+    );
+    renderWithProviders(<AppRoutes />, { route: "/chips/r1" });
+
+    await userEvent.click(await screen.findByRole("button", { name: "Отменить" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Отменить заявку" }));
+    await waitFor(() => expect(cancelChipRequest).toHaveBeenCalledWith("r1"));
+    expect(await screen.findByText("Заявка отменена")).toBeInTheDocument();
+  });
+
+  it("после скриншота оплаты отмена — через менеджера", async () => {
+    fetchChipRequest.mockResolvedValue(
+      request({ status: "paid", payment_deadline_at: null, has_screenshot: true }),
+    );
+    renderWithProviders(<AppRoutes />, { route: "/chips/r1" });
+    expect(await screen.findByTestId("cancel-via-manager")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Отменить" })).not.toBeInTheDocument();
   });
 
   it("отказ показывает комментарий и даёт повторить", async () => {

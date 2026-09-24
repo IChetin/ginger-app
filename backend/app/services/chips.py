@@ -73,7 +73,16 @@ logger = logging.getLogger(__name__)
 
 MSK = ZoneInfo("Europe/Moscow")
 FINAL_STATUSES = frozenset(
-    {ChipRequestStatus.COMPLETED, ChipRequestStatus.REJECTED, ChipRequestStatus.EXPIRED}
+    {
+        ChipRequestStatus.COMPLETED,
+        ChipRequestStatus.REJECTED,
+        ChipRequestStatus.EXPIRED,
+        ChipRequestStatus.CANCELLED,
+    }
+)
+# Игрок отменяет сам, пока денег не отправил: после скриншота оплаты — только через менеджера.
+CANCELLABLE = frozenset(
+    {ChipRequestStatus.SENT, ChipRequestStatus.ACCEPTED, ChipRequestStatus.AWAITING_PAYMENT}
 )
 SCREENSHOT_PURPOSE = "payment_screenshot"
 Status = ChipRequestStatus
@@ -606,6 +615,60 @@ async def attach_screenshot(
     request.payment_deadline_at = None
     _transition(request, Status.PAID, user.id)
     await session.flush()
+    reloaded = await _load_request(session, request.id)
+    assert reloaded is not None
+    return request_read(reloaded)
+
+
+async def cancel_request(
+    session: AsyncSession, user: User, request_id: uuid.UUID, *, now: datetime | None = None
+) -> ChipRequestRead:
+    """Игрок отменяет заявку сам — ошибся клубом или суммой (решение Ивана 24.09).
+
+    «Изменить» на экране заявки — это отмена плюс новая заявка с теми же клубами и суммами.
+    После скриншота оплаты деньги уже ушли: отменить может только менеджер, с возвратом.
+    Менеджерам — уведомление, чтобы никто не отправил фишки по отменённой заявке.
+    """
+    moment = now or datetime.now(UTC)
+    player = await get_player(session, user)
+    # Блокировка строки: менеджер мог в эту же секунду нажать «Выдать».
+    locked = await session.scalar(
+        select(ChipRequest)
+        .where(ChipRequest.id == request_id, ChipRequest.player_id == player.id)
+        .with_for_update()
+    )
+    if locked is None:
+        raise NotFoundError("Заявка не найдена")
+    request = await _load_request(session, request_id)
+    assert request is not None
+    _expire_if_overdue(request, moment)
+    if request.status is Status.PAID:
+        raise AppError(
+            "payment_sent",
+            "Оплата уже отправлена — отменить можно через менеджера, он вернёт деньги",
+            409,
+        )
+    if request.status not in CANCELLABLE:
+        raise AppError("request_closed", "Заявка уже закрыта", 409)
+    was_in_work = request.status is not Status.SENT
+    request.payment_deadline_at = None
+    _transition(request, Status.CANCELLED, user.id, "Отменена игроком")
+    await session.flush()
+
+    managers = await session.scalars(
+        select(User.id).where(User.role.in_([UserRole.EDITOR, UserRole.ADMIN]))
+    )
+    for manager_id in managers:
+        await enqueue_push(
+            session,
+            user_id=manager_id,
+            type=NotificationType.CHIP_REQUEST_CANCELLED,
+            title="Заявка отменена игроком" + (" — уже была в работе" if was_in_work else ""),
+            body=f"{user.nickname}: {_items_summary(request.items)}. Фишки не отправляйте.",
+            url=f"/admin/chips/{request.id}",
+            now=moment,
+            skip_if_in_app=False,
+        )
     reloaded = await _load_request(session, request.id)
     assert reloaded is not None
     return request_read(reloaded)

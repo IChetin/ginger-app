@@ -5,7 +5,14 @@ export type PlayerStatus = "active" | "blocked" | "archived" | "pending" | "reje
 export type PlayerAccountStatus = "pending" | "confirmed" | "rejected";
 export type ChipRequestKind = "topup" | "withdrawal";
 export type ChipRequestStatus =
-  "sent" | "accepted" | "awaiting_payment" | "paid" | "completed" | "rejected" | "expired";
+  | "sent"
+  | "accepted"
+  | "awaiting_payment"
+  | "paid"
+  | "completed"
+  | "rejected"
+  | "expired"
+  | "cancelled";
 
 export interface AccountClub {
   id: string;

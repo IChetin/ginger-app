@@ -534,3 +534,58 @@ async def test_app_account_once_for_several_clubs(
             ("Кувалда", "222")
         }
         assert len(accounts) == 3
+
+
+async def test_player_cancels_request_until_payment_sent(
+    client: AsyncClient, seeded_db: None, db_session: AsyncSession
+) -> None:
+    """Иван, 24.09: ошибся клубом или суммой — отменяет сам, пока не отправил оплату."""
+    ids = await _make_player(db_session, "oops", PlayerKind.DEPOSIT)
+    settings = get_settings()
+    async with (
+        _logged_in(ids["email"]) as player,
+        _logged_in(settings.seed_editor_email) as editor,
+    ):
+        first = (
+            await player.post(
+                "/api/v1/me/chip-requests",
+                json={"items": [{"account_id": ids["ginger"], "amount": "50"}]},
+            )
+        ).json()
+        cancelled = await player.post(f"/api/v1/me/chip-requests/{first['id']}/cancel")
+        assert cancelled.status_code == 200, cancelled.text
+        assert cancelled.json()["status"] == "cancelled"
+        # Из очереди менеджера ушла, действия по ней закрыты.
+        assert (await editor.get("/api/v1/admin/chip-requests")).json() == []
+        closed = await editor.post(f"/api/v1/admin/chip-requests/{first['id']}/complete")
+        assert closed.json()["error"]["code"] == "request_closed"
+        again = await player.post(f"/api/v1/me/chip-requests/{first['id']}/cancel")
+        assert again.json()["error"]["code"] == "request_closed"
+
+        # Реквизиты уже выданы — отменить ещё можно; после скриншота оплаты — нельзя.
+        second = (
+            await player.post(
+                "/api/v1/me/chip-requests",
+                json={"items": [{"account_id": ids["ginger"], "amount": "70"}]},
+            )
+        ).json()
+        template = await editor.post(
+            "/api/v1/admin/requisite-templates",
+            json={"title": "Карта", "body": "Карта 1111, Иван И."},
+        )
+        await editor.post(
+            f"/api/v1/admin/chip-requests/{second['id']}/requisites",
+            json={"template_id": template.json()["id"]},
+        )
+        await player.post(
+            f"/api/v1/me/chip-requests/{second['id']}/screenshot",
+            files={"file": ("pay.png", PNG, "image/png")},
+        )
+        paid = await player.post(f"/api/v1/me/chip-requests/{second['id']}/cancel")
+        assert paid.status_code == 409
+        assert paid.json()["error"]["code"] == "payment_sent"
+
+    # Менеджерам — отдельное уведомление об отмене.
+    assert NotificationType.CHIP_REQUEST_CANCELLED in await _push_types(
+        db_session, settings.seed_editor_email
+    )

@@ -33,6 +33,11 @@ export function createChipRequest(body: ChipRequestCreatePayload): Promise<ChipR
   return apiPost("/api/v1/me/chip-requests", body);
 }
 
+/** Игрок отменяет свою заявку, пока не отправил оплату (Иван, 24.09). */
+export function cancelChipRequest(id: string): Promise<ChipRequest> {
+  return apiPost(`/api/v1/me/chip-requests/${id}/cancel`);
+}
+
 export function uploadScreenshot(id: string, file: Blob, filename: string): Promise<ChipRequest> {
   const form = new FormData();
   form.append("file", file, filename);

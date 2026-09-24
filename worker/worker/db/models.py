@@ -44,6 +44,7 @@ class NotificationType(StrEnum):
     THREAD_REPLY = "thread_reply"
     NEW_PLAYER = "new_player"
     PLAYER_APPROVED = "player_approved"
+    CHIP_REQUEST_CANCELLED = "chip_request_cancelled"
 
 
 class NotificationChannel(StrEnum):

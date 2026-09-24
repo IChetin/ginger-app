@@ -4,6 +4,7 @@ import type { ChipRequest, ChipRequestCreatePayload } from "@/api/types/chips";
 import {
   addAppAccount,
   addPlayerAccount,
+  cancelChipRequest,
   createChipRequest,
   fetchChipRequest,
   fetchChipRequests,
@@ -72,6 +73,11 @@ export function useUploadScreenshot(id: string) {
       uploadScreenshot(id, vars.file, vars.filename),
     onSuccess: store,
   });
+}
+
+export function useCancelChipRequest(id: string) {
+  const store = useStoreRequest();
+  return useMutation({ mutationFn: () => cancelChipRequest(id), onSuccess: store });
 }
 
 export function useAddPlayerAccount() {

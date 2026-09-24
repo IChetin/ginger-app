@@ -94,6 +94,12 @@ async def get_request(request_id: UUID, user: CurrentUser, db: Db) -> ChipReques
     return await chips_service.get_player_request(db, user, request_id)
 
 
+@router.post("/me/chip-requests/{request_id}/cancel", response_model=ChipRequestRead)
+async def cancel_request(request_id: UUID, user: CurrentUser, db: Db) -> ChipRequestRead:
+    """Отменить свою заявку, пока оплата не отправлена (ошибся клубом или суммой)."""
+    return await chips_service.cancel_request(db, user, request_id)
+
+
 @router.post("/me/chip-requests/{request_id}/screenshot", response_model=ChipRequestRead)
 async def upload_screenshot(
     request_id: UUID,

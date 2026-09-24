@@ -32,6 +32,8 @@ export function statusLabel(status: ChipRequestStatus, kind: ChipRequestKind): s
       return "Отклонена";
     case "expired":
       return "Истекла";
+    case "cancelled":
+      return "Отменена";
   }
 }
 
@@ -40,7 +42,7 @@ export type StatusTone = "wait" | "action" | "done" | "fail";
 export function statusTone(status: ChipRequestStatus): StatusTone {
   if (status === "awaiting_payment") return "action";
   if (status === "completed") return "done";
-  if (status === "rejected" || status === "expired") return "fail";
+  if (status === "rejected" || status === "expired" || status === "cancelled") return "fail";
   return "wait";
 }
 
@@ -108,6 +110,7 @@ const DONE_STEPS: Record<"credit" | "payment" | "withdrawal", Record<ChipRequest
     completed: 3,
     rejected: 1,
     expired: 1,
+    cancelled: 1,
   },
   payment: {
     sent: 1,
@@ -117,6 +120,7 @@ const DONE_STEPS: Record<"credit" | "payment" | "withdrawal", Record<ChipRequest
     completed: 4,
     rejected: 1,
     expired: 1,
+    cancelled: 1,
   },
   withdrawal: {
     sent: 1,
@@ -126,6 +130,7 @@ const DONE_STEPS: Record<"credit" | "payment" | "withdrawal", Record<ChipRequest
     completed: 3,
     rejected: 1,
     expired: 1,
+    cancelled: 1,
   },
 };
 
@@ -153,7 +158,9 @@ export function requestSteps(request: ChipRequest): RequestStep[] {
       ? "Отклонена"
       : request.status === "expired"
         ? "Время вышло"
-        : null;
+        : request.status === "cancelled"
+          ? "Отменена"
+          : null;
 
   // Отклонённая или просроченная заявка заканчивается на провале: дальше шагов нет.
   const shown = failedLabel ? labels.slice(0, done + 1) : labels;
