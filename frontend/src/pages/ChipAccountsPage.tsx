@@ -158,8 +158,9 @@ function AppAccountCard({ account, clubs }: { account: AppAccount; clubs: Public
 }
 
 /**
- * Новый аккаунт: приложение → ID и ник → клубы. Клубы этого приложения отмечены сразу —
- * снять галочку проще, чем вводить ID трижды (Иван, 24.09).
+ * Новый аккаунт: приложение → ID и ник → клубы. Клубы игрок отмечает сам: отмеченный по
+ * умолчанию клуб, в котором он не состоит, превратился бы в заявку, которую придётся
+ * отклонить (Иван, 24.09). Единственный клуб приложения выбран сразу — выбирать не из чего.
  */
 function AddAppAccount({ clubs, onDone }: { clubs: PublicClub[]; onDone?: () => void }) {
   const add = useAddAppAccount();
@@ -167,10 +168,11 @@ function AddAppAccount({ clubs, onDone }: { clubs: PublicClub[]; onDone?: () => 
   const [app, setApp] = useState<PokerApp | null>(apps.length === 1 ? (apps[0] ?? null) : null);
   const [appId, setAppId] = useState("");
   const [nickname, setNickname] = useState("");
-  const [excluded, setExcluded] = useState<Set<string>>(new Set());
+  const [chosen, setChosen] = useState<Set<string>>(new Set());
 
   const appClubs = clubs.filter((club) => club.app === app);
-  const selected = appClubs.filter((club) => !excluded.has(club.id));
+  const onlyClub = appClubs.length === 1 ? appClubs[0] : undefined;
+  const selected = onlyClub ? [onlyClub] : appClubs.filter((club) => chosen.has(club.id));
   const valid = Boolean(app && appId.trim() && nickname.trim() && selected.length > 0);
 
   return (
@@ -190,7 +192,7 @@ function AddAppAccount({ clubs, onDone }: { clubs: PublicClub[]; onDone?: () => 
             onSuccess: () => {
               setAppId("");
               setNickname("");
-              setExcluded(new Set());
+              setChosen(new Set());
               onDone?.();
             },
           },
@@ -207,7 +209,7 @@ function AddAppAccount({ clubs, onDone }: { clubs: PublicClub[]; onDone?: () => 
             aria-checked={app === item}
             onClick={() => {
               setApp(item);
-              setExcluded(new Set());
+              setChosen(new Set());
             }}
             className={cn(
               "flex h-12 flex-1 items-center justify-center gap-1.5 rounded-md border text-[13px] font-bold",
@@ -246,17 +248,18 @@ function AddAppAccount({ clubs, onDone }: { clubs: PublicClub[]; onDone?: () => 
           </p>
           <div className="flex flex-wrap gap-1.5">
             {appClubs.map((club) => {
-              const on = !excluded.has(club.id);
+              const on = onlyClub !== undefined || chosen.has(club.id);
               return (
                 <button
                   key={club.id}
                   type="button"
                   aria-pressed={on}
+                  disabled={onlyClub !== undefined}
                   onClick={() =>
-                    setExcluded((current) => {
+                    setChosen((current) => {
                       const next = new Set(current);
-                      if (on) next.add(club.id);
-                      else next.delete(club.id);
+                      if (on) next.delete(club.id);
+                      else next.add(club.id);
                       return next;
                     })
                   }

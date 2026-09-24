@@ -219,7 +219,7 @@ describe("ChipsPage", () => {
     );
   });
 
-  it("новый аккаунт: ID вводится раз, клубы приложения отмечены сразу", async () => {
+  it("новый аккаунт: ID вводится раз, клубы игрок отмечает сам", async () => {
     const club = (id: string, name: string, app: "pppoker" | "xpoker") => ({
       id,
       name,
@@ -246,8 +246,10 @@ describe("ChipsPage", () => {
     await view.click(await screen.findByRole("radio", { name: "PPPoker" }));
     await view.type(screen.getByLabelText("ID в приложении"), "111640");
     await view.type(screen.getByLabelText("Ник в приложении"), "Молоток");
-    // Все три клуба PPPoker отмечены — снимаем один.
-    await view.click(screen.getByRole("button", { name: "✓ Private.G" }));
+    // По умолчанию клубы не отмечены — без выбора привязать нельзя.
+    expect(screen.getByRole("button", { name: "Привязать" })).toBeDisabled();
+    await view.click(screen.getByRole("button", { name: "Ginger" }));
+    await view.click(screen.getByRole("button", { name: "G.Psy" }));
     await view.click(screen.getByRole("button", { name: "Привязать" }));
 
     await waitFor(() =>
