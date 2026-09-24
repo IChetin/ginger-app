@@ -22,7 +22,7 @@ def test_otp_email_shows_code_in_preview_body_and_plain_text() -> None:
         code="788425", settings=_settings(), requested_at=requested_at
     )
 
-    assert subject == "Ginger — код для входа"
+    assert subject == "788425 — код для входа в Ginger"
     assert "788425" in plain
     assert "Код 788425 — действует 5 минут" in html  # строка превью в списке писем
     assert ">788425</td>" in html  # код одной строкой — работает «Скопировать код»

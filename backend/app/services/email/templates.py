@@ -131,7 +131,9 @@ def build_otp_email(
     *, code: str, settings: Settings, requested_at: datetime | None = None
 ) -> tuple[str, str, str]:
     when = _moscow_time(requested_at or datetime.now(UTC))
-    subject = f"{settings.app_name} — код для входа"
+    # Код первым в теме: в списке писем и в уведомлении на телефоне он виден без открытия
+    # письма, и Gmail чаще показывает карточку «Скопировать код» (идея Ивана 24.09).
+    subject = f"{code} — код для входа в {settings.app_name}"
     plain = (
         f"Ваш код для входа в {settings.app_name}: {code}\n\n"
         f"Действует 5 минут. Запрошен {when}.\n\n"

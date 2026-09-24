@@ -47,6 +47,9 @@ export function CodeStep({
   const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
   const submittingRef = useRef(false);
 
+  // Кнопка вставки — только там, где браузер даёт читать буфер (мобильный Safari, Chrome).
+  const canPaste =
+    typeof navigator !== "undefined" && typeof navigator.clipboard?.readText === "function";
   const { remaining, isFinished } = useCountdown(retryAfter, retryToken);
   const code = cells.join("");
   const canSubmit = code.length === CELL_COUNT && !isVerifying;
@@ -191,11 +194,17 @@ export function CodeStep({
               size={1}
               inputMode="numeric"
               autoComplete={index === 0 ? "one-time-code" : "off"}
-              maxLength={1}
+              // Без maxLength: автоподстановка кладёт в поле весь код, и его надо разнести.
               value={value}
               aria-label={`Цифра ${index + 1}`}
               onChange={(event) => {
-                const digit = digitsOnly(event.target.value).slice(-1);
+                const digits = digitsOnly(event.target.value);
+                // Автоподстановка (iOS, Android, менеджер паролей) кладёт весь код в одно поле.
+                if (digits.length === CELL_COUNT) {
+                  setCodeDigits(digits);
+                  return;
+                }
+                const digit = digits.slice(-1);
                 const next = [...cells];
                 next[index] = digit;
                 setCells(next);
@@ -221,6 +230,32 @@ export function CodeStep({
             />
           ))}
         </div>
+
+        {canPaste ? (
+          <button
+            type="button"
+            data-testid="paste-code"
+            className="text-gold self-center text-[13px] font-bold"
+            onClick={() => {
+              void (async () => {
+                try {
+                  const text = await navigator.clipboard.readText();
+                  const digits = digitsOnly(text);
+                  if (digits.length === CELL_COUNT) {
+                    setCodeDigits(digits);
+                    return;
+                  }
+                  setError("В буфере обмена нет кода из шести цифр");
+                } catch {
+                  // Браузер не дал доступ к буферу — остаётся обычная вставка в поле.
+                  setError("Не получилось прочитать буфер — вставьте код в поле");
+                }
+              })();
+            }}
+          >
+            Вставить код из буфера
+          </button>
+        ) : null}
 
         {captchaRequired ? (
           <div className="space-y-2">
