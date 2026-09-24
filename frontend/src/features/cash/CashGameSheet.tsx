@@ -62,7 +62,10 @@ function SheetBody({ game }: { game: CashGame }) {
         {GAME_LABELS[game.game_type]} {formatBlinds(game)}
       </Drawer.Title>
       <Drawer.Description className="text-ink-2 mt-1 text-[13px]">
-        {club.name} · {APP_LABELS[club.app]} · обновлено {minutesAgo(new Date(game.seen_at), now)}
+        {club.name} · {APP_LABELS[club.app]}
+        {game.manual
+          ? " · отбор редакции"
+          : ` · обновлено ${minutesAgo(new Date(game.seen_at), now)}`}
       </Drawer.Description>
 
       {game.is_editor_pick ? <EditorsPickPlate note={game.editor_pick_note} /> : null}
@@ -71,7 +74,11 @@ function SheetBody({ game }: { game: CashGame }) {
         <Stat label="Лимит" value={formatBlinds(game)} />
         <Stat
           label="Открыто сейчас"
-          value={`${game.tables} ${pluralRu(game.tables, "стол", "стола", "столов")}`}
+          value={
+            game.manual
+              ? "смотрите в приложении"
+              : `${game.tables} ${pluralRu(game.tables, "стол", "стола", "столов")}`
+          }
         />
       </div>
 

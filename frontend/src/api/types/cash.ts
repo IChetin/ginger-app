@@ -16,4 +16,6 @@ export interface CashGame {
   big_blind_rub: string | null;
   is_editor_pick: boolean;
   editor_pick_note: string | null;
+  /** Ручной Editor's Pick без данных сборщика: столов не знаем (24.09). */
+  manual?: boolean;
 }

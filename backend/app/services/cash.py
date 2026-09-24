@@ -19,6 +19,7 @@ from app.models.cash import CashGame
 from app.models.clubs import Club
 from app.models.collector import CollectorRun, CollectorSnapshot
 from app.models.enums import ClubBlock, CollectorRunKind, CollectorRunStatus, GameType
+from app.models.picks import EditorPick
 from app.schemas.cash import CashGameRead, CashSnapshotIn, CashSnapshotResult
 from app.schemas.tournaments import TournamentClub
 from app.services.clubs import rub_per_chip
@@ -126,9 +127,12 @@ async def list_cash_games(session: AsyncSession, *, now: datetime) -> list[CashG
     clubs = list({game.club_id: game.club for game in games}.values())
     rates = await rub_per_chip(session, clubs)
     picks = await active_picks(session, "cash")
+    matched_picks: set[uuid.UUID] = set()
     result: list[CashGameRead] = []
     for game in games:
         pick = match_cash(picks, game)
+        if pick is not None:
+            matched_picks.add(pick.id)
         result.append(
             CashGameRead(
                 id=game.id,
@@ -155,4 +159,67 @@ async def list_cash_games(session: AsyncSession, *, now: datetime) -> list[CashG
                 editor_pick_note=pick.note if pick else None,
             )
         )
+    result.extend(await _manual_picks(session, picks, matched_picks))
     return result
+
+
+async def _manual_picks(
+    session: AsyncSession, picks: list[EditorPick], matched: set[uuid.UUID]
+) -> list[CashGameRead]:
+    """Кэш-пики, заведённые руками, пока сборщик их не видит (Иван, 24.09).
+
+    Сборщик на проде ещё не запущен, а отбор уже нужен игрокам: пик с лимитом показывается
+    строкой CASH без числа столов. Как только сборщик увидит этот лимит, строку заменит
+    настоящая — с числом столов и диплинком.
+    """
+    pending = [
+        pick
+        for pick in picks
+        if pick.id not in matched and pick.game_type is not None and pick.big_blind is not None
+    ]
+    if not pending:
+        return []
+    clubs = {
+        club.id: club
+        for club in await session.scalars(
+            select(Club)
+            .options(selectinload(Club.chip_currency))
+            .where(
+                Club.id.in_({pick.club_id for pick in pending}),
+                Club.is_visible.is_(True),
+                Club.block == ClubBlock.ONLINE,
+            )
+        )
+    }
+    rates = await rub_per_chip(session, list(clubs.values()))
+    rows: list[CashGameRead] = []
+    for pick in pending:
+        club = clubs.get(pick.club_id)
+        if club is None or pick.game_type is None or pick.big_blind is None:
+            continue
+        rows.append(
+            CashGameRead(
+                id=pick.id,
+                club=TournamentClub(
+                    id=club.id,
+                    name=club.name,
+                    slug=club.slug,
+                    app=club.app,
+                    app_club_id=club.app_club_id,
+                    chip_value=club.chip_value,
+                    chip_currency_code=club.chip_currency_code,
+                    currency_symbol=club.chip_currency.symbol if club.chip_currency else None,
+                ),
+                game_type=pick.game_type,
+                small_blind=(pick.big_blind / 2).quantize(_CENT),
+                big_blind=pick.big_blind,
+                tables=0,
+                app_link=None,
+                seen_at=pick.updated_at,
+                big_blind_rub=_to_rub(pick.big_blind, rates.get(club.id)),
+                is_editor_pick=True,
+                editor_pick_note=pick.note,
+                manual=True,
+            )
+        )
+    return rows

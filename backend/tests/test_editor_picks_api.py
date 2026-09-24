@@ -119,3 +119,60 @@ async def test_editor_picks_flag_tournaments_and_cash(
 async def test_editor_picks_admin_requires_staff(user_client: AsyncClient) -> None:
     response = await user_client.get("/api/v1/admin/editor-picks")
     assert response.status_code == 403
+
+
+async def test_manual_cash_pick_shows_without_collector(
+    admin_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """Сборщик ещё не запущен — ручной кэш-пик всё равно виден в CASH (Иван, 24.09)."""
+    club = await db_session.scalar(select(Club).where(Club.slug == "private-g"))
+    assert club is not None
+    created = await admin_client.post(
+        "/api/v1/admin/editor-picks",
+        json={
+            "club_id": str(club.id),
+            "kind": "cash",
+            "game_type": "nlh",
+            "big_blind": "0.8",
+            "note": "Регуляры по вечерам",
+        },
+    )
+    assert created.status_code == 201, created.text
+    # Пик на все лимиты без сборщика показать нечем — строки нет.
+    await admin_client.post(
+        "/api/v1/admin/editor-picks",
+        json={"club_id": str(club.id), "kind": "cash", "game_type": "plo4"},
+    )
+
+    cash = (await admin_client.get("/api/v1/cash-games")).json()
+    assert [
+        (
+            item["club"]["slug"],
+            item["game_type"],
+            item["small_blind"],
+            item["big_blind"],
+            item["manual"],
+            item["is_editor_pick"],
+            item["editor_pick_note"],
+        )
+        for item in cash
+    ] == [("private-g", "nlh", "0.40", "0.80", True, True, "Регуляры по вечерам")]
+
+    # Сборщик увидел этот лимит — ручная строка уступает настоящей.
+    now = datetime.now(UTC)
+    db_session.add(
+        CashGame(
+            club_id=club.id,
+            game_type=GameType.NLH,
+            small_blind=Decimal("0.4"),
+            big_blind=Decimal("0.8"),
+            tables=4,
+            first_seen_at=now,
+            seen_at=now,
+        )
+    )
+    await db_session.flush()
+    cash = (await admin_client.get("/api/v1/cash-games")).json()
+    assert [(item["tables"], item["manual"], item["is_editor_pick"]) for item in cash] == [
+        (4, False, True)
+    ]

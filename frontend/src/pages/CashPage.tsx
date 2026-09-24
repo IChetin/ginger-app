@@ -170,7 +170,7 @@ function CashView({
                     {formatBlinds(game)}
                   </td>
                   <td className={cn(cell, "num text-ink pr-3 text-right font-bold tabular-nums")}>
-                    {game.tables}
+                    {game.manual ? <span className="text-ink-3">—</span> : game.tables}
                   </td>
                 </tr>
               );

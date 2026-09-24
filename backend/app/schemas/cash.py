@@ -63,3 +63,5 @@ class CashGameRead(BaseModel):
     # Отобрано в Editor's Pick; заметка — почему.
     is_editor_pick: bool = False
     editor_pick_note: str | None = None
+    # Строка из ручного Editor's Pick без данных сборщика: столов не знаем (24.09).
+    manual: bool = False

@@ -88,6 +88,8 @@ export function formatBlinds(game: Pick<CashGame, "small_blind" | "big_blind" | 
 export function latestSeen(games: CashGame[]): Date | null {
   let latest: number | null = null;
   for (const game of games) {
+    // Ручной пик — не наблюдение сборщика, «обновлено N минут назад» он не двигает.
+    if (game.manual) continue;
     const at = new Date(game.seen_at).getTime();
     if (latest === null || at > latest) latest = at;
   }
