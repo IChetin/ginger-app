@@ -96,7 +96,33 @@ describe("ChipRequestPage", () => {
     const file = new File(["png"], "pay.png", { type: "image/png" });
     await userEvent.upload(screen.getByLabelText("Скриншот оплаты"), file);
     await waitFor(() => expect(uploadScreenshot).toHaveBeenCalledWith("r1", file, "pay.png"));
-    expect(await screen.findByText("Скриншот получен — проверяем оплату")).toBeInTheDocument();
+    // После скриншота — крутится колесо ожидания, а не просто текст.
+    expect(await screen.findByTestId("request-waiting")).toHaveTextContent(
+      "Ожидайте — проверяем оплату",
+    );
+  });
+
+  it("номер телефона в реквизитах копируется отдельной кнопкой", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+    fetchChipRequest.mockResolvedValue(
+      request({ payment_requisites: "СБП Сбер, Иван И.\n8 926 855-67-55" }),
+    );
+    renderWithProviders(<AppRoutes />, { route: "/chips/r1" });
+
+    const button = await screen.findByTestId("copy-phone");
+    expect(button).toHaveTextContent("+7 926 855-67-55");
+    await userEvent.click(button);
+    expect(writeText).toHaveBeenCalledWith("+79268556755");
+    Reflect.deleteProperty(navigator, "clipboard");
+  });
+
+  it("пока менеджер не ответил — колесо ожидания", async () => {
+    fetchChipRequest.mockResolvedValue(request({ status: "sent", payment_deadline_at: null }));
+    renderWithProviders(<AppRoutes />, { route: "/chips/r1" });
+    expect(await screen.findByTestId("request-waiting")).toHaveTextContent(
+      "Ожидайте — заявка отправлена менеджеру",
+    );
   });
 
   it("отказ показывает комментарий и даёт повторить", async () => {

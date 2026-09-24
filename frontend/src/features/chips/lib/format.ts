@@ -188,3 +188,24 @@ const dateFormat = new Intl.DateTimeFormat("ru-RU", {
 export function formatDateMsk(iso: string): string {
   return dateFormat.format(new Date(iso));
 }
+
+// Российский номер в реквизитах: +7 / 8 / 7, дальше 10 цифр с пробелами, дефисами и скобками.
+// Без lookbehind: старые iPhone (до iOS 16.4) не разбирают его и роняют всё приложение.
+const PHONE =
+  /(^|[^\d+])((?:\+7|8|7)[\s\-()]*\d{3}[\s\-()]*\d{3}[\s-]*\d{2}[\s-]*\d{2})(?![\s-]?\d)/;
+
+/**
+ * Номер телефона из реквизитов для перевода по СБП — «+79268556755». Банки понимают
+ * этот вид при любом написании в реквизитах: «8 926 855-67-55», «+7 (926) 855 67 55».
+ */
+export function findPhone(text: string | null | undefined): string | null {
+  const match = text ? PHONE.exec(text) : null;
+  const digits = match?.[2]?.replace(/\D/g, "") ?? "";
+  return digits.length === 11 ? `+7${digits.slice(1)}` : null;
+}
+
+/** «+7 926 855-67-55» — чтобы игрок узнал номер на кнопке. */
+export function formatPhone(phone: string): string {
+  const d = phone.replace(/\D/g, "");
+  return `+7 ${d.slice(1, 4)} ${d.slice(4, 7)}-${d.slice(7, 9)}-${d.slice(9, 11)}`;
+}

@@ -4,7 +4,9 @@ import type { AccountClub, ChipRequest } from "@/api/types/chips";
 import {
   amountPresets,
   computeTotals,
+  findPhone,
   formatMoney,
+  formatPhone,
   formatRemaining,
   isOpen,
   parseAmount,
@@ -114,5 +116,30 @@ describe("chips format", () => {
     expect(parseAmount("abc")).toBe(0);
     expect(formatRemaining(18 * 60_000 + 42_000)).toBe("18:42");
     expect(formatRemaining(-5)).toBe("00:00");
+  });
+});
+
+describe("findPhone", () => {
+  it.each([
+    ["Сбер, Иван П.\n+79268556755", "+79268556755"],
+    ["СБП 89259683926 Тинькофф", "+79259683926"],
+    ["+7 (926) 855-67-55", "+79268556755"],
+    ["8 925 968 39 26 — Альфа", "+79259683926"],
+    ["79268556755", "+79268556755"],
+  ])("находит номер в «%s»", (text, phone) => {
+    expect(findPhone(text)).toBe(phone);
+  });
+
+  it.each([
+    ["Карта 2202 2063 1234 5678"],
+    ["8600 1234 5678 9012"],
+    ["USDT TRC20 TXk3m8925968392612"],
+    [""],
+  ])("не путает с номером карты и кошелька: «%s»", (text) => {
+    expect(findPhone(text)).toBeNull();
+  });
+
+  it("показывает номер по-человечески", () => {
+    expect(formatPhone("+79268556755")).toBe("+7 926 855-67-55");
   });
 });

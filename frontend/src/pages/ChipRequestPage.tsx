@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
@@ -8,9 +8,11 @@ import { StatusBadge } from "@/features/chips/components/RequestRow";
 import { useChipRequest, useUploadScreenshot } from "@/features/chips/hooks";
 import { compressImage } from "@/features/chips/lib/compressImage";
 import {
+  findPhone,
   formatDateMsk,
   formatMoney,
   formatNumber,
+  formatPhone,
   formatRemaining,
   isOpen,
   requestSteps,
@@ -92,22 +94,61 @@ function Box({
   return <div className={`mt-2 rounded-md border px-3 py-2.5 ${toneClass}`}>{children}</div>;
 }
 
+/**
+ * Ожидание с крутящимся колесом (фидбэк Ивана 24.09): игрок должен видеть, что заявка
+ * живая и в работе, а не зависла. Сколько уже ждёт — тоже на виду.
+ */
+function Waiting({
+  title,
+  since,
+  children,
+}: {
+  title: string;
+  since: string;
+  children?: ReactNode;
+}) {
+  const now = useNow(30_000);
+  const minutes = Math.max(0, Math.floor((now.getTime() - new Date(since).getTime()) / 60_000));
+  return (
+    <Box tone="gold">
+      <div className="flex items-center gap-3" role="status" data-testid="request-waiting">
+        <span
+          aria-hidden="true"
+          className="border-line-strong border-t-gold h-8 w-8 shrink-0 animate-spin rounded-full border-[3px] motion-reduce:animate-none"
+        />
+        <span className="min-w-0 flex-1">
+          <span className="text-ink block text-[14px] font-bold">{title}</span>
+          <span className="text-ink-2 block text-[12.5px]">
+            {minutes < 1 ? "Только что" : `Ждёте ${minutes} мин`} · обычно около 5 минут в часы
+            кассы. Можно свернуть приложение — пришлём уведомление.
+          </span>
+        </span>
+      </div>
+      {children}
+    </Box>
+  );
+}
+
 function PaymentBlock({ request }: { request: ChipRequest }) {
   const now = useNow(1000);
   const upload = useUploadScreenshot(request.id);
   const input = useRef<HTMLInputElement>(null);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<"all" | "phone" | null>(null);
   const remaining = request.payment_deadline_at
     ? new Date(request.payment_deadline_at).getTime() - now.getTime()
     : null;
+  // Перевод по СБП — по номеру телефона: его копируют отдельно от остального текста.
+  const phone = findPhone(request.payment_requisites);
 
-  const copy = async () => {
+  const copy = async (what: "all" | "phone") => {
     try {
-      await navigator.clipboard.writeText(request.payment_requisites ?? "");
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(
+        what === "phone" && phone ? phone : (request.payment_requisites ?? ""),
+      );
+      setCopied(what);
+      window.setTimeout(() => setCopied(null), 2000);
     } catch {
-      setCopied(false);
+      setCopied(null);
     }
   };
 
@@ -140,22 +181,35 @@ function PaymentBlock({ request }: { request: ChipRequest }) {
         {request.payment_requisites}
       </pre>
       <div className="mt-2 flex gap-1.5">
+        {phone ? (
+          <button
+            type="button"
+            data-testid="copy-phone"
+            onClick={() => void copy("phone")}
+            className="border-line-gold bg-surface text-ink flex h-11 flex-[1.4] flex-col items-center justify-center rounded-md border leading-tight"
+          >
+            <span className="text-[13px] font-bold">
+              {copied === "phone" ? "Номер скопирован" : "Скопировать номер"}
+            </span>
+            <span className="num text-ink-3 text-[11px]">{formatPhone(phone)}</span>
+          </button>
+        ) : null}
         <button
           type="button"
-          onClick={() => void copy()}
-          className="border-line-strong bg-surface text-ink h-10 flex-1 rounded-md border text-[13px] font-bold"
+          onClick={() => void copy("all")}
+          className="border-line-strong bg-surface text-ink h-11 flex-1 rounded-md border text-[13px] font-bold"
         >
-          {copied ? "Скопировано" : "Скопировать"}
-        </button>
-        <button
-          type="button"
-          disabled={upload.isPending || (remaining !== null && remaining <= 0)}
-          onClick={() => input.current?.click()}
-          className="bg-gold-grad text-ink-ongold h-10 flex-[1.4] rounded-md text-[13px] font-bold disabled:opacity-45"
-        >
-          {upload.isPending ? "Отправляем…" : "Приложить скриншот"}
+          {copied === "all" ? "Скопировано" : phone ? "Всё целиком" : "Скопировать"}
         </button>
       </div>
+      <button
+        type="button"
+        disabled={upload.isPending || (remaining !== null && remaining <= 0)}
+        onClick={() => input.current?.click()}
+        className="bg-gold-grad text-ink-ongold mt-1.5 h-11 w-full rounded-md text-[14px] font-bold disabled:opacity-45"
+      >
+        {upload.isPending ? "Отправляем…" : "Приложить скриншот оплаты"}
+      </button>
       <input
         ref={input}
         type="file"
@@ -268,18 +322,15 @@ export function ChipRequestPage() {
         ) : null}
       </div>
 
-      {request.status === "sent" || request.status === "accepted" ? (
-        <Box>
-          <p className="text-ink text-[14px] font-bold">Заявка у менеджера</p>
-          <p className="text-ink-2 text-[12.5px]">
-            В часы кассы (12:00–03:00 МСК) обычно около 5 минут. Экран обновится сам.
-          </p>
-        </Box>
+      {request.status === "sent" ? (
+        <Waiting title="Ожидайте — заявка отправлена менеджеру" since={request.created_at} />
+      ) : null}
+      {request.status === "accepted" ? (
+        <Waiting title="Заявка в работе у менеджера" since={request.updated_at} />
       ) : null}
       {request.status === "awaiting_payment" ? <PaymentBlock request={request} /> : null}
       {request.status === "paid" ? (
-        <Box>
-          <p className="text-ink text-[14px] font-bold">Скриншот получен — проверяем оплату</p>
+        <Waiting title="Ожидайте — проверяем оплату" since={request.updated_at}>
           <a href={screenshotUrl(request.id)} target="_blank" rel="noreferrer">
             <img
               src={screenshotUrl(request.id)}
@@ -287,7 +338,7 @@ export function ChipRequestPage() {
               className="border-line mt-2 max-h-40 rounded-md border"
             />
           </a>
-        </Box>
+        </Waiting>
       ) : null}
       {request.status === "completed" ? (
         <Box tone="live">
