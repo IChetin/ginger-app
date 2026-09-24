@@ -34,6 +34,7 @@ EXPECTED_TABLES = {
     "clubs",
     "currencies",
     "editor_picks",
+    "feed_posts",
     "fx_rates",
     "invites",
     "notification_queue",

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -52,9 +52,70 @@ class WinCreate(BaseModel):
         return value.strip().upper()
 
 
-class FeedRead(BaseModel):
-    """Лента (этап 7): главное событие каждого дня, вечер в каждом клубе, выигрыши."""
+class FeedPostRead(BaseModel):
+    """Запись менеджера в ленте: текст, картинка и ссылка внутрь приложения."""
 
+    id: UUID
+    title: str
+    body: str | None
+    image_url: str | None
+    link_url: str | None
+    link_label: str | None
+    club: WinClub | None
+    is_pinned: bool
+    published_at: datetime
+    expires_at: datetime | None
+
+
+class FeedPostCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=120)
+    body: str | None = Field(default=None, max_length=2000)
+    link_url: str | None = Field(default=None, max_length=200)
+    link_label: str | None = Field(default=None, max_length=40)
+    club_id: UUID | None = None
+    is_pinned: bool = False
+    published_at: datetime | None = None
+    expires_at: datetime | None = None
+
+    @field_validator("title")
+    @classmethod
+    def _strip_title(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("Не может быть пустым")
+        return cleaned
+
+    @field_validator("body", "link_label")
+    @classmethod
+    def _strip_optional(cls, value: str | None) -> str | None:
+        cleaned = (value or "").strip()
+        return cleaned or None
+
+    @field_validator("link_url")
+    @classmethod
+    def _internal_link(cls, value: str | None) -> str | None:
+        """Как в рассылках: ссылка открывает свой экран, а не уводит из приложения."""
+        cleaned = (value or "").strip()
+        if not cleaned:
+            return None
+        if not cleaned.startswith("/") or cleaned.startswith("//"):
+            raise ValueError("Ссылка должна вести внутрь приложения: /tournaments, /clubs…")
+        return cleaned
+
+
+class FeedPostUpdate(FeedPostCreate):
+    """Правка записи: поля те же, картинка меняется отдельной загрузкой."""
+
+
+class FeedPostAdminRead(FeedPostRead):
+    author_nickname: str | None
+    created_at: datetime
+
+
+class FeedRead(BaseModel):
+    """Лента (этап 7): записи менеджера, главное событие дня, вечер в клубах, выигрыши."""
+
+    posts: list[FeedPostRead]
     main_events: list[TournamentRead]
     evening: list[TournamentRead]
     wins: list[WinRead]

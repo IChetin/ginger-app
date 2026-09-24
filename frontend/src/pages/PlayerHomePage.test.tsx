@@ -150,6 +150,20 @@ describe("PlayerHomePage", () => {
       role: "user",
     } as Awaited<ReturnType<typeof client.fetchCurrentUser>>);
     vi.mocked(feedApi.fetchFeed).mockResolvedValue({
+      posts: [
+        {
+          id: "post1",
+          title: "Вторник в клубе",
+          body: "Сбор в 19:30.",
+          image_url: null,
+          link_url: "/tournaments",
+          link_label: "Расписание",
+          club: null,
+          is_pinned: true,
+          published_at: "2026-09-14T09:00:00Z",
+          expires_at: null,
+        },
+      ],
       main_events: [
         { ...tournament("main", g21, 120), name: "Grand Knockout", guarantee: "1500000" },
       ],
@@ -182,6 +196,12 @@ describe("PlayerHomePage", () => {
     expect(within(open).getAllByTestId("chip-request-row")).toHaveLength(1);
     expect(await screen.findByTestId("home-repeat")).toHaveTextContent("Ещё Ginger 100");
     expect(await screen.findByTestId("feed-main-event")).toHaveTextContent("Grand Knockout");
+    const post = within(screen.getByTestId("feed-posts")).getByTestId("feed-post");
+    expect(within(post).getByText("Вторник в клубе")).toBeInTheDocument();
+    expect(within(post).getByRole("link", { name: "Расписание →" })).toHaveAttribute(
+      "href",
+      "/tournaments",
+    );
     expect(within(screen.getByTestId("feed-evening")).getByText("T eve")).toBeInTheDocument();
     expect(within(screen.getByTestId("feed-win")).getByText("Player123")).toBeInTheDocument();
     expect(screen.queryByTestId("home-guest")).not.toBeInTheDocument();

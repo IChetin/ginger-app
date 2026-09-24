@@ -1,6 +1,7 @@
 from typing import Annotated
+from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -25,4 +26,15 @@ async def get_feed(
             "main_events": tournaments_for_guest(feed.main_events),
             "evening": tournaments_for_guest(feed.evening),
         }
+    )
+
+
+@router.get("/feed/posts/{post_id}/image")
+async def get_post_image(post_id: UUID, db: Annotated[AsyncSession, Depends(get_db)]) -> Response:
+    """Афиша записи — часть витрины: открыта всем, кешируется на сутки."""
+    data, content_type = await feed_service.post_image(db, post_id)
+    return Response(
+        content=data,
+        media_type=content_type,
+        headers={"Cache-Control": "public, max-age=86400"},
     )

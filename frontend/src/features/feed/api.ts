@@ -1,12 +1,32 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { createWin, deleteWin, fetchAdminWins, fetchFeed } from "@/features/feed/feedApi";
+import {
+  createPost,
+  createWin,
+  deletePost,
+  deletePostImage,
+  deleteWin,
+  fetchAdminPosts,
+  fetchAdminWins,
+  fetchFeed,
+  updatePost,
+  uploadPostImage,
+  type FeedPostPayload,
+} from "@/features/feed/feedApi";
 
-export type { Feed, WinCreatePayload, WinItem } from "@/features/feed/feedApi";
+export type {
+  Feed,
+  FeedPost,
+  FeedPostAdmin,
+  FeedPostPayload,
+  WinCreatePayload,
+  WinItem,
+} from "@/features/feed/feedApi";
 
 const keys = {
   feed: ["feed"] as const,
   adminWins: ["admin", "wins"] as const,
+  adminPosts: ["admin", "posts"] as const,
 };
 
 export function useFeed() {
@@ -42,4 +62,44 @@ export function useDeleteWin() {
       void queryClient.invalidateQueries({ queryKey: keys.feed });
     },
   });
+}
+
+/** Записи в ленте: после любой правки обновляем и админский список, и саму ленту. */
+function usePostMutation<TVariables, TData>(mutationFn: (variables: TVariables) => Promise<TData>) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: keys.adminPosts });
+      void queryClient.invalidateQueries({ queryKey: keys.feed });
+    },
+  });
+}
+
+export function useAdminPosts() {
+  return useQuery({ queryKey: keys.adminPosts, queryFn: fetchAdminPosts });
+}
+
+export function useCreatePost() {
+  return usePostMutation(createPost);
+}
+
+export function useUpdatePost() {
+  return usePostMutation(({ id, body }: { id: string; body: FeedPostPayload }) =>
+    updatePost(id, body),
+  );
+}
+
+export function useDeletePost() {
+  return usePostMutation(deletePost);
+}
+
+export function useUploadPostImage() {
+  return usePostMutation(({ id, file }: { id: string; file: File }) =>
+    uploadPostImage(id, file, file.name),
+  );
+}
+
+export function useDeletePostImage() {
+  return usePostMutation(deletePostImage);
 }

@@ -1,15 +1,26 @@
 import uuid
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Date, ForeignKey, Index, Numeric, SmallInteger, String
+from sqlalchemy import (
+    Boolean,
+    Date,
+    DateTime,
+    ForeignKey,
+    Index,
+    Numeric,
+    SmallInteger,
+    String,
+    Text,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
+    from app.models.chips import Attachment
     from app.models.clubs import Club
     from app.models.players import Player
     from app.models.references import Currency
@@ -50,3 +61,38 @@ class PlayerWin(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     player: Mapped["Player | None"] = relationship()
     club: Mapped["Club | None"] = relationship()
     currency: Mapped["Currency"] = relationship()
+
+
+class FeedPost(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    """Запись в ленте руками менеджера: анонс, афиша, итоги вторника.
+
+    Лента сама по себе собирается из расписания и выигрышей — сюда попадает то, что
+    раньше уходило постом в Telegram. Запись можно закрепить наверху, отложить публикацию
+    и задать срок, после которого она пропадает из ленты сама.
+    """
+
+    __tablename__ = "feed_posts"
+    __table_args__ = (Index("ix_feed_posts_published_at", "published_at"),)
+
+    title: Mapped[str] = mapped_column(String(120), nullable=False)
+    body: Mapped[str | None] = mapped_column(Text)
+    link_url: Mapped[str | None] = mapped_column(String(200))
+    link_label: Mapped[str | None] = mapped_column(String(40))
+    image_attachment_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("attachments.id", ondelete="SET NULL"),
+    )
+    club_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("clubs.id", ondelete="SET NULL"),
+    )
+    is_pinned: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+    )
+
+    club: Mapped["Club | None"] = relationship()
+    image: Mapped["Attachment | None"] = relationship()

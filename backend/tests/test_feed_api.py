@@ -160,3 +160,117 @@ async def test_win_validation_and_player_cannot_add(
 
 async def test_player_cannot_manage_wins(user_client: AsyncClient) -> None:
     assert (await user_client.get("/api/v1/admin/wins")).status_code == 403
+
+
+async def test_manager_publishes_post_and_feed_shows_it(
+    admin_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    club = await _club(db_session, "ginger21")
+    created = await admin_client.post(
+        "/api/v1/admin/posts",
+        json={
+            "title": "  Вторник в клубе  ",
+            "body": "Сбор в 19:30, старт в 20:00.",
+            "link_url": "/tournaments",
+            "link_label": "Расписание",
+            "club_id": str(club.id),
+            "is_pinned": True,
+        },
+    )
+    assert created.status_code == 201, created.text
+    post = created.json()
+    assert post["title"] == "Вторник в клубе"
+    assert post["club"]["name"] == "Ginger21"
+    assert post["image_url"] is None
+
+    # Отложенная запись в ленту пока не попадает, закреплённая — идёт первой.
+    later = (
+        await admin_client.post(
+            "/api/v1/admin/posts",
+            json={
+                "title": "Анонс на потом",
+                "published_at": (datetime.now(UTC) + timedelta(days=2)).isoformat(),
+            },
+        )
+    ).json()
+    old = (
+        await admin_client.post(
+            "/api/v1/admin/posts",
+            json={
+                "title": "Старое объявление",
+                "published_at": (datetime.now(UTC) - timedelta(days=3)).isoformat(),
+                "expires_at": (datetime.now(UTC) - timedelta(days=1)).isoformat(),
+            },
+        )
+    ).json()
+
+    feed = (await admin_client.get("/api/v1/feed")).json()
+    titles = [item["title"] for item in feed["posts"]]
+    assert titles[0] == "Вторник в клубе"
+    assert "Анонс на потом" not in titles
+    assert "Старое объявление" not in titles
+
+    # Менеджеру видны все записи, включая отложенные и просроченные.
+    admin_titles = [
+        item["title"] for item in (await admin_client.get("/api/v1/admin/posts")).json()
+    ]
+    assert {"Анонс на потом", "Старое объявление"} <= set(admin_titles)
+    assert later["id"] and old["id"]
+
+    updated = await admin_client.put(
+        f"/api/v1/admin/posts/{post['id']}",
+        json={"title": "Вторник переносится", "is_pinned": False},
+    )
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["club"] is None
+    assert updated.json()["link_url"] is None
+
+    deleted = await admin_client.delete(f"/api/v1/admin/posts/{post['id']}")
+    assert deleted.status_code == 204
+    left = [item["id"] for item in (await admin_client.get("/api/v1/admin/posts")).json()]
+    assert post["id"] not in left
+
+
+async def test_post_image_is_public_and_replaced(
+    client: AsyncClient, admin_client: AsyncClient
+) -> None:
+    post = (await admin_client.post("/api/v1/admin/posts", json={"title": "Афиша недели"})).json()
+
+    text_file = await admin_client.post(
+        f"/api/v1/admin/posts/{post['id']}/image",
+        files={"file": ("grid.txt", b"not an image", "text/plain")},
+    )
+    assert text_file.status_code == 415
+
+    uploaded = await admin_client.post(
+        f"/api/v1/admin/posts/{post['id']}/image",
+        files={"file": ("afisha.png", b"\x89PNG\r\n\x1a\nafisha", "image/png")},
+    )
+    assert uploaded.status_code == 200, uploaded.text
+    assert uploaded.json()["image_url"] == f"/api/v1/feed/posts/{post['id']}/image"
+
+    # Картинку видит гость: лента — витрина клуба.
+    image = await client.get(f"/api/v1/feed/posts/{post['id']}/image")
+    assert image.status_code == 200
+    assert image.headers["content-type"].startswith("image/png")
+    assert image.content.endswith(b"afisha")
+
+    cleared = await admin_client.delete(f"/api/v1/admin/posts/{post['id']}/image")
+    assert cleared.status_code == 200
+    assert cleared.json()["image_url"] is None
+    assert (await client.get(f"/api/v1/feed/posts/{post['id']}/image")).status_code == 404
+
+
+async def test_post_link_must_stay_inside_the_app(admin_client: AsyncClient) -> None:
+    outside = await admin_client.post(
+        "/api/v1/admin/posts",
+        json={"title": "Промо", "link_url": "https://example.com"},
+    )
+    assert outside.status_code == 422
+
+
+async def test_player_cannot_manage_posts(user_client: AsyncClient) -> None:
+    assert (await user_client.get("/api/v1/admin/posts")).status_code == 403
+    assert (
+        await user_client.post("/api/v1/admin/posts", json={"title": "Свой анонс"})
+    ).status_code == 403

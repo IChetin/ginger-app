@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 import type { Tournament } from "@/api/types/tournaments";
 import { formatMoney as formatAmount, formatNumber } from "@/features/chips/lib/format";
-import { useFeed, type WinItem } from "@/features/feed/api";
+import { useFeed, type FeedPost, type WinItem } from "@/features/feed/api";
 import { AppIcon } from "@/features/tournaments/components/TournamentCard";
 import { TournamentSheet } from "@/features/tournaments/components/TournamentSheet";
 import {
@@ -115,6 +115,69 @@ function EventRow({ tournament, onOpen }: { tournament: Tournament; onOpen: () =
   );
 }
 
+const postDate = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long" });
+const LONG_BODY = 220;
+
+/** Запись менеджера: анонс, афиша, итоги вторника. Длинный текст раскрывается по кнопке. */
+function PostCard({ post }: { post: FeedPost }) {
+  const [expanded, setExpanded] = useState(false);
+  const body = post.body ?? "";
+  const long = body.length > LONG_BODY;
+  return (
+    <article
+      className="border-line bg-surface overflow-hidden rounded-lg border"
+      data-testid="feed-post"
+    >
+      {post.image_url ? (
+        <img
+          src={post.image_url}
+          alt=""
+          loading="lazy"
+          className="bg-surface-2 block max-h-[240px] w-full object-cover"
+        />
+      ) : null}
+      <div className="px-3 py-2.5">
+        <div className="text-ink-3 flex items-center gap-1.5 text-[11px] font-bold tracking-[0.08em] uppercase">
+          {post.club ? <AppIcon app={post.club.app} className="h-4 w-4 shrink-0" /> : null}
+          <span className="truncate">
+            {post.is_pinned ? "Закреплено" : postDate.format(new Date(post.published_at))}
+            {post.club ? ` · ${post.club.name}` : ""}
+          </span>
+        </div>
+        <h3 className="font-display text-ink mt-1 text-[16px] leading-tight font-bold">
+          {post.title}
+        </h3>
+        {body ? (
+          <p
+            className={cn(
+              "text-ink-2 mt-1 text-[13px] whitespace-pre-line",
+              long && !expanded && "line-clamp-4",
+            )}
+          >
+            {body}
+          </p>
+        ) : null}
+        <div className="mt-1.5 flex items-center gap-3">
+          {post.link_url ? (
+            <Link to={post.link_url} className="text-gold text-[13px] font-bold">
+              {post.link_label || "Подробнее"} →
+            </Link>
+          ) : null}
+          {long ? (
+            <button
+              type="button"
+              onClick={() => setExpanded((value) => !value)}
+              className="text-ink-3 text-[13px] font-bold"
+            >
+              {expanded ? "Свернуть" : "Читать"}
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </article>
+  );
+}
+
 const winDate = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" });
 
 function WinCard({ win }: { win: WinItem }) {
@@ -144,8 +207,8 @@ function WinCard({ win }: { win: WinItem }) {
 }
 
 /**
- * Лента на главной (этап 7): главное событие дня, остальные главные события недели,
- * вечер в каждом клубе, выигрыши игроков. Открыта и гостю — это витрина клуба.
+ * Лента на главной (этап 7): записи менеджера, главное событие дня, остальные главные
+ * события недели, вечер в каждом клубе, выигрыши игроков. Открыта и гостю — это витрина клуба.
  */
 export function FeedSections({ now }: { now: Date }) {
   const feed = useFeed();
@@ -163,10 +226,18 @@ export function FeedSections({ now }: { now: Date }) {
   }
 
   const [main, ...week] = feed.data.main_events;
-  const { evening, wins } = feed.data;
+  const { posts, evening, wins } = feed.data;
 
   return (
     <div data-testid="feed">
+      {posts.length > 0 ? (
+        <div className="mt-5 flex flex-col gap-1.5" data-testid="feed-posts">
+          {posts.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))}
+        </div>
+      ) : null}
+
       {main ? (
         <>
           <SectionTitle link={{ to: "/tournaments", label: "Всё расписание" }}>Лента</SectionTitle>
@@ -207,7 +278,7 @@ export function FeedSections({ now }: { now: Date }) {
         </>
       ) : null}
 
-      {!main && evening.length === 0 && wins.length === 0 ? (
+      {!main && posts.length === 0 && evening.length === 0 && wins.length === 0 ? (
         <p className={cn("text-ink-3 mt-5 text-center text-[13px]")}>
           В ленте пока пусто — загляните в{" "}
           <Link to="/tournaments" className="text-gold font-bold">

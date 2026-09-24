@@ -19,6 +19,7 @@ import { AdminOrganizersPage } from "@/pages/admin/AdminOrganizersPage";
 import { AdminBroadcastsPage } from "@/pages/admin/AdminBroadcastsPage";
 import { AdminPlayerPage } from "@/pages/admin/AdminPlayerPage";
 import { AdminPlayersPage } from "@/pages/admin/AdminPlayersPage";
+import { AdminPostsPage } from "@/pages/admin/AdminPostsPage";
 import { AdminRequisitesPage } from "@/pages/admin/AdminRequisitesPage";
 import { AdminWinsPage } from "@/pages/admin/AdminWinsPage";
 import { AdminThreadPage } from "@/pages/admin/AdminThreadPage";
@@ -100,6 +101,7 @@ export function AppRoutes() {
           <Route path="invites" element={<AdminInvitesPage />} />
           <Route path="requisites" element={<AdminRequisitesPage />} />
           <Route path="wins" element={<AdminWinsPage />} />
+          <Route path="posts" element={<AdminPostsPage />} />
           <Route path="threads" element={<AdminThreadsPage />} />
           <Route path="threads/:threadId" element={<AdminThreadPage />} />
         </Route>

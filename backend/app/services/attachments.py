@@ -81,3 +81,10 @@ async def purge_expired(session: AsyncSession, *, now: datetime | None = None) -
         )
         await session.flush()
     return len(expired)
+
+
+async def remove(session: AsyncSession, attachment: Attachment) -> None:
+    """Удалить файл вместе с записью — картинку записи в ленте меняют и снимают руками."""
+    _path(attachment.storage_key).unlink(missing_ok=True)
+    await session.delete(attachment)
+    await session.flush()

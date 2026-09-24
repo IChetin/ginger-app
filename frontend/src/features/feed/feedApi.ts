@@ -1,4 +1,4 @@
-import { apiDelete, apiGet, apiPost } from "@/api/client";
+import { apiDelete, apiGet, apiPost, apiPostForm, apiPut } from "@/api/client";
 import type { PokerApp, Tournament } from "@/api/types/tournaments";
 
 export interface WinItem {
@@ -13,8 +13,39 @@ export interface WinItem {
   won_on: string;
 }
 
-/** Лента (этап 7): главное событие каждого дня, вечер в каждом клубе, выигрыши. */
+/** Запись в ленте руками менеджера: анонс, афиша, итоги вторника. */
+export interface FeedPost {
+  id: string;
+  title: string;
+  body: string | null;
+  image_url: string | null;
+  link_url: string | null;
+  link_label: string | null;
+  club: { id: string; name: string; app: PokerApp } | null;
+  is_pinned: boolean;
+  published_at: string;
+  expires_at: string | null;
+}
+
+export interface FeedPostAdmin extends FeedPost {
+  author_nickname: string | null;
+  created_at: string;
+}
+
+export interface FeedPostPayload {
+  title: string;
+  body?: string | null;
+  link_url?: string | null;
+  link_label?: string | null;
+  club_id?: string | null;
+  is_pinned: boolean;
+  published_at?: string | null;
+  expires_at?: string | null;
+}
+
+/** Лента (этап 7): записи менеджера, главное событие каждого дня, вечер в клубах, выигрыши. */
 export interface Feed {
+  posts: FeedPost[];
   main_events: Tournament[];
   evening: Tournament[];
   wins: WinItem[];
@@ -35,3 +66,19 @@ export const fetchFeed = () => apiGet<Feed>("/api/v1/feed");
 export const fetchAdminWins = () => apiGet<WinItem[]>("/api/v1/admin/wins");
 export const createWin = (body: WinCreatePayload) => apiPost<WinItem>("/api/v1/admin/wins", body);
 export const deleteWin = (id: string) => apiDelete(`/api/v1/admin/wins/${id}`);
+
+export const fetchAdminPosts = () => apiGet<FeedPostAdmin[]>("/api/v1/admin/posts");
+export const createPost = (body: FeedPostPayload) =>
+  apiPost<FeedPostAdmin>("/api/v1/admin/posts", body);
+export const updatePost = (id: string, body: FeedPostPayload) =>
+  apiPut<FeedPostAdmin>(`/api/v1/admin/posts/${id}`, body);
+export const deletePost = (id: string) => apiDelete(`/api/v1/admin/posts/${id}`);
+
+export function uploadPostImage(id: string, file: Blob, filename: string) {
+  const form = new FormData();
+  form.append("file", file, filename);
+  return apiPostForm<FeedPostAdmin>(`/api/v1/admin/posts/${id}/image`, form);
+}
+
+export const deletePostImage = (id: string) =>
+  apiDelete<FeedPostAdmin>(`/api/v1/admin/posts/${id}/image`, { allowEmpty: false });
