@@ -26,6 +26,8 @@ export function Conversation({
   pending,
   error,
   closedHint,
+  fill = false,
+  scrollKey,
 }: {
   thread: Thread;
   viewer: ConversationViewer;
@@ -34,6 +36,10 @@ export function Conversation({
   pending: boolean;
   error: unknown;
   closedHint?: string;
+  /** Экран переписки как в мессенджере: лента прокручивается, поле ввода прижато к низу. */
+  fill?: boolean;
+  /** Меняется при открытии клавиатуры — тогда ленту снова прокручиваем к последнему. */
+  scrollKey?: number;
 }) {
   const [text, setText] = useState("");
   const input = useRef<HTMLInputElement>(null);
@@ -41,7 +47,7 @@ export function Conversation({
 
   useEffect(() => {
     bottom.current?.scrollIntoView?.({ block: "end" });
-  }, [thread.messages.length]);
+  }, [thread.messages.length, scrollKey]);
 
   const send = async () => {
     const body = text.trim();
@@ -55,8 +61,13 @@ export function Conversation({
   };
 
   return (
-    <div className="flex flex-col" data-testid="conversation">
-      <div className="flex flex-col gap-1.5 py-2">
+    <div className={cn("flex flex-col", fill && "min-h-0 flex-1")} data-testid="conversation">
+      <div
+        className={cn(
+          "flex flex-col gap-1.5 py-2",
+          fill && "min-h-0 flex-1 overflow-y-auto overscroll-contain",
+        )}
+      >
         {thread.messages.map((message) => {
           const mine = viewer === "manager" ? message.from_manager : !message.from_manager;
           return (
@@ -112,7 +123,12 @@ export function Conversation({
         <p className="text-ink-3 pb-1.5 text-center text-[12px]">{closedHint}</p>
       ) : null}
 
-      <div className="border-line bg-bg/95 sticky bottom-0 flex items-end gap-1.5 border-t pt-2 pb-2 backdrop-blur-[12px]">
+      <div
+        className={cn(
+          "border-line bg-bg/95 flex items-end gap-1.5 border-t pt-2 pb-2 backdrop-blur-[12px]",
+          fill ? "shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]" : "sticky bottom-0",
+        )}
+      >
         <button
           type="button"
           aria-label="Приложить картинку"
@@ -124,7 +140,7 @@ export function Conversation({
         </button>
         <textarea
           aria-label="Сообщение"
-          placeholder="Сообщение или история раздачи"
+          placeholder="Сообщение"
           value={text}
           rows={Math.min(5, Math.max(1, text.split("\n").length))}
           onChange={(event) => setText(event.target.value)}

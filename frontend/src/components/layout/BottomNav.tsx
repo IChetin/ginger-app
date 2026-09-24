@@ -65,8 +65,16 @@ function isItemActive(pathname: string, item: NavItem): boolean {
   return item.sections.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
+// Открытая переписка: /dialogs/<id>, но не список и не «Написать».
+const THREAD_PATH = /^\/dialogs\/(?!new$)[^/]+$/;
+
 export function BottomNav({ dialogsUnread = 0 }: { dialogsUnread?: number }) {
   const { pathname } = useLocation();
+
+  // Внутри переписки меню не показываем — как в мессенджерах, низ экрана отдан полю ввода.
+  if (THREAD_PATH.test(pathname)) {
+    return null;
+  }
 
   return (
     <nav

@@ -334,10 +334,13 @@ async def test_withdrawal_rules(
         assert (await editor.post(f"{url}/complete")).json()["status"] == "completed"
 
 
-async def test_accounts_need_confirmation(
+async def test_account_works_right_away_and_can_be_edited(
     client: AsyncClient, seeded_db: None, db_session: AsyncSession
 ) -> None:
+    """Решение Ивана 24.09: аккаунт без проверки менеджером, игрок сам его правит."""
     ids = await _make_player(db_session, "newbie", PlayerKind.CREDIT, clubs=())
+    # У второго игрока аккаунт в том же клубе с ID «other-ginger21».
+    first = await _make_player(db_session, "other", PlayerKind.CREDIT, clubs=("ginger21",))
     ginger21 = await db_session.scalar(select(Club.id).where(Club.slug == "ginger21"))
     async with _logged_in(ids["email"]) as player:
         added = await player.post(
@@ -345,32 +348,39 @@ async def test_accounts_need_confirmation(
             json={"club_id": str(ginger21), "nickname": "newbie", "app_account_id": "777"},
         )
         assert added.status_code == 201, added.text
-        assert added.json()["status"] == "pending"
+        assert added.json()["status"] == "confirmed"
         duplicate = await player.post(
             "/api/v1/me/accounts",
             json={"club_id": str(ginger21), "nickname": "x", "app_account_id": "777"},
         )
         assert duplicate.status_code == 409
 
-        pending = await player.post(
-            "/api/v1/me/chip-requests",
-            json={"items": [{"account_id": added.json()["id"], "amount": "1000"}]},
-        )
-        assert pending.json()["error"]["code"] == "account_not_confirmed"
-
-        async with _logged_in(get_settings().seed_editor_email) as editor:
-            queue = (await editor.get("/api/v1/admin/player-accounts/pending")).json()
-            assert [item["player_nickname"] for item in queue] == ["newbie"]
-            confirmed = await editor.post(
-                f"/api/v1/admin/player-accounts/{added.json()['id']}/confirm"
-            )
-            assert confirmed.json()["status"] == "confirmed"
-
+        # Заявка в этот клуб — сразу, без ожидания менеджера.
         ok = await player.post(
             "/api/v1/me/chip-requests",
             json={"items": [{"account_id": added.json()["id"], "amount": "1000"}]},
         )
-        assert ok.status_code == 201
+        assert ok.status_code == 201, ok.text
+
+        # Правка: ник и ID меняются, чужой ID в том же клубе занять нельзя.
+        account_id = added.json()["id"]
+        edited = await player.patch(
+            f"/api/v1/me/accounts/{account_id}",
+            json={"nickname": " newbie2 ", "app_account_id": "778"},
+        )
+        assert edited.status_code == 200, edited.text
+        assert (edited.json()["nickname"], edited.json()["app_account_id"]) == ("newbie2", "778")
+        clash = await player.patch(
+            f"/api/v1/me/accounts/{account_id}", json={"app_account_id": "other-ginger21"}
+        )
+        assert clash.status_code == 409
+
+    # Чужой аккаунт не поправить.
+    async with _logged_in(first["email"]) as other:
+        foreign = await other.patch(
+            f"/api/v1/me/accounts/{account_id}", json={"nickname": "hijack"}
+        )
+        assert foreign.status_code == 404
 
 
 async def test_access_rules(client: AsyncClient, seeded_db: None, db_session: AsyncSession) -> None:

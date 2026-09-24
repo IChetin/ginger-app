@@ -15,8 +15,9 @@ export function PlayerProfileSection() {
   const me = player.data;
   if (!me) return null;
 
-  const confirmed = me.accounts.filter((account) => account.status === "confirmed").length;
-  const pending = me.accounts.filter((account) => account.status === "pending").length;
+  const accountsLine = me.accounts
+    .map((account) => `${account.club.name} · ${account.nickname}`)
+    .join(", ");
 
   return (
     <section className="mx-4 mb-3" data-testid="player-profile">
@@ -25,12 +26,14 @@ export function PlayerProfileSection() {
           <span className="text-ink-2 flex-1">Тип игрока</span>
           <b>{me.kind === "deposit" ? "Депозитный" : "Кредитный"}</b>
         </div>
-        <Link to="/chips/accounts" className={rowClass}>
-          <span className="text-ink-2 flex-1">Аккаунты в клубах</span>
-          <b>
-            {confirmed}
-            {pending > 0 ? ` · ${pending} на проверке` : ""}
-          </b>
+        <Link to="/chips/accounts" className={rowClass} data-testid="profile-accounts">
+          <span className="text-ink-2 min-w-0 flex-1">
+            Мои аккаунты
+            <span className="text-ink-3 block truncate text-[11.5px]">
+              {accountsLine || "Не привязаны — нажмите, чтобы добавить"}
+            </span>
+          </span>
+          <b>{me.accounts.length}</b>
           <span className="text-ink-3" aria-hidden="true">
             ›
           </span>

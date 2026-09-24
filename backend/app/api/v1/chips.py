@@ -15,6 +15,7 @@ from app.schemas.chips import (
     InviteCheck,
     PlayerAccountCreate,
     PlayerAccountRead,
+    PlayerAccountUpdate,
     PlayerMe,
     PlayerMeUpdate,
     ReferralRead,
@@ -53,6 +54,14 @@ async def rotate_referral(user: CurrentUser, db: Db) -> ReferralRead:
 @router.post("/me/accounts", response_model=PlayerAccountRead, status_code=status.HTTP_201_CREATED)
 async def add_account(body: PlayerAccountCreate, user: CurrentUser, db: Db) -> PlayerAccountRead:
     return await chips_service.add_account(db, user, body)
+
+
+@router.patch("/me/accounts/{account_id}", response_model=PlayerAccountRead)
+async def update_account(
+    account_id: UUID, body: PlayerAccountUpdate, user: CurrentUser, db: Db
+) -> PlayerAccountRead:
+    """Поправить ник или ID своего аккаунта в клубе (раздел «Мои аккаунты»)."""
+    return await chips_service.update_account(db, user, account_id, body)
 
 
 @router.get("/me/chip-requests", response_model=list[ChipRequestRead])

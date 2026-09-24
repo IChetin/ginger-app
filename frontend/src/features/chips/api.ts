@@ -47,6 +47,13 @@ export function addPlayerAccount(body: PlayerAccountCreatePayload): Promise<Play
   return apiPost("/api/v1/me/accounts", body);
 }
 
+export function updatePlayerAccount(
+  id: string,
+  body: { nickname?: string; app_account_id?: string },
+): Promise<PlayerAccount> {
+  return apiPatch(`/api/v1/me/accounts/${id}`, body);
+}
+
 export function fetchPublicClubs(): Promise<PublicClub[]> {
   return apiGet("/api/v1/clubs");
 }

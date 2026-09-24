@@ -426,9 +426,7 @@ export function ChipsPage() {
           <div className="border-line-gold bg-surface rounded-lg border border-dashed px-4 py-5 text-center">
             <p className="text-ink text-[15px] font-bold">Привяжите аккаунт в клубе</p>
             <p className="text-ink-2 mt-1 text-[13px]">
-              {me.accounts.some((account) => account.status === "pending")
-                ? "Аккаунт на проверке у менеджера — после подтверждения можно запрашивать фишки"
-                : "Без него фишки не запросить: укажите клуб, ник и ID в приложении"}
+              Без него фишки не запросить: укажите клуб, ник и ID в приложении
             </p>
             <Link
               to="/chips/accounts"

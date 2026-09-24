@@ -13,6 +13,7 @@ const fetchPlayerMe = vi.fn();
 const fetchChipRequests = vi.fn();
 const fetchChipRequest = vi.fn();
 const createChipRequest = vi.fn();
+const updatePlayerAccount = vi.fn();
 
 vi.mock("@/api/client", async () => {
   const actual = await vi.importActual<typeof import("@/api/client")>("@/api/client");
@@ -27,6 +28,7 @@ vi.mock("@/features/chips/api", async () => {
     fetchChipRequests: () => fetchChipRequests(),
     fetchChipRequest: (id: string) => fetchChipRequest(id),
     createChipRequest: (body: unknown) => createChipRequest(body),
+    updatePlayerAccount: (id: string, body: unknown) => updatePlayerAccount(id, body),
   };
 });
 
@@ -179,24 +181,44 @@ describe("ChipsPage", () => {
     expect(repeat).toHaveAttribute("href", "/chips?repeat=r-old");
   });
 
-  it("без подтверждённого аккаунта — предлагает привязать", async () => {
-    fetchPlayerMe.mockResolvedValue(
-      player({
-        accounts: [
-          {
-            id: "acc-new",
-            club: ginger,
-            nickname: "player",
-            app_account_id: "1",
-            status: "pending",
-            created_at: "2026-09-01T00:00:00Z",
-          },
-        ],
+  it("мои аккаунты: аккаунт правится прямо в списке", async () => {
+    const account = {
+      id: "acc-1",
+      club: ginger,
+      nickname: "Молоток",
+      app_account_id: "111640",
+      status: "confirmed" as const,
+      created_at: "2026-09-01T00:00:00Z",
+    };
+    fetchPlayerMe.mockResolvedValue(player({ accounts: [account] }));
+    updatePlayerAccount.mockResolvedValue({ ...account, nickname: "Кувалда" });
+    const view = userEvent.setup();
+    renderWithProviders(<AppRoutes />, { route: "/chips/accounts" });
+
+    expect(await screen.findByRole("heading", { name: "Мои аккаунты" })).toBeInTheDocument();
+    // Статуса «на проверке» больше нет — аккаунт сразу в работе.
+    expect(screen.queryByText("На проверке")).not.toBeInTheDocument();
+
+    await view.click(await screen.findByRole("button", { name: "Изменить Ginger" }));
+    const row = screen.getByTestId("account-row");
+    const nick = within(row).getByLabelText("Ник в клубе");
+    await view.clear(nick);
+    await view.type(nick, "Кувалда");
+    await view.click(within(row).getByRole("button", { name: "Сохранить" }));
+
+    await waitFor(() =>
+      expect(updatePlayerAccount).toHaveBeenCalledWith("acc-1", {
+        nickname: "Кувалда",
+        app_account_id: "111640",
       }),
     );
+  });
+
+  it("без аккаунтов — предлагает привязать", async () => {
+    fetchPlayerMe.mockResolvedValue(player({ accounts: [] }));
     renderWithProviders(<AppRoutes />, { route: "/chips" });
     expect(await screen.findByText("Привяжите аккаунт в клубе")).toBeInTheDocument();
-    expect(screen.getByText(/Аккаунт на проверке у менеджера/)).toBeInTheDocument();
+    expect(screen.getByText(/Без него фишки не запросить/)).toBeInTheDocument();
   });
 
   it("не игрок — объясняет, как попасть", async () => {

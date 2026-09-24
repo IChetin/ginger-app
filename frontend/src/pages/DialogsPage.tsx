@@ -12,6 +12,7 @@ import {
 import { ApiError } from "@/api/client";
 import type { ThreadTopic } from "@/api/types/threads";
 import { Conversation } from "@/features/threads/components/Conversation";
+import { useVisualViewport } from "@/hooks/useVisualViewport";
 import { fetchThreads, threadAttachmentUrl } from "@/features/threads/api";
 import {
   useCreateThread,
@@ -191,6 +192,7 @@ function ThreadScreen() {
   const { threadId = "" } = useParams();
   const thread = useThread(threadId);
   const post = usePostThreadMessage(threadId);
+  const viewport = useVisualViewport();
 
   if (thread.isPending) return <div className="bg-surface mx-3 mt-4 h-48 rounded-md" />;
   if (thread.isError) {
@@ -205,8 +207,17 @@ function ThreadScreen() {
   }
   const data = thread.data;
   return (
-    <div className="bg-bg min-h-full px-3" data-testid="thread-page">
-      <header className="border-line bg-bg/95 sticky top-0 z-10 border-b pt-2.5 pb-2 backdrop-blur-[12px]">
+    // Как в мессенджерах: экран переписки занимает видимую часть экрана целиком, лента
+    // прокручивается внутри, поле ввода прижато к низу и поднимается вместе с клавиатурой.
+    <div
+      className="bg-bg fixed inset-x-0 top-0 z-40 mx-auto flex w-full max-w-[420px] flex-col px-3"
+      style={{
+        height: viewport.height || "100dvh",
+        transform: viewport.offsetTop ? `translateY(${viewport.offsetTop}px)` : undefined,
+      }}
+      data-testid="thread-page"
+    >
+      <header className="border-line bg-bg/95 z-10 shrink-0 border-b pt-2.5 pb-2 backdrop-blur-[12px]">
         <div className="flex items-center gap-2">
           <Link to="/dialogs" className="text-gold text-[13px] font-bold">
             ← Диалоги
@@ -233,6 +244,8 @@ function ThreadScreen() {
         pending={post.isPending}
         error={post.error}
         closedHint="Диалог закрыт. Новое сообщение откроет его снова."
+        fill
+        scrollKey={viewport.height}
         onSend={(vars) =>
           post.mutateAsync(
             vars.file

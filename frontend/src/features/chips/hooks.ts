@@ -9,6 +9,7 @@ import {
   fetchPlayerMe,
   fetchPublicClubs,
   fetchReferral,
+  updatePlayerAccount,
   rotateReferral,
   updatePlayerMe,
   uploadScreenshot,
@@ -76,6 +77,21 @@ export function useAddPlayerAccount() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: addPlayerAccount,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: chipsKeys.player });
+    },
+  });
+}
+
+/** Игрок сам правит ник и ID аккаунта (раздел «Мои аккаунты», 24.09). */
+export function useUpdatePlayerAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { id: string; nickname?: string; app_account_id?: string }) =>
+      updatePlayerAccount(vars.id, {
+        nickname: vars.nickname,
+        app_account_id: vars.app_account_id,
+      }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: chipsKeys.player });
     },

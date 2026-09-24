@@ -51,6 +51,7 @@ from app.schemas.chips import (
     PendingAccountRead,
     PlayerAccountCreate,
     PlayerAccountRead,
+    PlayerAccountUpdate,
     PlayerAdminRead,
     PlayerAdminUpdate,
     PlayerBrief,
@@ -355,13 +356,44 @@ async def add_account(
     )
     if taken is not None:
         raise ConflictError("Этот аккаунт уже привязан")
+    # Решение Ивана 24.09: менеджер аккаунты больше не проверяет — привязанный сразу в работе.
     account = PlayerAccount(
         player_id=player.id,
         club_id=club.id,
         nickname=body.nickname.strip(),
         app_account_id=app_account_id,
+        status=PlayerAccountStatus.CONFIRMED,
+        reviewed_at=datetime.now(UTC),
     )
     session.add(account)
+    await session.flush()
+    player = await get_player(session, user)
+    return account_read(next(item for item in player.accounts if item.id == account.id))
+
+
+async def update_account(
+    session: AsyncSession, user: User, account_id: uuid.UUID, body: PlayerAccountUpdate
+) -> PlayerAccountRead:
+    """Игрок сам правит ник и ID своего аккаунта — ошибся при привязке или сменил ник."""
+    player = await get_player(session, user)
+    _require_active(player)
+    account = next((item for item in player.accounts if item.id == account_id), None)
+    if account is None:
+        raise NotFoundError("Аккаунт не найден")
+    if body.nickname is not None:
+        account.nickname = body.nickname.strip()
+    if body.app_account_id is not None:
+        app_account_id = body.app_account_id.strip()
+        taken = await session.scalar(
+            select(PlayerAccount.id).where(
+                PlayerAccount.club_id == account.club_id,
+                PlayerAccount.app_account_id == app_account_id,
+                PlayerAccount.id != account.id,
+            )
+        )
+        if taken is not None:
+            raise ConflictError("Этот аккаунт уже привязан")
+        account.app_account_id = app_account_id
     await session.flush()
     player = await get_player(session, user)
     return account_read(next(item for item in player.accounts if item.id == account.id))
