@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
 import { usePlayerMe, useUpdatePlayerMe } from "@/features/chips/hooks";
+import { groupAccounts } from "@/features/chips/lib/accounts";
+import { APP_LABELS } from "@/features/tournaments/lib/format";
 
 const rowClass = "border-line flex items-center gap-2 border-t px-3 py-2.5 first:border-t-0";
 
@@ -15,8 +17,14 @@ export function PlayerProfileSection() {
   const me = player.data;
   if (!me) return null;
 
-  const accountsLine = me.accounts
-    .map((account) => `${account.club.name} · ${account.nickname}`)
+  // Аккаунт живёт в приложении: «PPPoker · Молоток (3 клуба)», а не список клубов.
+  const appAccounts = groupAccounts(me.accounts);
+  const accountsLine = appAccounts
+    .map(
+      (account) =>
+        `${APP_LABELS[account.app]} · ${account.nickname}` +
+        (account.rows.length > 1 ? ` (${account.rows.length} клуба)` : ""),
+    )
     .join(", ");
 
   return (
@@ -33,7 +41,7 @@ export function PlayerProfileSection() {
               {accountsLine || "Не привязаны — нажмите, чтобы добавить"}
             </span>
           </span>
-          <b>{me.accounts.length}</b>
+          <b>{appAccounts.length}</b>
           <span className="text-ink-3" aria-hidden="true">
             ›
           </span>

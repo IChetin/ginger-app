@@ -47,6 +47,15 @@ export function addPlayerAccount(body: PlayerAccountCreatePayload): Promise<Play
   return apiPost("/api/v1/me/accounts", body);
 }
 
+/** ID приложения один раз — и сразу в отмеченных клубах (Иван, 24.09). */
+export function addAppAccount(body: {
+  club_ids: string[];
+  nickname: string;
+  app_account_id: string;
+}): Promise<PlayerAccount[]> {
+  return apiPost("/api/v1/me/app-accounts", body);
+}
+
 export function updatePlayerAccount(
   id: string,
   body: { nickname?: string; app_account_id?: string },

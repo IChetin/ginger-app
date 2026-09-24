@@ -41,6 +41,14 @@ class PlayerAccountCreate(BaseModel):
     app_account_id: str = Field(min_length=1, max_length=32)
 
 
+class PlayerAccountsCreate(BaseModel):
+    """Аккаунт приложения сразу в нескольких клубах: ID и ник общие, клубы — галочками."""
+
+    club_ids: list[UUID] = Field(min_length=1, max_length=10)
+    nickname: str = Field(min_length=1, max_length=64)
+    app_account_id: str = Field(min_length=1, max_length=32)
+
+
 class PlayerAccountUpdate(BaseModel):
     nickname: str | None = Field(default=None, min_length=1, max_length=64)
     app_account_id: str | None = Field(default=None, min_length=1, max_length=32)

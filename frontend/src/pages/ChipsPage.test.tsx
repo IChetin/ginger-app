@@ -14,6 +14,8 @@ const fetchChipRequests = vi.fn();
 const fetchChipRequest = vi.fn();
 const createChipRequest = vi.fn();
 const updatePlayerAccount = vi.fn();
+const addAppAccount = vi.fn();
+const fetchPublicClubs = vi.fn();
 
 vi.mock("@/api/client", async () => {
   const actual = await vi.importActual<typeof import("@/api/client")>("@/api/client");
@@ -29,6 +31,8 @@ vi.mock("@/features/chips/api", async () => {
     fetchChipRequest: (id: string) => fetchChipRequest(id),
     createChipRequest: (body: unknown) => createChipRequest(body),
     updatePlayerAccount: (id: string, body: unknown) => updatePlayerAccount(id, body),
+    addAppAccount: (body: unknown) => addAppAccount(body),
+    fetchPublicClubs: () => fetchPublicClubs(),
   };
 });
 
@@ -118,6 +122,7 @@ describe("ChipsPage", () => {
     fetchChipRequests.mockResolvedValue([]);
     fetchChipRequest.mockResolvedValue(created);
     createChipRequest.mockResolvedValue(created);
+    fetchPublicClubs.mockResolvedValue([]);
   });
 
   it("заявка в два клуба: кнопки сумм, итог, отправка", async () => {
@@ -199,9 +204,9 @@ describe("ChipsPage", () => {
     // Статуса «на проверке» больше нет — аккаунт сразу в работе.
     expect(screen.queryByText("На проверке")).not.toBeInTheDocument();
 
-    await view.click(await screen.findByRole("button", { name: "Изменить Ginger" }));
-    const row = screen.getByTestId("account-row");
-    const nick = within(row).getByLabelText("Ник в клубе");
+    await view.click(await screen.findByRole("button", { name: "Изменить PPPoker Молоток" }));
+    const row = screen.getByTestId("app-account");
+    const nick = within(row).getByLabelText("Ник в приложении");
     await view.clear(nick);
     await view.type(nick, "Кувалда");
     await view.click(within(row).getByRole("button", { name: "Сохранить" }));
@@ -209,6 +214,46 @@ describe("ChipsPage", () => {
     await waitFor(() =>
       expect(updatePlayerAccount).toHaveBeenCalledWith("acc-1", {
         nickname: "Кувалда",
+        app_account_id: "111640",
+      }),
+    );
+  });
+
+  it("новый аккаунт: ID вводится раз, клубы приложения отмечены сразу", async () => {
+    const club = (id: string, name: string, app: "pppoker" | "xpoker") => ({
+      id,
+      name,
+      slug: id,
+      app,
+      app_club_id: null,
+      chip_value: null,
+      chip_currency_code: null,
+      download_url: null,
+      join_steps: null,
+      games: null,
+    });
+    fetchPublicClubs.mockResolvedValue([
+      club("c-g", "Ginger", "pppoker"),
+      club("c-psy", "G.Psy", "pppoker"),
+      club("c-pg", "Private.G", "pppoker"),
+      club("c-plus", "Ginger+", "xpoker"),
+    ]);
+    fetchPlayerMe.mockResolvedValue(player({ accounts: [] }));
+    addAppAccount.mockResolvedValue([]);
+    const view = userEvent.setup();
+    renderWithProviders(<AppRoutes />, { route: "/chips/accounts" });
+
+    await view.click(await screen.findByRole("radio", { name: "PPPoker" }));
+    await view.type(screen.getByLabelText("ID в приложении"), "111640");
+    await view.type(screen.getByLabelText("Ник в приложении"), "Молоток");
+    // Все три клуба PPPoker отмечены — снимаем один.
+    await view.click(screen.getByRole("button", { name: "✓ Private.G" }));
+    await view.click(screen.getByRole("button", { name: "Привязать" }));
+
+    await waitFor(() =>
+      expect(addAppAccount).toHaveBeenCalledWith({
+        club_ids: ["c-g", "c-psy"],
+        nickname: "Молоток",
         app_account_id: "111640",
       }),
     );

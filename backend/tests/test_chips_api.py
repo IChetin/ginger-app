@@ -488,3 +488,49 @@ async def test_registration_by_invite(
     )
     assert reuse.json()["error"]["code"] == "invite_used"
     assert await db_session.scalar(select(func.count()).select_from(ChipRequest)) == 0
+
+
+async def test_app_account_once_for_several_clubs(
+    client: AsyncClient, seeded_db: None, db_session: AsyncSession
+) -> None:
+    """ID живёт в приложении, а не в клубе: вводится раз, клубы — галочками (Иван, 24.09)."""
+    ids = await _make_player(db_session, "pp", PlayerKind.CREDIT, clubs=())
+    pppoker = [
+        str(club_id)
+        for club_id in await db_session.scalars(
+            select(Club.id).where(Club.slug.in_(["ginger", "g-psy"])).order_by(Club.slug)
+        )
+    ]
+    private_g = await db_session.scalar(select(Club.id).where(Club.slug == "private-g"))
+    async with _logged_in(ids["email"]) as player:
+        created = await player.post(
+            "/api/v1/me/app-accounts",
+            json={"club_ids": pppoker, "nickname": "Молоток", "app_account_id": "111640"},
+        )
+        assert created.status_code == 201, created.text
+        assert sorted(item["club"]["slug"] for item in created.json()) == ["g-psy", "ginger"]
+        assert {item["status"] for item in created.json()} == {"confirmed"}
+
+        # Повтор с ещё одним клубом — уже привязанные пропускаются, добавляется только новый.
+        more = await player.post(
+            "/api/v1/me/app-accounts",
+            json={
+                "club_ids": [*pppoker, str(private_g)],
+                "nickname": "Молоток",
+                "app_account_id": "111640",
+            },
+        )
+        assert [item["club"]["slug"] for item in more.json()] == ["private-g"]
+
+        # Правка ника и ID в одном клубе — меняется во всех клубах приложения.
+        first_id = created.json()[0]["id"]
+        edited = await player.patch(
+            f"/api/v1/me/accounts/{first_id}",
+            json={"nickname": "Кувалда", "app_account_id": "222"},
+        )
+        assert edited.status_code == 200, edited.text
+        accounts = (await player.get("/api/v1/me/player")).json()["accounts"]
+        assert {(item["nickname"], item["app_account_id"]) for item in accounts} == {
+            ("Кувалда", "222")
+        }
+        assert len(accounts) == 3

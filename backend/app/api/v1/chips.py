@@ -15,6 +15,7 @@ from app.schemas.chips import (
     InviteCheck,
     PlayerAccountCreate,
     PlayerAccountRead,
+    PlayerAccountsCreate,
     PlayerAccountUpdate,
     PlayerMe,
     PlayerMeUpdate,
@@ -54,6 +55,18 @@ async def rotate_referral(user: CurrentUser, db: Db) -> ReferralRead:
 @router.post("/me/accounts", response_model=PlayerAccountRead, status_code=status.HTTP_201_CREATED)
 async def add_account(body: PlayerAccountCreate, user: CurrentUser, db: Db) -> PlayerAccountRead:
     return await chips_service.add_account(db, user, body)
+
+
+@router.post(
+    "/me/app-accounts",
+    response_model=list[PlayerAccountRead],
+    status_code=status.HTTP_201_CREATED,
+)
+async def add_app_account(
+    body: PlayerAccountsCreate, user: CurrentUser, db: Db
+) -> list[PlayerAccountRead]:
+    """ID приложения один раз — и сразу в отмеченных клубах этого приложения."""
+    return await chips_service.add_app_account(db, user, body)
 
 
 @router.patch("/me/accounts/{account_id}", response_model=PlayerAccountRead)

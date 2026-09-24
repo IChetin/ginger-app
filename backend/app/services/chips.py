@@ -51,6 +51,7 @@ from app.schemas.chips import (
     PendingAccountRead,
     PlayerAccountCreate,
     PlayerAccountRead,
+    PlayerAccountsCreate,
     PlayerAccountUpdate,
     PlayerAdminRead,
     PlayerAdminUpdate,
@@ -371,29 +372,85 @@ async def add_account(
     return account_read(next(item for item in player.accounts if item.id == account.id))
 
 
+async def add_app_account(
+    session: AsyncSession, user: User, body: PlayerAccountsCreate
+) -> list[PlayerAccountRead]:
+    """Аккаунт приложения сразу в нескольких клубах (Иван, 24.09).
+
+    ID и ник в PPPoker, X-Poker, Poker21 общие для всех клубов приложения — игрок вводит
+    их один раз и отмечает клубы. Уже привязанные этим игроком клубы пропускаются, чужой
+    ID в клубе — ошибка с названием клуба, ничего не сохраняется.
+    """
+    player = await get_player(session, user)
+    _require_active(player)
+    nickname = body.nickname.strip()
+    app_account_id = body.app_account_id.strip()
+    clubs = [await session.get(Club, club_id) for club_id in dict.fromkeys(body.club_ids)]
+    if any(club is None or not club.is_visible for club in clubs):
+        raise NotFoundError("Клуб не найден")
+    mine = {(item.club_id, item.app_account_id) for item in player.accounts}
+    created: list[uuid.UUID] = []
+    for club in clubs:
+        assert club is not None
+        if (club.id, app_account_id) in mine:
+            continue
+        taken = await session.scalar(
+            select(PlayerAccount.id).where(
+                PlayerAccount.club_id == club.id, PlayerAccount.app_account_id == app_account_id
+            )
+        )
+        if taken is not None:
+            raise ConflictError(f"ID {app_account_id} в клубе {club.name} уже привязан")
+        # Решение Ивана 24.09: менеджер аккаунты не проверяет — привязанный сразу в работе.
+        account = PlayerAccount(
+            player_id=player.id,
+            club_id=club.id,
+            nickname=nickname,
+            app_account_id=app_account_id,
+            status=PlayerAccountStatus.CONFIRMED,
+            reviewed_at=datetime.now(UTC),
+        )
+        session.add(account)
+        await session.flush()
+        created.append(account.id)
+    player = await get_player(session, user)
+    return [account_read(item) for item in player.accounts if item.id in created]
+
+
 async def update_account(
     session: AsyncSession, user: User, account_id: uuid.UUID, body: PlayerAccountUpdate
 ) -> PlayerAccountRead:
-    """Игрок сам правит ник и ID своего аккаунта — ошибся при привязке или сменил ник."""
+    """Игрок сам правит ник и ID — сразу во всех клубах этого приложения с тем же ID.
+
+    Аккаунт живёт в приложении, а не в клубе: сменил ник в PPPoker — он сменился везде.
+    """
     player = await get_player(session, user)
     _require_active(player)
     account = next((item for item in player.accounts if item.id == account_id), None)
     if account is None:
         raise NotFoundError("Аккаунт не найден")
-    if body.nickname is not None:
-        account.nickname = body.nickname.strip()
+    siblings = [
+        item
+        for item in player.accounts
+        if item.club.app == account.club.app and item.app_account_id == account.app_account_id
+    ]
     if body.app_account_id is not None:
         app_account_id = body.app_account_id.strip()
-        taken = await session.scalar(
-            select(PlayerAccount.id).where(
-                PlayerAccount.club_id == account.club_id,
-                PlayerAccount.app_account_id == app_account_id,
-                PlayerAccount.id != account.id,
+        for item in siblings:
+            taken = await session.scalar(
+                select(PlayerAccount.id).where(
+                    PlayerAccount.club_id == item.club_id,
+                    PlayerAccount.app_account_id == app_account_id,
+                    PlayerAccount.id.not_in([sibling.id for sibling in siblings]),
+                )
             )
-        )
-        if taken is not None:
-            raise ConflictError("Этот аккаунт уже привязан")
-        account.app_account_id = app_account_id
+            if taken is not None:
+                raise ConflictError(f"ID {app_account_id} в клубе {item.club.name} уже привязан")
+        for item in siblings:
+            item.app_account_id = app_account_id
+    if body.nickname is not None:
+        for item in siblings:
+            item.nickname = body.nickname.strip()
     await session.flush()
     player = await get_player(session, user)
     return account_read(next(item for item in player.accounts if item.id == account.id))

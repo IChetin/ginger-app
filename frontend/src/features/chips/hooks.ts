@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { ChipRequest, ChipRequestCreatePayload } from "@/api/types/chips";
 import {
+  addAppAccount,
   addPlayerAccount,
   createChipRequest,
   fetchChipRequest,
@@ -77,6 +78,16 @@ export function useAddPlayerAccount() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: addPlayerAccount,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: chipsKeys.player });
+    },
+  });
+}
+
+export function useAddAppAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: addAppAccount,
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: chipsKeys.player });
     },
