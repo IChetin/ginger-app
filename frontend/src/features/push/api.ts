@@ -200,6 +200,7 @@ export async function showLocalTestNotification(): Promise<void> {
   await registration.showNotification("Ginger", {
     body: "Так выглядят уведомления на этом телефоне",
     icon: "/icons/icon-192.png",
+    badge: "/icons/badge-96.png",
     tag: "ginger-local-test",
     lang: "ru",
   });

@@ -165,7 +165,12 @@ describe("PlayerHomePage", () => {
         },
       ],
       main_events: [
-        { ...tournament("main", g21, 120), name: "Grand Knockout", guarantee: "1500000" },
+        {
+          ...tournament("main", g21, 120),
+          name: "Grand Knockout",
+          guarantee: "1500000",
+          app_link: "https://pppoker.club/poker/api/share.php?id=1",
+        },
       ],
       evening: [tournament("eve", ginger, 300)],
       wins: [
@@ -196,6 +201,11 @@ describe("PlayerHomePage", () => {
     expect(within(open).getAllByTestId("chip-request-row")).toHaveLength(1);
     expect(await screen.findByTestId("home-repeat")).toHaveTextContent("Ещё Ginger 100");
     expect(await screen.findByTestId("feed-main-event")).toHaveTextContent("Grand Knockout");
+    // Проба 24.09: ссылка прямо в турнир — рядом с названием главного события.
+    expect(screen.getByTestId("feed-main-event-link")).toHaveAttribute(
+      "href",
+      "https://pppoker.club/poker/api/share.php?id=1",
+    );
     const post = within(screen.getByTestId("feed-posts")).getByTestId("feed-post");
     expect(within(post).getByText("Вторник в клубе")).toBeInTheDocument();
     expect(within(post).getByRole("link", { name: "Расписание →" })).toHaveAttribute(

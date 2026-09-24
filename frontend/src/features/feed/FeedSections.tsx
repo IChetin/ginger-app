@@ -7,6 +7,7 @@ import { useFeed, type FeedPost, type WinItem } from "@/features/feed/api";
 import { AppIcon } from "@/features/tournaments/components/TournamentCard";
 import { TournamentSheet } from "@/features/tournaments/components/TournamentSheet";
 import {
+  APP_TINT,
   displayName,
   formatDayLabel,
   formatMoney,
@@ -45,12 +46,21 @@ function MainEventCard({
   onOpen: () => void;
 }) {
   const guarantee = formatMoney(tournament.guarantee, tournament.club);
+  // Ссылка внутри кнопки — невалидная разметка, поэтому карточка — блок с ролью кнопки,
+  // а «Перейти в турнир» — настоящая ссылка рядом с названием (проба Ивана 24.09).
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
       data-testid="feed-main-event"
-      className="border-line-gold bg-surface relative block w-full overflow-hidden rounded-lg border p-3.5 text-left"
+      className="border-line-gold bg-surface relative block w-full cursor-pointer overflow-hidden rounded-lg border p-3.5 text-left"
     >
       <span
         aria-hidden="true"
@@ -61,8 +71,23 @@ function MainEventCard({
           Главное событие · {formatDayLabel(mskDayKey(new Date(tournament.starts_at)), now)}
         </span>
       </span>
-      <span className="font-display text-ink relative mt-1.5 block text-[20px] leading-tight font-bold">
-        {displayName(tournament)}
+      <span className="relative mt-1.5 flex items-center gap-2">
+        <span className="font-display text-ink min-w-0 flex-1 text-[20px] leading-tight font-bold">
+          {displayName(tournament)}
+        </span>
+        {tournament.app_link ? (
+          <a
+            href={tournament.app_link}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(event) => event.stopPropagation()}
+            data-testid="feed-main-event-link"
+            className="shrink-0 rounded-md px-2.5 py-1.5 text-[12px] leading-none font-bold text-white"
+            style={{ background: APP_TINT[tournament.club.app] ?? "#1fa35a" }}
+          >
+            Перейти в турнир
+          </a>
+        ) : null}
       </span>
       <span className="relative mt-2 flex items-end justify-between gap-3">
         <span className="text-ink-2 flex min-w-0 items-center gap-1.5 text-[12.5px]">
@@ -83,7 +108,7 @@ function MainEventCard({
           </span>
         ) : null}
       </span>
-    </button>
+    </div>
   );
 }
 

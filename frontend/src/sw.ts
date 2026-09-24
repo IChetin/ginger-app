@@ -109,6 +109,8 @@ self.addEventListener("push", (event) => {
       await self.registration.showNotification(payload.title ?? "Ginger", {
         body: payload.body,
         icon: "/icons/icon-192.png",
+        // Значок в строке состояния Android — белый силуэт лисы, пока не нарисуем настоящий.
+        badge: "/icons/badge-96.png",
         lang: "ru",
         data: { url: payload.url ?? "/" },
       });
