@@ -22,7 +22,14 @@ import { registerCompleteSchema } from "@/features/auth/lib/password";
 import { isValidEmail, normalizeEmail } from "@/lib/email";
 import { cn } from "@/lib/utils";
 
-type Step = "email" | "code" | "profile";
+type Step = "email" | "code" | "profile" | "about";
+
+// Клавиатура на телефоне закрывает нижнюю половину экрана: поднимаем поле в середину.
+const keepVisible = (event: { target: EventTarget & HTMLElement }) => {
+  window.setTimeout(() => {
+    event.target.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, 250);
+};
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -99,6 +106,38 @@ export function RegisterPage() {
     window.setTimeout(() => setToast(null), 3500);
   };
 
+  /** Создание аккаунта: анкета уходит вместе с паролем и никнеймом одним запросом. */
+  const createAccount = async (questionnaire = true) => {
+    if (!registrationToken) {
+      setFieldError("Код подтверждения истёк. Начните регистрацию заново");
+      setStep("email");
+      return;
+    }
+    const values = form.getValues();
+    const answer = (value: string) =>
+      selfSignup && questionnaire ? value.trim() || undefined : undefined;
+    setFieldError(null);
+    try {
+      await registerComplete.mutateAsync({
+        registration_token: registrationToken,
+        password: values.password,
+        nickname: values.nickname,
+        invite_token: inviteToken ?? undefined,
+        real_name: answer(realName),
+        play_nickname: answer(playNickname),
+        source: answer(source),
+      });
+      forgetInvite();
+      navigate("/welcome", { replace: true });
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        showToast("Нет соединения, попробуйте ещё раз");
+        return;
+      }
+      setFieldError(authErrorMessage(error));
+    }
+  };
+
   const startRegistration = async (nextEmail: string, token?: string | null) => {
     setFieldError(null);
     setAccountExists(false);
@@ -147,7 +186,9 @@ export function RegisterPage() {
           ? () => setStep("email")
           : step === "profile"
             ? () => setStep("code")
-            : () => navigate("/login", { replace: true })
+            : step === "about"
+              ? () => setStep("profile")
+              : () => navigate("/login", { replace: true })
       }
     >
       {step === "email" ? (
@@ -299,7 +340,17 @@ export function RegisterPage() {
 
       {step === "profile" ? (
         <div data-testid="register-profile-step">
-          <h1 className="mt-[18px] text-[23px] font-extrabold tracking-[-0.02em]">
+          {selfSignup ? (
+            <p className="text-ink-3 mt-[18px] text-[11px] font-bold tracking-[0.08em] uppercase">
+              Шаг 2 из 3
+            </p>
+          ) : null}
+          <h1
+            className={cn(
+              "text-[23px] font-extrabold tracking-[-0.02em]",
+              selfSignup ? "mt-1" : "mt-[18px]",
+            )}
+          >
             Пароль и никнейм
           </h1>
           <p className="text-ink-2 mt-1.5 max-w-[300px] text-sm">
@@ -308,32 +359,14 @@ export function RegisterPage() {
 
           <form
             className="mt-6 flex flex-col gap-3"
-            onSubmit={form.handleSubmit(async (values) => {
-              if (!registrationToken) {
-                setFieldError("Код подтверждения истёк. Начните регистрацию заново");
-                setStep("email");
+            onSubmit={form.handleSubmit(async () => {
+              // Анкета — отдельным экраном: шесть полей под клавиатурой не помещаются.
+              if (selfSignup) {
+                setFieldError(null);
+                setStep("about");
                 return;
               }
-              setFieldError(null);
-              try {
-                await registerComplete.mutateAsync({
-                  registration_token: registrationToken,
-                  password: values.password,
-                  nickname: values.nickname,
-                  invite_token: inviteToken ?? undefined,
-                  real_name: selfSignup ? realName.trim() || undefined : undefined,
-                  play_nickname: selfSignup ? playNickname.trim() || undefined : undefined,
-                  source: selfSignup ? source.trim() || undefined : undefined,
-                });
-                forgetInvite();
-                navigate("/welcome", { replace: true });
-              } catch (error) {
-                if (!(error instanceof ApiError)) {
-                  showToast("Нет соединения, попробуйте ещё раз");
-                  return;
-                }
-                setFieldError(authErrorMessage(error));
-              }
+              await createAccount();
             })}
           >
             <label className="text-ink-2 text-[13px] font-semibold" htmlFor="register-nickname">
@@ -342,8 +375,10 @@ export function RegisterPage() {
             <input
               id="register-nickname"
               autoComplete="nickname"
+              enterKeyHint="next"
               className="tracker-input"
               {...form.register("nickname")}
+              onFocus={keepVisible}
             />
             {form.formState.errors.nickname ? (
               <p className="text-danger text-[12px]">{form.formState.errors.nickname.message}</p>
@@ -358,7 +393,9 @@ export function RegisterPage() {
             <PasswordInput
               id="register-password"
               autoComplete="new-password"
+              enterKeyHint="next"
               showStrength
+              onFocus={keepVisible}
               value={passwordValue}
               onChange={(event) => {
                 form.setValue("password", event.target.value, {
@@ -384,7 +421,9 @@ export function RegisterPage() {
             <PasswordInput
               id="register-password-confirm"
               autoComplete="new-password"
+              enterKeyHint="done"
               {...form.register("passwordConfirm")}
+              onFocus={keepVisible}
             />
             {form.formState.errors.passwordConfirm ? (
               <p className="text-danger text-[12px]">
@@ -392,45 +431,92 @@ export function RegisterPage() {
               </p>
             ) : null}
 
-            {selfSignup ? (
-              <div className="mt-3 flex flex-col gap-3" data-testid="register-questionnaire">
-                <p className="text-ink-2 text-[13px] font-semibold">
-                  Чтобы менеджер вас узнал
-                  <span className="text-ink-3 block font-normal">
-                    Три поля — по ним подтверждают доступ. Можно пропустить, тогда спросим в
-                    диалоге.
-                  </span>
-                </p>
-                <input
-                  aria-label="Как вас зовут"
-                  placeholder="Как вас зовут"
-                  className="tracker-input"
-                  maxLength={120}
-                  value={realName}
-                  onChange={(event) => setRealName(event.target.value)}
-                />
-                <input
-                  aria-label="Ник в покерном приложении"
-                  placeholder="Ник в покерном приложении"
-                  className="tracker-input"
-                  maxLength={64}
-                  value={playNickname}
-                  onChange={(event) => setPlayNickname(event.target.value)}
-                />
-                <input
-                  aria-label="Откуда узнали о клубе"
-                  placeholder="Откуда узнали о клубе"
-                  className="tracker-input"
-                  maxLength={64}
-                  value={source}
-                  onChange={(event) => setSource(event.target.value)}
-                />
-              </div>
-            ) : null}
+            {fieldError ? <p className="text-danger text-[13px]">{fieldError}</p> : null}
+
+            <button
+              type="submit"
+              disabled={registerComplete.isPending}
+              className={cn(
+                "bg-gold-grad text-ink-ongold mt-2 flex h-12 items-center justify-center rounded-md text-[15px] font-extrabold",
+                registerComplete.isPending && "opacity-60",
+              )}
+            >
+              {selfSignup ? "Далее" : registerComplete.isPending ? "Создаём…" : "Создать аккаунт"}
+            </button>
+          </form>
+        </div>
+      ) : null}
+
+      {step === "about" ? (
+        <div data-testid="register-about-step">
+          <p className="text-ink-3 mt-[18px] text-[11px] font-bold tracking-[0.08em] uppercase">
+            Шаг 3 из 3
+          </p>
+          <h1 className="mt-1 text-[23px] font-extrabold tracking-[-0.02em]">Чтобы вас узнали</h1>
+          <p className="text-ink-2 mt-1.5 max-w-[320px] text-sm">
+            По этим ответам менеджер откроет доступ к кассе. Можно пропустить — тогда он спросит в
+            диалоге.
+          </p>
+
+          <form
+            className="mt-6 flex flex-col gap-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void createAccount();
+            }}
+          >
+            <label className="text-ink-2 text-[13px] font-semibold" htmlFor="register-real-name">
+              Как вас зовут
+            </label>
+            <input
+              id="register-real-name"
+              aria-label="Как вас зовут"
+              placeholder="Иван"
+              className="tracker-input"
+              autoComplete="name"
+              enterKeyHint="next"
+              maxLength={120}
+              value={realName}
+              onFocus={keepVisible}
+              onChange={(event) => setRealName(event.target.value)}
+            />
+
+            <label
+              className="text-ink-2 mt-2 text-[13px] font-semibold"
+              htmlFor="register-play-nick"
+            >
+              Ник в покерном приложении
+            </label>
+            <input
+              id="register-play-nick"
+              aria-label="Ник в покерном приложении"
+              placeholder="Под каким ником играете"
+              className="tracker-input"
+              enterKeyHint="next"
+              maxLength={64}
+              value={playNickname}
+              onFocus={keepVisible}
+              onChange={(event) => setPlayNickname(event.target.value)}
+            />
+
+            <label className="text-ink-2 mt-2 text-[13px] font-semibold" htmlFor="register-source">
+              Откуда узнали о клубе
+            </label>
+            <input
+              id="register-source"
+              aria-label="Откуда узнали о клубе"
+              placeholder="Друг, турнир, Telegram…"
+              className="tracker-input"
+              enterKeyHint="done"
+              maxLength={64}
+              value={source}
+              onFocus={keepVisible}
+              onChange={(event) => setSource(event.target.value)}
+            />
 
             {fieldError ? <p className="text-danger text-[13px]">{fieldError}</p> : null}
 
-            {selfSignup && moderatedSignup ? (
+            {moderatedSignup ? (
               <p className="text-ink-3 text-[12.5px]">
                 Расписание откроется сразу. Касса и привязка аккаунтов — после того, как менеджер
                 подтвердит заявку; он напишет вам в диалоге.
@@ -446,6 +532,14 @@ export function RegisterPage() {
               )}
             >
               {registerComplete.isPending ? "Создаём…" : "Создать аккаунт"}
+            </button>
+            <button
+              type="button"
+              disabled={registerComplete.isPending}
+              className="text-ink-3 h-10 text-[13px] font-bold"
+              onClick={() => void createAccount(false)}
+            >
+              Пропустить
             </button>
           </form>
         </div>

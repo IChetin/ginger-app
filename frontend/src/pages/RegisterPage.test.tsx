@@ -141,6 +141,10 @@ describe("RegisterPage", () => {
     await user.type(screen.getByLabelText("Никнейм"), "newbie");
     await user.type(screen.getByLabelText("Пароль"), "CorrectHorse1");
     await user.type(screen.getByLabelText("Повтор пароля"), "CorrectHorse1");
+    await user.click(screen.getByRole("button", { name: "Далее" }));
+
+    // Анкета — отдельным экраном, иначе на телефоне её не видно из-за клавиатуры.
+    await screen.findByTestId("register-about-step");
     await user.type(screen.getByLabelText("Как вас зовут"), "Олег");
     await user.type(screen.getByLabelText("Ник в покерном приложении"), "oleg_ru");
     await user.type(screen.getByLabelText("Откуда узнали о клубе"), "друг");
@@ -157,6 +161,41 @@ describe("RegisterPage", () => {
         play_nickname: "oleg_ru",
         source: "друг",
       });
+    });
+  });
+
+  it("анкету можно пропустить — аккаунт всё равно создаётся", async () => {
+    const user = userEvent.setup();
+    window.sessionStorage.clear();
+    fetchRegistrationMode.mockResolvedValue({
+      mode: "moderated",
+      invite_required: false,
+      moderated: true,
+    });
+    renderWithProviders(<AppRoutes />, { route: "/register" });
+
+    await user.type(await screen.findByLabelText("Email"), "new@example.com");
+    await user.click(screen.getByRole("button", { name: "Продолжить" }));
+    await screen.findByTestId("code-step");
+    await user.click(screen.getByLabelText("Цифра 1"));
+    await user.paste("123456");
+
+    await screen.findByTestId("register-profile-step");
+    await user.type(screen.getByLabelText("Никнейм"), "newbie");
+    await user.type(screen.getByLabelText("Пароль"), "CorrectHorse1");
+    await user.type(screen.getByLabelText("Повтор пароля"), "CorrectHorse1");
+    await user.click(screen.getByRole("button", { name: "Далее" }));
+
+    await screen.findByTestId("register-about-step");
+    fetchCurrentUser.mockResolvedValue(userFixture);
+    await user.click(screen.getByRole("button", { name: "Пропустить" }));
+
+    await waitFor(() => expect(registerComplete).toHaveBeenCalled());
+    expect(vi.mocked(registerComplete).mock.calls[0]?.[0]).toMatchObject({
+      nickname: "newbie",
+      real_name: undefined,
+      play_nickname: undefined,
+      source: undefined,
     });
   });
 });
