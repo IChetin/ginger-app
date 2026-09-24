@@ -212,7 +212,7 @@ describe("ProfilePage", () => {
     await user.click(pushSwitch);
 
     const toast = await screen.findByRole("status");
-    expect(toast).toHaveTextContent(/Chrome заблокировал уведомления/);
+    expect(toast).toHaveTextContent(/Браузер заблокировал уведомления/);
     expect(toast).not.toHaveTextContent(/Safari/);
     expect(pushSwitch).not.toBeChecked();
     vi.unstubAllGlobals();

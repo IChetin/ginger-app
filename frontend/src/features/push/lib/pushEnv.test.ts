@@ -36,6 +36,17 @@ describe("detectPushBrowser", () => {
     expect(detectPushBrowser(env())).toBe("chrome-android");
   });
 
+  // У Яндекс Браузера в UA есть Chrome, но путь к настройкам уведомлений свой (24.09).
+  it("recognizes Yandex Browser on Android", () => {
+    const yandex = env({
+      userAgent:
+        "Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36 (KHTML, like Gecko) " +
+        "Chrome/124.0.0.0 YaBrowser/24.7.1.100.00 Mobile Safari/537.36",
+    });
+    expect(detectPushBrowser(yandex)).toBe("yandex-android");
+    expect(pushPermissionDeniedMessage(detectPushBrowser(yandex))).toContain("Яндекс Браузер");
+  });
+
   it("recognizes iOS regardless of the wrapper browser", () => {
     expect(detectPushBrowser(env({ userAgent: SAFARI_IOS, platform: "iPhone" }))).toBe(
       "safari-ios",
@@ -71,7 +82,7 @@ describe("detectPushBrowser", () => {
 
   it("gives Chrome Android its own instruction, never the Safari one", () => {
     const message = pushPermissionDeniedMessage(detectPushBrowser(env()));
-    expect(message).toContain("Chrome");
+    expect(message).toContain("Настройки сайта");
     expect(message).not.toContain("Safari");
   });
 

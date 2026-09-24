@@ -1,5 +1,5 @@
 export type PushBrowser =
-  "chrome-android" | "safari-ios" | "firefox" | "chromium-desktop" | "other";
+  "chrome-android" | "yandex-android" | "safari-ios" | "firefox" | "chromium-desktop" | "other";
 
 /** Why push cannot be enabled at all, regardless of the permission prompt. */
 export type PushBlocker = "insecure-context" | "ios-needs-install" | "unsupported" | null;
@@ -54,7 +54,11 @@ export function detectPushBrowser(env: PushEnv = currentPushEnv()): PushBrowser 
   if (/Firefox|FxiOS/i.test(ua)) {
     return "firefox";
   }
-  if (/Android/i.test(ua) && /Chrome|CriOS|EdgA|SamsungBrowser|YaBrowser|OPR/i.test(ua)) {
+  // Яндекс Браузер проверяем раньше: его UA содержит Chrome, а путь к настройкам другой.
+  if (/Android/i.test(ua) && /YaBrowser/i.test(ua)) {
+    return "yandex-android";
+  }
+  if (/Android/i.test(ua) && /Chrome|CriOS|EdgA|SamsungBrowser|OPR/i.test(ua)) {
     return "chrome-android";
   }
   if (/Chrome|Chromium|Edg|YaBrowser|OPR/i.test(ua)) {
@@ -78,7 +82,9 @@ export function detectPushBlocker(env: PushEnv = currentPushEnv()): PushBlocker 
 
 const DENIED_MESSAGES: Record<PushBrowser, string> = {
   "chrome-android":
-    "Chrome заблокировал уведомления: нажмите на замок слева от адреса → Разрешения → Уведомления → Разрешить, затем попробуйте снова",
+    "Браузер заблокировал уведомления: значок слева от адреса → «Настройки сайта» → Уведомления → Разрешить, затем попробуйте снова",
+  "yandex-android":
+    "Яндекс Браузер заблокировал уведомления: ⋮ → Настройки → Уведомления → Уведомления сайтов → найдите lisa52.com и разрешите, затем попробуйте снова",
   "safari-ios":
     "Разрешите уведомления в Настройках iPhone: Уведомления → Ginger, затем попробуйте снова",
   firefox:
