@@ -66,6 +66,12 @@ function PickRow({
       </div>
       <p className="text-ink-3 text-[12px]">{pick.club_name}</p>
       {pick.note ? <p className="text-ink-2 mt-0.5 text-[12.5px]">{pick.note}</p> : null}
+      {unmatched && pick.kind === "cash" ? (
+        <p className="text-ink-3 mt-0.5 text-[12px]">
+          Кэш-столы присылает сборщик лобби раз в 15–20 минут вечером. Пока его данных нет или этот
+          лимит сейчас не играется, пик сохранён, но выделять нечего.
+        </p>
+      ) : null}
       <div className="mt-2 flex gap-1.5">
         <button
           type="button"
