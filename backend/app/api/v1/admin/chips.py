@@ -17,6 +17,8 @@ from app.schemas.chips import (
     PendingAccountRead,
     PlayerAdminRead,
     PlayerAdminUpdate,
+    PlayerApproveBody,
+    PlayerRejectBody,
     ReferralRead,
     RejectBody,
     RequisitesBody,
@@ -27,6 +29,7 @@ from app.schemas.chips import (
 from app.services import chips as chips_service
 from app.services import crm as crm_service
 from app.services import invites as invites_service
+from app.services import signup as signup_service
 
 router = APIRouter()
 
@@ -111,6 +114,26 @@ async def update_player(
 ) -> PlayerAdminRead:
     """Тип, блокировка, офлайн-доступ и карточка CRM — только админ (ТЗ §9а.1)."""
     return await crm_service.update_player(db, player_id, body)
+
+
+@router.post("/players/{player_id}/approve", response_model=PlayerAdminRead)
+async def approve_player(
+    player_id: UUID, body: PlayerApproveBody, actor: Manager, db: Db
+) -> PlayerAdminRead:
+    """Подтвердить самостоятельную регистрацию: игроку открывается касса, ему уходит пуш."""
+    await signup_service.approve(
+        db, actor, player_id, kind=body.kind, offline_access=body.offline_access
+    )
+    return await crm_service.get_player_card(db, player_id)
+
+
+@router.post("/players/{player_id}/reject", response_model=PlayerAdminRead)
+async def reject_player(
+    player_id: UUID, body: PlayerRejectBody, actor: Manager, db: Db
+) -> PlayerAdminRead:
+    """Отказать: причина уходит в заметки карточки, человек видит отказ в приложении."""
+    await signup_service.reject(db, actor, player_id, reason=body.reason)
+    return await crm_service.get_player_card(db, player_id)
 
 
 @router.post("/players/{player_id}/referral/rotate", response_model=ReferralRead)

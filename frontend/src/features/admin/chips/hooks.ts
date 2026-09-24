@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import type { PlayerKind } from "@/api/types/chips";
 import {
   acceptChipRequest,
+  approvePlayer,
   completeChipRequest,
   createInvite,
   createRequisiteTemplate,
@@ -12,6 +14,7 @@ import {
   fetchPendingAccounts,
   fetchRequisiteTemplates,
   rejectChipRequest,
+  rejectPlayer,
   revokeInvite,
   reviewAccount,
   sendRequisites,
@@ -157,4 +160,24 @@ export function useRevokeInvite() {
       await queryClient.invalidateQueries({ queryKey: keys.invites });
     },
   });
+}
+
+/** Модерация самостоятельной регистрации (24.09): принять или отказать. */
+export function useModeratePlayer() {
+  const queryClient = useQueryClient();
+  const refresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: keys.players });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "player-card"] });
+    await queryClient.invalidateQueries({ queryKey: ["admin", "crm-summary"] });
+  };
+  const approve = useMutation({
+    mutationFn: (vars: { id: string; kind?: PlayerKind; offline_access?: boolean }) =>
+      approvePlayer(vars.id, { kind: vars.kind, offline_access: vars.offline_access }),
+    onSuccess: refresh,
+  });
+  const reject = useMutation({
+    mutationFn: (vars: { id: string; reason: string }) => rejectPlayer(vars.id, vars.reason),
+    onSuccess: refresh,
+  });
+  return { approve, reject };
 }

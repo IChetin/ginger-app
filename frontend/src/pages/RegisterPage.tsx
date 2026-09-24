@@ -5,7 +5,13 @@ import { z } from "zod";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 
 import { ApiError } from "@/api/client";
-import { useMe, useRegisterComplete, useRegisterStart, useRegisterVerify } from "@/api/auth";
+import {
+  useMe,
+  useRegisterComplete,
+  useRegisterStart,
+  useRegisterVerify,
+  useRegistrationMode,
+} from "@/api/auth";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { CodeStep } from "@/components/auth/CodeStep";
 import { PasswordInput } from "@/components/auth/PasswordInput";
@@ -24,6 +30,8 @@ export function RegisterPage() {
   // Ginger — закрытый клуб: регистрация только по приглашению (ТЗ §5, ответ 11.8).
   const [inviteToken] = useState(() => readInvite(searchParams.get("invite")));
   const { data: user } = useMe();
+  const registrationMode = useRegistrationMode();
+  const mode = registrationMode.data;
   const registerStart = useRegisterStart();
   const registerVerify = useRegisterVerify();
   const registerComplete = useRegisterComplete();
@@ -38,6 +46,10 @@ export function RegisterPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [captchaRequired, setCaptchaRequired] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  // Анкета самостоятельной регистрации (24.09) — её видит менеджер в очереди модерации.
+  const [realName, setRealName] = useState("");
+  const [playNickname, setPlayNickname] = useState("");
+  const [source, setSource] = useState("");
 
   const form = useForm<z.infer<typeof registerCompleteSchema>>({
     resolver: standardSchemaResolver(registerCompleteSchema),
@@ -49,7 +61,21 @@ export function RegisterPage() {
     return <Navigate to="/" replace />;
   }
 
-  if (!inviteToken) {
+  // Без приглашения человек заводит аккаунт сам, если это разрешено на сервере (24.09):
+  // доступ к кассе даёт менеджер после модерации.
+  const selfSignup = !inviteToken && !(mode?.invite_required ?? true);
+  const moderatedSignup = selfSignup && (mode?.moderated ?? false);
+
+  // Пока режим не пришёл — не мигаем формой; если не ответил, считаем клуб закрытым.
+  if (!inviteToken && registrationMode.isPending) {
+    return (
+      <AuthShell toast={null} onBack={() => navigate("/login", { replace: true })}>
+        <div className="bg-surface-2 mt-[18px] h-24 rounded-md" aria-hidden />
+      </AuthShell>
+    );
+  }
+
+  if (!inviteToken && !selfSignup) {
     return (
       <AuthShell toast={null} onBack={() => navigate("/login", { replace: true })}>
         <div data-testid="register-invite-required">
@@ -295,6 +321,9 @@ export function RegisterPage() {
                   password: values.password,
                   nickname: values.nickname,
                   invite_token: inviteToken ?? undefined,
+                  real_name: selfSignup ? realName.trim() || undefined : undefined,
+                  play_nickname: selfSignup ? playNickname.trim() || undefined : undefined,
+                  source: selfSignup ? source.trim() || undefined : undefined,
                 });
                 forgetInvite();
                 navigate("/welcome", { replace: true });
@@ -363,7 +392,50 @@ export function RegisterPage() {
               </p>
             ) : null}
 
+            {selfSignup ? (
+              <div className="mt-3 flex flex-col gap-3" data-testid="register-questionnaire">
+                <p className="text-ink-2 text-[13px] font-semibold">
+                  Чтобы менеджер вас узнал
+                  <span className="text-ink-3 block font-normal">
+                    Три поля — по ним подтверждают доступ. Можно пропустить, тогда спросим в
+                    диалоге.
+                  </span>
+                </p>
+                <input
+                  aria-label="Как вас зовут"
+                  placeholder="Как вас зовут"
+                  className="tracker-input"
+                  maxLength={120}
+                  value={realName}
+                  onChange={(event) => setRealName(event.target.value)}
+                />
+                <input
+                  aria-label="Ник в покерном приложении"
+                  placeholder="Ник в покерном приложении"
+                  className="tracker-input"
+                  maxLength={64}
+                  value={playNickname}
+                  onChange={(event) => setPlayNickname(event.target.value)}
+                />
+                <input
+                  aria-label="Откуда узнали о клубе"
+                  placeholder="Откуда узнали о клубе"
+                  className="tracker-input"
+                  maxLength={64}
+                  value={source}
+                  onChange={(event) => setSource(event.target.value)}
+                />
+              </div>
+            ) : null}
+
             {fieldError ? <p className="text-danger text-[13px]">{fieldError}</p> : null}
+
+            {selfSignup && moderatedSignup ? (
+              <p className="text-ink-3 text-[12.5px]">
+                Расписание откроется сразу. Касса и привязка аккаунтов — после того, как менеджер
+                подтвердит заявку; он напишет вам в диалоге.
+              </p>
+            ) : null}
 
             <button
               type="submit"

@@ -73,6 +73,10 @@ class RegisterCompleteBody(BaseModel):
     password: str = Field(min_length=1, max_length=128)
     nickname: str = Field(min_length=2, max_length=32)
     invite_token: str | None = Field(default=None, max_length=128)
+    # Анкета самостоятельной регистрации (24.09): по ней менеджер и решает.
+    real_name: str | None = Field(default=None, max_length=120)
+    play_nickname: str | None = Field(default=None, max_length=64)
+    source: str | None = Field(default=None, max_length=64)
 
     @field_validator("password")
     @classmethod
@@ -138,3 +142,11 @@ class UserMe(BaseModel):
     email_verified: bool
     has_password: bool
     created_at: datetime
+
+
+class RegistrationMode(BaseModel):
+    """Режим регистрации для формы: нужно ли приглашение и будет ли модерация."""
+
+    mode: str
+    invite_required: bool
+    moderated: bool

@@ -299,13 +299,19 @@ async def get_player(session: AsyncSession, user: User) -> Player:
     return player
 
 
+_STATUS_MESSAGES = {
+    PlayerStatus.PENDING: "Касса откроется, когда менеджер подтвердит заявку",
+    PlayerStatus.REJECTED: "Заявка отклонена — напишите менеджеру в диалогах",
+    PlayerStatus.BLOCKED: "Вы заблокированы, обратитесь к администратору",
+    PlayerStatus.ARCHIVED: "Аккаунт в архиве, обратитесь к администратору",
+}
+
+
 def _require_active(player: Player) -> None:
     if player.status is not PlayerStatus.ACTIVE:
         raise AppError(
             f"player_{player.status.value}",
-            "Вы заблокированы, обратитесь к администратору"
-            if player.status is PlayerStatus.BLOCKED
-            else "Аккаунт в архиве, обратитесь к администратору",
+            _STATUS_MESSAGES[player.status],
             403,
         )
 
@@ -837,6 +843,8 @@ def _player_admin_read(player: Player, invited: tuple[int, int] = (0, 0)) -> Pla
         invited_total=total,
         invited_24h=recent,
         referral_paused=recent >= get_settings().referral_daily_limit,
+        play_nickname=player.play_nickname,
+        moderated_at=player.moderated_at,
     )
 
 

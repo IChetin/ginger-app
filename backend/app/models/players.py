@@ -79,8 +79,16 @@ class Player(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     tags: Mapped[list[str]] = mapped_column(
         ARRAY(String(32)), nullable=False, server_default=text("'{}'::varchar[]")
     )
+    # Самостоятельная регистрация (24.09): под каким ником человек играет — по нему менеджер
+    # и узнаёт его в клубе, пока аккаунты не привязаны.
+    play_nickname: Mapped[str | None] = mapped_column(String(64))
+    moderated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    moderated_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+    )
 
-    user: Mapped["User"] = relationship()
+    user: Mapped["User"] = relationship(foreign_keys=[user_id])
     accounts: Mapped[list["PlayerAccount"]] = relationship(
         back_populates="player",
         cascade="all, delete-orphan",

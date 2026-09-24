@@ -56,6 +56,9 @@ export interface PlayerAdmin {
   requests_30d: number;
   sleeping: boolean;
   days_to_birthday: number | null;
+  // Самостоятельная регистрация (24.09): анкета новичка и когда заявку рассмотрели.
+  play_nickname: string | null;
+  moderated_at: string | null;
 }
 
 export interface PendingAccount extends PlayerAccount {
@@ -137,6 +140,14 @@ export const updateAdminPlayer = (
     >
   >,
 ): Promise<PlayerAdmin> => apiPatch(`${ADMIN}/players/${id}`, body);
+
+export const approvePlayer = (
+  id: string,
+  body: { kind?: PlayerKind; offline_access?: boolean },
+): Promise<PlayerAdmin> => apiPost(`${ADMIN}/players/${id}/approve`, body);
+
+export const rejectPlayer = (id: string, reason: string): Promise<PlayerAdmin> =>
+  apiPost(`${ADMIN}/players/${id}/reject`, { reason });
 
 export const fetchPendingAccounts = (): Promise<PendingAccount[]> =>
   apiGet(`${ADMIN}/player-accounts/pending`);

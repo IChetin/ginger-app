@@ -48,6 +48,17 @@ export interface RegisterCompletePayload {
   password: string;
   nickname: string;
   invite_token?: string;
+  // Анкета самостоятельной регистрации (24.09): по ней менеджер принимает решение.
+  real_name?: string;
+  play_nickname?: string;
+  source?: string;
+}
+
+/** Режим регистрации: нужно ли приглашение и будет ли модерация. */
+export interface RegistrationMode {
+  mode: "invite" | "moderated" | "open";
+  invite_required: boolean;
+  moderated: boolean;
 }
 
 export interface LoginPasswordPayload {

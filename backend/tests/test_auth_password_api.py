@@ -22,7 +22,7 @@ def _registration_without_invite(monkeypatch: pytest.MonkeyPatch) -> None:
     # Тесты регистрации Day2 — без инвайта; регистрация по инвайту — в test_chips_api.
     from app.core.config import get_settings
 
-    monkeypatch.setattr(get_settings(), "registration_requires_invite", False)
+    monkeypatch.setattr(get_settings(), "registration_mode", "open")
 
 
 pytestmark = pytest.mark.integration

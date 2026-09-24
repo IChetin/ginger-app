@@ -24,6 +24,8 @@ vi.mock("@/features/admin/chips/api", async (importOriginal) => {
     fetchAdminPlayers: vi.fn(),
     fetchPendingAccounts: vi.fn(),
     updateAdminPlayer: vi.fn(),
+    approvePlayer: vi.fn(),
+    rejectPlayer: vi.fn(),
   };
 });
 
@@ -64,6 +66,8 @@ function makePlayer(overrides: Partial<PlayerAdmin> = {}): PlayerAdmin {
     requests_30d: 0,
     sleeping: false,
     days_to_birthday: null,
+    play_nickname: null,
+    moderated_at: null,
     ...overrides,
   };
 }
@@ -157,6 +161,44 @@ describe("AdminPlayerPage", () => {
         tags: ["vip", "хайроллер"],
       }),
     );
+  });
+
+  it("подтверждает заявку новичка на вступление", async () => {
+    const pending: PlayerCrmCard = {
+      ...makePlayer({
+        status: "pending",
+        kind: "deposit",
+        play_nickname: "oleg_ru",
+        source: "друг",
+      }),
+      referrer_nickname: null,
+      invited_players: 0,
+      completed_topups: 0,
+      requests: [],
+      threads: [],
+    };
+    vi.mocked(crmApi.fetchPlayerCard).mockResolvedValue(pending);
+    vi.mocked(chipsApi.approvePlayer).mockResolvedValue({ ...pending, status: "active" });
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/admin/players/:playerId" element={<AdminPlayerPage />} />
+      </Routes>,
+      { route: "/admin/players/p1" },
+    );
+
+    const block = await screen.findByTestId("player-moderation");
+    expect(block).toHaveTextContent("ник в клубе: oleg_ru");
+    fireEvent.change(screen.getByLabelText("Тип игрока при подтверждении"), {
+      target: { value: "credit" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Принять" }));
+
+    await waitFor(() => expect(chipsApi.approvePlayer).toHaveBeenCalled());
+    expect(vi.mocked(chipsApi.approvePlayer).mock.calls[0]).toEqual([
+      "p1",
+      { kind: "credit", offline_access: false },
+    ]);
   });
 });
 

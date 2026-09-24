@@ -51,6 +51,9 @@ class NotificationType(str, Enum):
     BROADCAST = "broadcast"
     # Ginger APP: ответ менеджера игроку в диалоге (в Telegram — всегда, пушем — по настройке).
     THREAD_REPLY = "thread_reply"
+    # Ginger APP: самостоятельная регистрация — менеджеру о новичке, игроку об открытии доступа.
+    NEW_PLAYER = "new_player"
+    PLAYER_APPROVED = "player_approved"
 
 
 class NotificationChannel(str, Enum):
@@ -134,6 +137,9 @@ class PlayerStatus(str, Enum):
     ACTIVE = "active"
     BLOCKED = "blocked"
     ARCHIVED = "archived"
+    # Зарегистрировался сам, ждёт подтверждения менеджера (решение 24.09).
+    PENDING = "pending"
+    REJECTED = "rejected"
 
 
 class PlayerAccountStatus(str, Enum):

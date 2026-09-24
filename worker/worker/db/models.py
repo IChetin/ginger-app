@@ -42,6 +42,8 @@ class NotificationType(StrEnum):
     NEW_THREAD_MESSAGE = "new_thread_message"
     BROADCAST = "broadcast"
     THREAD_REPLY = "thread_reply"
+    NEW_PLAYER = "new_player"
+    PLAYER_APPROVED = "player_approved"
 
 
 class NotificationChannel(StrEnum):

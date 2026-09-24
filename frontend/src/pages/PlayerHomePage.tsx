@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
+import { ModerationNotice } from "@/features/auth/ModerationNotice";
 import { GingerWordmark } from "@/components/brand/GingerWordmark";
 import { isStaffUser, useMe } from "@/features/auth/hooks";
 import { RequestRow } from "@/features/chips/components/RequestRow";
@@ -116,7 +117,8 @@ export function PlayerHomePage() {
           </div>
         </div>
       ) : null}
-      {me ? (
+      {me ? <ModerationNotice status={me.status} className="mt-3" /> : null}
+      {me && me.status === "active" ? (
         <p className="text-ink-3 mt-0.5 text-[12px]">
           {me.cashdesk_open
             ? `Касса открыта · ${me.cashdesk_hours}`

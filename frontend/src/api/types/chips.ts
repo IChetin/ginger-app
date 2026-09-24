@@ -1,7 +1,7 @@
 import type { PokerApp } from "@/api/types/tournaments";
 
 export type PlayerKind = "credit" | "deposit";
-export type PlayerStatus = "active" | "blocked" | "archived";
+export type PlayerStatus = "active" | "blocked" | "archived" | "pending" | "rejected";
 export type PlayerAccountStatus = "pending" | "confirmed" | "rejected";
 export type ChipRequestKind = "topup" | "withdrawal";
 export type ChipRequestStatus =

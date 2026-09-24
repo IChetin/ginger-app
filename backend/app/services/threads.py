@@ -177,9 +177,14 @@ async def _notify_managers(
         )
 
 
+# Новичок на модерации пишет менеджеру — именно в диалоге менеджер его и расспрашивает
+# (решение 24.09). Отказанный уже не пишет: разговор окончен.
+_MAY_WRITE = {PlayerStatus.ACTIVE, PlayerStatus.PENDING}
+
+
 async def _active_player(session: AsyncSession, user: User) -> Player:
     player = await get_player(session, user)
-    if player.status is not PlayerStatus.ACTIVE:
+    if player.status not in _MAY_WRITE:
         raise AppError("player_blocked", "Аккаунт заблокирован — обратитесь к администратору", 403)
     return player
 

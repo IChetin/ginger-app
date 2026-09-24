@@ -11,6 +11,7 @@ const registerStart = vi.fn();
 const registerVerify = vi.fn();
 const registerComplete = vi.fn();
 const fetchCurrentUser = vi.fn();
+const fetchRegistrationMode = vi.fn();
 
 vi.mock("@/api/client", async () => {
   const actual = await vi.importActual<typeof import("@/api/client")>("@/api/client");
@@ -20,6 +21,7 @@ vi.mock("@/api/client", async () => {
     registerVerify: (...args: unknown[]) => registerVerify(...args),
     registerComplete: (...args: unknown[]) => registerComplete(...args),
     fetchCurrentUser: (...args: unknown[]) => fetchCurrentUser(...args),
+    fetchRegistrationMode: (...args: unknown[]) => fetchRegistrationMode(...args),
   };
 });
 
@@ -41,6 +43,12 @@ describe("RegisterPage", () => {
     registerVerify.mockReset();
     registerComplete.mockReset();
     fetchCurrentUser.mockReset();
+    fetchRegistrationMode.mockReset();
+    fetchRegistrationMode.mockResolvedValue({
+      mode: "invite",
+      invite_required: true,
+      moderated: false,
+    });
     fetchCurrentUser.mockRejectedValue(new ApiError(401, "unauthorized", "Unauthorized"));
     registerStart.mockResolvedValue({ ok: true, expires_in_seconds: 300, retry_after: 60 });
     registerVerify.mockResolvedValue({
@@ -100,6 +108,9 @@ describe("RegisterPage", () => {
         password: "CorrectHorse1",
         nickname: "newbie",
         invite_token: "inv-token",
+        real_name: undefined,
+        play_nickname: undefined,
+        source: undefined,
       });
     });
   });
@@ -108,5 +119,44 @@ describe("RegisterPage", () => {
     renderWithProviders(<AppRoutes />, { route: "/register" });
     expect(await screen.findByTestId("register-invite-required")).toBeInTheDocument();
     expect(registerStart).not.toHaveBeenCalled();
+  });
+
+  it("в режиме модерации регистрируется сам и заполняет анкету", async () => {
+    const user = userEvent.setup();
+    window.sessionStorage.clear();
+    fetchRegistrationMode.mockResolvedValue({
+      mode: "moderated",
+      invite_required: false,
+      moderated: true,
+    });
+    renderWithProviders(<AppRoutes />, { route: "/register" });
+
+    await user.type(await screen.findByLabelText("Email"), "new@example.com");
+    await user.click(screen.getByRole("button", { name: "Продолжить" }));
+    await screen.findByTestId("code-step");
+    await user.click(screen.getByLabelText("Цифра 1"));
+    await user.paste("123456");
+
+    await screen.findByTestId("register-profile-step");
+    await user.type(screen.getByLabelText("Никнейм"), "newbie");
+    await user.type(screen.getByLabelText("Пароль"), "CorrectHorse1");
+    await user.type(screen.getByLabelText("Повтор пароля"), "CorrectHorse1");
+    await user.type(screen.getByLabelText("Как вас зовут"), "Олег");
+    await user.type(screen.getByLabelText("Ник в покерном приложении"), "oleg_ru");
+    await user.type(screen.getByLabelText("Откуда узнали о клубе"), "друг");
+    fetchCurrentUser.mockResolvedValue(userFixture);
+    await user.click(screen.getByRole("button", { name: "Создать аккаунт" }));
+
+    await waitFor(() => {
+      expect(registerComplete).toHaveBeenCalledWith({
+        registration_token: "reg-token-aaaaaaaaaaaaaaaa",
+        password: "CorrectHorse1",
+        nickname: "newbie",
+        invite_token: undefined,
+        real_name: "Олег",
+        play_nickname: "oleg_ru",
+        source: "друг",
+      });
+    });
   });
 });

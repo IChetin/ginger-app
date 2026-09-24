@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
 import type { PlayerAccountStatus } from "@/api/types/chips";
+import { ModerationNotice } from "@/features/auth/ModerationNotice";
 import { useAddPlayerAccount, usePlayerMe, usePublicClubs } from "@/features/chips/hooks";
 import { APP_LABELS } from "@/features/tournaments/lib/format";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,9 @@ export function ChipAccountsPage() {
   const [nickname, setNickname] = useState("");
   const [appId, setAppId] = useState("");
 
+  const status = player.data?.status;
+  // До подтверждения менеджером аккаунт не привязать — сервер всё равно ответит 403.
+  const locked = status === "pending" || status === "rejected";
   const club = clubs.data?.find((item) => item.id === clubId) ?? null;
   const valid = Boolean(clubId && nickname.trim() && appId.trim());
 
@@ -63,74 +67,80 @@ export function ChipAccountsPage() {
         ))}
       </div>
 
-      <form
-        className="border-line bg-surface mt-3 flex flex-col gap-2 rounded-md border p-2.5"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!valid) return;
-          add.mutate(
-            { club_id: clubId, nickname: nickname.trim(), app_account_id: appId.trim() },
-            {
-              onSuccess: () => {
-                setNickname("");
-                setAppId("");
+      {status === "pending" || status === "rejected" ? (
+        <ModerationNotice status={status} className="mt-3" />
+      ) : null}
+
+      {locked ? null : (
+        <form
+          className="border-line bg-surface mt-3 flex flex-col gap-2 rounded-md border p-2.5"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!valid) return;
+            add.mutate(
+              { club_id: clubId, nickname: nickname.trim(), app_account_id: appId.trim() },
+              {
+                onSuccess: () => {
+                  setNickname("");
+                  setAppId("");
+                },
               },
-            },
-          );
-        }}
-      >
-        <p className="text-ink text-[14px] font-bold">Привязать аккаунт</p>
-        <select
-          aria-label="Клуб"
-          className={inputClass}
-          value={clubId}
-          onChange={(event) => setClubId(event.target.value)}
+            );
+          }}
         >
-          <option value="">Выберите клуб</option>
-          {clubs.data?.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.name} · {APP_LABELS[item.app]}
-            </option>
-          ))}
-        </select>
-        {club?.app_club_id ? (
-          <p className="text-ink-3 text-[12px]">
-            ID клуба в {APP_LABELS[club.app]}: <b className="text-ink">{club.app_club_id}</b>
-          </p>
-        ) : null}
-        <input
-          aria-label="Ник в клубе"
-          placeholder="Ник в клубе"
-          className={inputClass}
-          value={nickname}
-          onChange={(event) => setNickname(event.target.value)}
-        />
-        <input
-          aria-label="ID аккаунта"
-          placeholder="ID аккаунта в приложении"
-          inputMode="numeric"
-          className={inputClass}
-          value={appId}
-          onChange={(event) => setAppId(event.target.value)}
-        />
-        {add.isError ? (
-          <p role="alert" className="text-danger text-[13px] font-semibold">
-            {add.error instanceof ApiError ? add.error.message : "Не удалось сохранить"}
-          </p>
-        ) : null}
-        {add.isSuccess ? (
-          <p role="status" className="text-ink-2 text-[13px]">
-            Отправлено на проверку менеджеру
-          </p>
-        ) : null}
-        <button
-          type="submit"
-          disabled={!valid || add.isPending}
-          className="bg-gold-grad text-ink-ongold h-10 rounded-md text-[14px] font-bold disabled:opacity-45"
-        >
-          Отправить на проверку
-        </button>
-      </form>
+          <p className="text-ink text-[14px] font-bold">Привязать аккаунт</p>
+          <select
+            aria-label="Клуб"
+            className={inputClass}
+            value={clubId}
+            onChange={(event) => setClubId(event.target.value)}
+          >
+            <option value="">Выберите клуб</option>
+            {clubs.data?.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name} · {APP_LABELS[item.app]}
+              </option>
+            ))}
+          </select>
+          {club?.app_club_id ? (
+            <p className="text-ink-3 text-[12px]">
+              ID клуба в {APP_LABELS[club.app]}: <b className="text-ink">{club.app_club_id}</b>
+            </p>
+          ) : null}
+          <input
+            aria-label="Ник в клубе"
+            placeholder="Ник в клубе"
+            className={inputClass}
+            value={nickname}
+            onChange={(event) => setNickname(event.target.value)}
+          />
+          <input
+            aria-label="ID аккаунта"
+            placeholder="ID аккаунта в приложении"
+            inputMode="numeric"
+            className={inputClass}
+            value={appId}
+            onChange={(event) => setAppId(event.target.value)}
+          />
+          {add.isError ? (
+            <p role="alert" className="text-danger text-[13px] font-semibold">
+              {add.error instanceof ApiError ? add.error.message : "Не удалось сохранить"}
+            </p>
+          ) : null}
+          {add.isSuccess ? (
+            <p role="status" className="text-ink-2 text-[13px]">
+              Отправлено на проверку менеджеру
+            </p>
+          ) : null}
+          <button
+            type="submit"
+            disabled={!valid || add.isPending}
+            className="bg-gold-grad text-ink-ongold h-10 rounded-md text-[14px] font-bold disabled:opacity-45"
+          >
+            Отправить на проверку
+          </button>
+        </form>
+      )}
     </div>
   );
 }

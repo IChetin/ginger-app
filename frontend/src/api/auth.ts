@@ -4,6 +4,7 @@ import {
   ApiError,
   changePassword,
   fetchCurrentUser,
+  fetchRegistrationMode,
   loginWithPassword,
   logoutAuth,
   registerComplete,
@@ -168,5 +169,14 @@ export function useUpdateProfile() {
     onSuccess: (user) => {
       queryClient.setQueryData(authKeys.me(), user);
     },
+  });
+}
+
+/** Открыта ли регистрация без приглашения — форма спрашивает до первого шага. */
+export function useRegistrationMode() {
+  return useQuery({
+    queryKey: ["auth", "registration-mode"],
+    queryFn: fetchRegistrationMode,
+    staleTime: 5 * 60_000,
   });
 }

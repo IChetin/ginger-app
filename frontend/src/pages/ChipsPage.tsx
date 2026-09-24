@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
 import type { ChipRequest, ChipRequestKind, PlayerAccount, PlayerMe } from "@/api/types/chips";
+import { ModerationNotice } from "@/features/auth/ModerationNotice";
 import { RequestRow } from "@/features/chips/components/RequestRow";
 import { useChipRequests, useCreateChipRequest, usePlayerMe } from "@/features/chips/hooks";
 import {
@@ -351,6 +352,18 @@ export function ChipsPage() {
   }
 
   const me = player.data;
+  // Новичок на модерации: касса закрыта до подтверждения менеджером (24.09).
+  if (me.status === "pending" || me.status === "rejected") {
+    return (
+      <div className="bg-bg min-h-full px-3 pb-4" data-testid="chips-page">
+        <header className="border-line flex items-center gap-2 border-b pt-2.5 pb-2">
+          <h1 className="text-[18px] font-bold">Фишки</h1>
+        </header>
+        <ModerationNotice status={me.status} className="mt-3" />
+      </div>
+    );
+  }
+
   const repeat = repeatId ? requests.data?.find((item) => item.id === repeatId) : undefined;
   const lastTopup = requests.data?.find((item) => item.kind === kind);
   const formReady = !repeatId || requests.isSuccess;

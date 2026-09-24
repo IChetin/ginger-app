@@ -15,12 +15,19 @@ import { APP_ICONS } from "@/features/tournaments/lib/format";
 import { cn } from "@/lib/utils";
 
 const KIND_LABEL: Record<PlayerKind, string> = { credit: "Кредитный", deposit: "Депозитный" };
+const STATUS_LABEL: Partial<Record<PlayerAdmin["status"], string>> = {
+  blocked: "Заблокирован",
+  archived: "В архиве",
+  pending: "На модерации",
+  rejected: "Отказано",
+};
 const BIRTHDAY_WINDOW_DAYS = 14;
 
-type Segment = "all" | "sleeping" | "birthdays" | "credit" | "deposit";
+type Segment = "all" | "moderation" | "sleeping" | "birthdays" | "credit" | "deposit";
 
 const SEGMENTS: { value: Segment; label: string }[] = [
   { value: "all", label: "Все" },
+  { value: "moderation", label: "На модерации" },
   { value: "sleeping", label: "Спящие" },
   { value: "birthdays", label: "ДР скоро" },
   { value: "credit", label: "Кредитные" },
@@ -31,6 +38,8 @@ function inSegment(player: PlayerAdmin, segment: Segment): boolean {
   switch (segment) {
     case "all":
       return true;
+    case "moderation":
+      return player.status === "pending";
     case "sleeping":
       return player.status === "active" && player.sleeping;
     case "birthdays":
@@ -140,8 +149,13 @@ function PlayerRow({ player }: { player: PlayerAdmin }) {
           {formatAgo(player.last_activity_at)}
         </span>
         {player.status !== "active" ? (
-          <span className="bg-danger-soft text-danger rounded-full px-2 py-0.5 text-[10.5px] font-bold">
-            {player.status === "blocked" ? "Заблокирован" : "В архиве"}
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5 text-[10.5px] font-bold",
+              player.status === "pending" ? "bg-gold-soft text-gold" : "bg-danger-soft text-danger",
+            )}
+          >
+            {STATUS_LABEL[player.status] ?? "В архиве"}
           </span>
         ) : null}
         {birthday ? (

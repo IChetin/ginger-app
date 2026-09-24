@@ -44,6 +44,7 @@ from app.models.enums import AuthTokenPurpose, UserRole
 from app.schemas.auth import UpdateMeBody, UserMe
 from app.services import captcha as captcha_service
 from app.services import invites as invites_service
+from app.services import signup as signup_service
 from app.services.email import EmailProvider, get_email_provider
 
 logger = logging.getLogger(__name__)
@@ -603,8 +604,15 @@ async def register_complete(
     user_agent: str | None,
     settings: Settings | None = None,
     invite_token: str | None = None,
+    real_name: str | None = None,
+    play_nickname: str | None = None,
+    source: str | None = None,
 ) -> tuple[Session, User]:
-    """Create account after email proof + password + nickname."""
+    """Create account after email proof + password + nickname.
+
+    Без приглашения игрок заводится сам (решение 24.09): в режиме `moderated` — со статусом
+    «на модерации», анкета из формы уходит менеджеру в карточку.
+    """
     settings = settings or get_settings()
     now = datetime.now(UTC)
     token_hash = hash_auth_token(registration_token, secret=settings.otp_hmac_secret)
@@ -652,6 +660,16 @@ async def register_complete(
     )
     if invite is not None:
         await invites_service.consume_invite(session, invite, user)
+    else:
+        await signup_service.create_self_registered(
+            session,
+            user,
+            real_name=real_name,
+            play_nickname=play_nickname,
+            source=source,
+            settings=settings,
+            now=now,
+        )
     auth_session = await _create_auth_session(
         session, user, user_agent=user_agent, settings=settings
     )

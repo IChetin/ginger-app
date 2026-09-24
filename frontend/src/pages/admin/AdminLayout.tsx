@@ -5,7 +5,11 @@ import type { UserRole } from "@/api/types/auth";
 import { useAdminDesktop } from "@/components/admin/useAdminDesktop";
 import { GingerWordmark } from "@/components/brand/GingerWordmark";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
-import { useAdminChipRequests, usePendingAccounts } from "@/features/admin/chips/hooks";
+import {
+  useAdminChipRequests,
+  useAdminPlayers,
+  usePendingAccounts,
+} from "@/features/admin/chips/hooks";
 import { useAdminThreads } from "@/features/admin/threads/hooks";
 import { isAdminUser, useLogout, useMe } from "@/features/admin/hooks";
 import { cn } from "@/lib/utils";
@@ -57,7 +61,11 @@ function SidebarNav({ showUsers, onNavigate }: { showUsers: boolean; onNavigate?
   const confirm = useConfirm();
   const navigate = useNavigate();
   const openRequests = useAdminChipRequests("open").data?.length ?? 0;
+  // В счётчике «Игроки» — и аккаунты на проверке, и заявки на вступление (24.09).
   const pendingAccounts = usePendingAccounts().data?.length ?? 0;
+  const pendingPlayers = (useAdminPlayers().data ?? []).filter(
+    (player) => player.status === "pending",
+  ).length;
   const unreadThreads = (useAdminThreads("open").data ?? []).filter((t) => t.unread).length;
 
   return (
@@ -113,9 +121,9 @@ function SidebarNav({ showUsers, onNavigate }: { showUsers: boolean; onNavigate?
           <path d="M2 21c1.2-3.5 4-5 7-5s5.8 1.5 7 5" />
         </NavIcon>
         Игроки
-        {pendingAccounts > 0 ? (
+        {pendingAccounts + pendingPlayers > 0 ? (
           <span className="bg-warn text-ink-ongold ml-auto flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[10px] font-extrabold">
-            {pendingAccounts}
+            {pendingAccounts + pendingPlayers}
           </span>
         ) : null}
       </NavLink>

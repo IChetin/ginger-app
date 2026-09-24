@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -103,8 +104,12 @@ class Settings(BaseSettings):
     minor_satellite_below_rub: int = Field(default=5000, ge=0)
 
     # Ginger APP: заявки на фишки и игроки.
-    # Регистрация только по инвайту — клуб закрытый (ТЗ §5, вопрос 11.8).
-    registration_requires_invite: bool = True
+    # Как человек попадает в клуб (решение 24.09):
+    #   invite    — только по приглашению менеджера или игрока (ТЗ §5, вопрос 11.8);
+    #   moderated — регистрируется сам, но до подтверждения менеджером открыты только витрина
+    #               и диалог с менеджером;
+    #   open      — регистрируется сам и сразу получает доступ (для теста, не для боя).
+    registration_mode: Literal["invite", "moderated", "open"] = "invite"
     invite_ttl_days: int = Field(default=7, ge=1)
     # Треды: закрытие после тишины (вопрос 11.15) и пуш игроку на ответ менеджера (ТЗ §4.2а:
     # в v1 нет, включим, если реакция начнёт проваливаться).
@@ -145,6 +150,15 @@ class Settings(BaseSettings):
     @property
     def superadmin_emails_list(self) -> list[str]:
         return [item.strip().lower() for item in self.superadmin_emails.split(",") if item.strip()]
+
+    @property
+    def registration_requires_invite(self) -> bool:
+        return self.registration_mode == "invite"
+
+    @property
+    def registration_moderated(self) -> bool:
+        """Самостоятельная регистрация с подтверждением менеджером."""
+        return self.registration_mode == "moderated"
 
     @property
     def is_development(self) -> bool:

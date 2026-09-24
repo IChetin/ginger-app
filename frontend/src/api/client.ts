@@ -5,6 +5,7 @@ import type {
   RegisterStartPayload,
   RegisterVerifyPayload,
   RegisterVerifyResponse,
+  RegistrationMode,
   RequestCodeResponse,
   SetPasswordPayload,
   UpdateMePayload,
@@ -272,6 +273,10 @@ export function registerVerify(body: RegisterVerifyPayload): Promise<RegisterVer
 
 export function registerComplete(body: RegisterCompletePayload): Promise<UserMe> {
   return apiPost("/api/v1/auth/register/complete", body);
+}
+
+export function fetchRegistrationMode(): Promise<RegistrationMode> {
+  return apiGet("/api/v1/auth/register/mode");
 }
 
 export function loginWithPassword(body: LoginPasswordPayload): Promise<UserMe> {

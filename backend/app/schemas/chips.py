@@ -195,6 +195,9 @@ class PlayerAdminRead(BaseModel):
     requests_30d: int = 0
     sleeping: bool = False
     days_to_birthday: int | None = None
+    # Самостоятельная регистрация (24.09): анкета новичка и когда заявку рассмотрели.
+    play_nickname: str | None = None
+    moderated_at: datetime | None = None
 
 
 class PlayerAdminUpdate(BaseModel):
@@ -254,3 +257,14 @@ class ReferralRead(BaseModel):
     # Лимит регистраций за сутки исчерпан — ссылка не работает, пока не пройдут сутки
     # или код не перевыпустят.
     paused: bool
+
+
+class PlayerApproveBody(BaseModel):
+    """Подтверждение самостоятельной регистрации (24.09): тип игрока задаёт менеджер."""
+
+    kind: PlayerKind | None = None
+    offline_access: bool = False
+
+
+class PlayerRejectBody(BaseModel):
+    reason: str | None = Field(default=None, max_length=500)

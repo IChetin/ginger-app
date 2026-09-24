@@ -228,6 +228,21 @@ describe("PlayerHomePage", () => {
     expect(screen.queryByRole("link", { name: "Запросить фишки" })).not.toBeInTheDocument();
   });
 
+  it("новичок на модерации видит плашку вместо кассы", async () => {
+    vi.mocked(chipsApi.fetchPlayerMe).mockResolvedValue(player({ status: "pending" }));
+    vi.mocked(chipsApi.fetchChipRequests).mockResolvedValue([]);
+    renderHome();
+    const notice = await screen.findByTestId("moderation-notice");
+    expect(within(notice).getByText("Заявка на рассмотрении")).toBeInTheDocument();
+    expect(within(notice).getByRole("link", { name: "Написать менеджеру" })).toHaveAttribute(
+      "href",
+      "/dialogs",
+    );
+    expect(screen.queryByText(/Касса открыта/)).not.toBeInTheDocument();
+    // Витрина остаётся на месте.
+    expect(await screen.findByTestId("feed")).toBeInTheDocument();
+  });
+
   it("blocked player sees only the stub", async () => {
     vi.mocked(chipsApi.fetchPlayerMe).mockResolvedValue(player({ status: "blocked" }));
     vi.mocked(chipsApi.fetchChipRequests).mockResolvedValue([]);

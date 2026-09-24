@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { ApiError } from "@/api/client";
 import type { PlayerKind, PlayerStatus } from "@/api/types/chips";
 import { useConfirm } from "@/components/ui/ConfirmDialog";
-import { useUpdateAdminPlayer } from "@/features/admin/chips/hooks";
+import { useModeratePlayer, useUpdateAdminPlayer } from "@/features/admin/chips/hooks";
 import type { PlayerCrmCard } from "@/features/admin/crm/crmApi";
 import { formatAgo, formatBirthdaySoon, usePlayerCard } from "@/features/admin/crm/hooks";
 import { isAdminUser, useMe } from "@/features/admin/hooks";
@@ -13,6 +13,12 @@ import { APP_ICONS } from "@/features/tournaments/lib/format";
 import { cn } from "@/lib/utils";
 
 const KIND_LABEL: Record<PlayerKind, string> = { credit: "Кредитный", deposit: "Депозитный" };
+const STATUS_LABEL: Partial<Record<PlayerStatus, string>> = {
+  blocked: "Заблокирован",
+  archived: "В архиве",
+  pending: "На модерации",
+  rejected: "Отказано",
+};
 const THREAD_STATUS: Record<"open" | "answered" | "closed", string> = {
   open: "ждёт ответа",
   answered: "отвечен",
@@ -311,6 +317,89 @@ function StatusControls({ player }: { player: PlayerCrmCard }) {
   );
 }
 
+/**
+ * Заявка на вступление (24.09): анкета новичка и решение. Тип игрока задаётся здесь же —
+ * по умолчанию депозитный, как у пришедших по личной ссылке.
+ */
+function ModerationBlock({ player }: { player: PlayerCrmCard }) {
+  const { approve, reject } = useModeratePlayer();
+  const confirm = useConfirm();
+  const [kind, setKind] = useState<PlayerKind>(player.kind);
+  const [offline, setOffline] = useState(player.offline_access);
+  const busy = approve.isPending || reject.isPending;
+
+  return (
+    <section
+      data-testid="player-moderation"
+      className="border-line-gold bg-gold-soft mt-3 rounded-lg border px-3 py-2.5"
+    >
+      <h2 className="text-ink text-[14px] font-extrabold">Заявка на вступление</h2>
+      <p className="text-ink-2 mt-0.5 text-[13px]">
+        {[
+          player.real_name,
+          player.play_nickname ? `ник в клубе: ${player.play_nickname}` : null,
+          player.source ? `узнал: ${player.source}` : null,
+        ]
+          .filter(Boolean)
+          .join(" · ") || "Анкету не заполнил — спросите в диалоге"}
+      </p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <select
+          aria-label="Тип игрока при подтверждении"
+          value={kind}
+          onChange={(event) => setKind(event.target.value as PlayerKind)}
+          className={cn(inputClass, "h-9 w-auto")}
+        >
+          <option value="deposit">Депозитный</option>
+          <option value="credit">Кредитный</option>
+        </select>
+        <label className="text-ink-2 flex items-center gap-1.5 text-[12.5px] font-semibold">
+          <input
+            type="checkbox"
+            checked={offline}
+            onChange={(event) => setOffline(event.target.checked)}
+            className="size-4"
+          />
+          Офлайн-блок
+        </label>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => approve.mutate({ id: player.id, kind, offline_access: offline })}
+          className="bg-gold-grad text-ink-ongold ml-auto h-9 rounded-md px-4 text-[13px] font-bold disabled:opacity-45"
+        >
+          Принять
+        </button>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => {
+            void (async () => {
+              const ok = await confirm({
+                title: `Отказать ${player.nickname}?`,
+                description: "Человек увидит отказ в приложении. Причина уйдёт в заметки карточки.",
+                confirmLabel: "Отказать",
+                cancelLabel: "Отмена",
+                variant: "danger",
+              });
+              if (!ok) return;
+              reject.mutate({ id: player.id, reason: "Отказано при модерации" });
+            })();
+          }}
+          className="text-danger h-9 rounded-md px-2 text-[13px] font-bold disabled:opacity-45"
+        >
+          Отказать
+        </button>
+      </div>
+      {approve.isError || reject.isError ? (
+        <p role="alert" className="text-danger mt-1.5 text-[12px] font-semibold">
+          Не удалось сохранить решение
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 /** Карточка человека (ТЗ §9а.3): кто, статус, откуда, активность, теги, заметки, история. */
 export function AdminPlayerPage() {
   const { playerId = "" } = useParams();
@@ -353,8 +442,15 @@ export function AdminPlayerPage() {
             {KIND_LABEL[player.kind]}
           </span>
           {player.status !== "active" ? (
-            <span className="bg-danger-soft text-danger rounded-full px-2 py-0.5 text-[11px] font-bold">
-              {player.status === "blocked" ? "Заблокирован" : "В архиве"}
+            <span
+              className={cn(
+                "rounded-full px-2 py-0.5 text-[11px] font-bold",
+                player.status === "pending"
+                  ? "bg-gold-soft text-gold"
+                  : "bg-danger-soft text-danger",
+              )}
+            >
+              {STATUS_LABEL[player.status] ?? "В архиве"}
             </span>
           ) : null}
           {player.sleeping ? (
@@ -377,6 +473,8 @@ export function AdminPlayerPage() {
           Отправить пуш игроку
         </Link>
       ) : null}
+
+      {player.status === "pending" ? <ModerationBlock player={player} /> : null}
 
       <Section title="Активность">
         <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">

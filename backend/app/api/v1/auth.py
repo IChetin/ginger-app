@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.cookies import clear_session_cookie, set_session_cookie
 from app.core.database import get_db
 from app.core.deps import get_current_user, get_session_id_from_request
@@ -15,6 +16,7 @@ from app.schemas.auth import (
     RegisterStartBody,
     RegisterVerifyBody,
     RegisterVerifyResponse,
+    RegistrationMode,
     RequestCodeBody,
     RequestCodeResponse,
     SetPasswordBody,
@@ -122,9 +124,21 @@ async def register_complete(
         nickname=body.nickname,
         user_agent=request.headers.get("user-agent"),
         invite_token=body.invite_token,
+        real_name=body.real_name,
+        play_nickname=body.play_nickname,
+        source=body.source,
     )
     set_session_cookie(response, str(auth_session.id))
     return auth_service.user_to_me(user)
+
+
+@router.get("/register/mode", response_model=RegistrationMode)
+def registration_mode() -> RegistrationMode:
+    """Открыта ли регистрация без приглашения — форма спрашивает это до первого шага."""
+    mode = get_settings().registration_mode
+    return RegistrationMode(
+        mode=mode, invite_required=mode == "invite", moderated=mode == "moderated"
+    )
 
 
 @router.post("/login", response_model=UserMe)
