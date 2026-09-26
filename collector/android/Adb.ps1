@@ -108,7 +108,9 @@ function Connect-Phone {
     }
     if (-not $script:Phone) {
         # Кабель: устройство видно сразу после любой перезагрузки, портов не существует.
-        $lines = @(& $exe devices | Select-Object -Skip 1 | Where-Object { $_ -match '\sdevice$' -and $_ -notmatch ':\d+\s' })
+        # Строки чистим: adb под Windows оставляет возврат каретки, и якорь конца строки не срабатывал.
+        $lines = @(& $exe devices | Select-Object -Skip 1 | ForEach-Object { "$_".Trim() } |
+            Where-Object { $_ -match '^\S+\s+device\b' -and $_ -notmatch '^\d+\.\d+\.\d+\.\d+:' })
         if ($lines.Count -ne 1) {
             throw "Phone not found (tried: $($candidates -join ', ')). Plug in USB, or read the new port from Wireless debugging and run Set-PhoneAddress."
         }

@@ -2,17 +2,22 @@
 #
 #   powershell -NoProfile -ExecutionPolicy Bypass -File D:\...\collector\android\Run-Pass.ps1
 #
-# 1. Подключение к телефону по беспроводной отладке (адрес — в %USERPROFILE%\.ginger\phone).
-# 2. X-Poker: вкладка MTT клуба Ginger+ → отправка в приёмник на проде (если есть токен).
-# 3. PPPoker: лента MTT клуба Ginger → отправка ядра полей (старт, имя, бай-ин, гарантия).
-# Лог, JSON и последние кадры — в %LOCALAPPDATA%\GingerCollector\<дата>. Второй экземпляр не запускается.
-# Телефон должен быть на зарядке, приложения — залогинены в нужных клубах.
+# Снимает лобби трёх приложений и отправляет в приёмник на проде:
+#   PPPoker  → клуб Ginger (1049607),   slug ginger
+#   X-Poker  → клуб GINGER+ (2022497),  slug ginger-plus
+#   Poker21  → клуб Ginger21 (542765),  slug ginger21
+#
+# Приложения должны быть уже открыты в лобби нужного клуба на вкладке турниров: проход
+# по клубам не ходит и приложения не перезапускает. X-Poker после рестарта упирается в
+# проверку сети, Suprema теряет сессию — оба выяснены на живом проходе 26.09.
+# Лог, JSON и кадры — в %LOCALAPPDATA%\GingerCollector\<дата>. Второй экземпляр не запускается.
 # В строках кода — только латиница (Windows PowerShell 5.1).
 
 param(
     [switch]$NoSend,
     [switch]$SkipPPPoker,
     [switch]$SkipXPoker,
+    [switch]$SkipPoker21,
     [string]$PhoneAddress,
     [switch]$KeepShots
 )
@@ -31,6 +36,7 @@ if (Test-Path $lock) {
 }
 Set-Content -Path $lock -Value $PID
 $stayOn = $false
+$failed = @()
 
 try {
     . "$PSScriptRoot\Lobby.ps1"
@@ -45,31 +51,35 @@ try {
     Write-Host ("Battery: level {0}%, {1} mV, health {2}, {3} C" -f $battery.level, $battery.voltage_mv, $battery.health, $battery.temperature_c)
 
     $stamp = Get-Date -Format 'yyyyMMdd-HHmm'
-    if (-not $SkipXPoker) {
-        Write-Host '== X-Poker MTT pass'
-        $xp = @(Invoke-XpMttPassPhone -OutDir $day -KeepShots:$KeepShots)
-        Write-Host ("X-Poker: {0} cards, {1} with start" -f $xp.Count, @($xp | Where-Object { $_.starts_at }).Count)
-        $xpJson = Export-PhonePass -Cards $xp -Path (Join-Path $day "xpoker-mtt-$stamp.json")
-        if (-not $NoSend -and $xp.Count) {
-            Write-Host '== X-Poker send'
-            $result = Send-CollectorSnapshot -JsonPath $xpJson -ClubSlug 'ginger-plus' -App 'xpoker' -Apply
-            $result | ConvertTo-Json -Compress | Write-Host
-        }
-    }
+    $passes = @(
+        [pscustomobject]@{ Skip = $SkipPPPoker; Name = 'PPPoker'; Tag = 'pppoker-mtt'; Slug = 'ginger'; App = 'pppoker'; Run = { Invoke-PpMttPassPhone -OutDir $day -KeepShots:$KeepShots } },
+        [pscustomobject]@{ Skip = $SkipXPoker; Name = 'X-Poker'; Tag = 'xpoker-mtt'; Slug = 'ginger-plus'; App = 'xpoker'; Run = { Invoke-XpMttPassPhone -OutDir $day -KeepShots:$KeepShots } },
+        [pscustomobject]@{ Skip = $SkipPoker21; Name = 'Poker21'; Tag = 'poker21-mtt'; Slug = 'ginger21'; App = 'poker21'; Run = { Invoke-P21MttPassPhone -OutDir $day -KeepShots:$KeepShots } }
+    )
 
-    if (-not $SkipPPPoker) {
-        Write-Host '== PPPoker MTT pass'
-        $pp = @(Invoke-PpMttPassPhone -OutDir $day -KeepShots:$KeepShots)
-        Write-Host ("PPPoker: {0} cards, {1} with start" -f $pp.Count, @($pp | Where-Object { $_.starts_at }).Count)
-        $ppJson = Export-PhonePass -Cards $pp -Path (Join-Path $day "pppoker-mtt-$stamp.json")
-        if (-not $NoSend -and @($pp | Where-Object { $_.starts_at }).Count) {
-            Write-Host '== PPPoker send'
-            $result = Send-CollectorSnapshot -JsonPath $ppJson -ClubSlug 'ginger' -App 'pppoker' -Apply
-            $result | ConvertTo-Json -Compress | Write-Host
+    foreach ($pass in $passes) {
+        if ($pass.Skip) { continue }
+        Write-Host ("== {0} pass" -f $pass.Name)
+        # Одно упавшее приложение не должно уносить весь проход: остальные всё равно снимаем.
+        try {
+            $cards = @(& $pass.Run)
+            $withStart = @($cards | Where-Object { $_.starts_at }).Count
+            Write-Host ("{0}: {1} cards, {2} with start" -f $pass.Name, $cards.Count, $withStart)
+            if (-not $cards.Count) { throw 'empty pass' }
+            $jsonPath = Export-PhonePass -Cards $cards -Path (Join-Path $day ("{0}-{1}.json" -f $pass.Tag, $stamp))
+            if (-not $NoSend -and $withStart) {
+                Write-Host ("== {0} send" -f $pass.Name)
+                $result = Send-CollectorSnapshot -JsonPath $jsonPath -ClubSlug $pass.Slug -App $pass.App -Apply
+                $result | ConvertTo-Json -Compress | Write-Host
+            }
+        } catch {
+            $failed += "$($pass.Name): $_"
+            Write-Warning ("{0} pass failed: {1}" -f $pass.Name, $_)
         }
     }
 
     Get-HaikuSpend | Format-List | Out-String | Write-Host
+    if ($failed.Count) { throw ("Passes failed - " + ($failed -join '; ')) }
     Write-Host '== done'
 } catch {
     Write-Error "Phone pass failed: $_"

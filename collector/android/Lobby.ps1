@@ -8,7 +8,10 @@
 #   Connect-Phone
 #   $cards = Invoke-PpMttPassPhone -OutDir $env:TEMP\pass
 #   $cards = Invoke-XpMttPassPhone -OutDir $env:TEMP\pass
+#   $cards = Invoke-P21MttPassPhone -OutDir $env:TEMP\pass
 #
+# Проверено на живом проходе 26.09: PPPoker (Ginger, Go Daddy!, Private.G), X-Poker (GINGER+),
+# Poker21 (Ginger21) - 96 турниров. Приложения должны быть уже открыты в лобби нужного клуба.
 # В строках кода - только латиница (Windows PowerShell 5.1).
 
 . "$PSScriptRoot\Adb.ps1"
@@ -16,7 +19,12 @@
 
 $script:PpPackage = 'com.lein.pppoker.android'
 $script:XpPackage = 'com.game.android.xpoker'
+$script:P21Package = 'com.kmg.pokerseka21'
 $script:SupremaPackage = 'com.opt.supremapoker'
+
+# Приложения, которые нельзя перезапускать: X-Poker проверяет сеть только при старте и с VPN
+# не поднимается, Suprema теряет сессию и требует ручного входа (оба выяснены 26.09).
+$script:NoRestartPackages = @($script:XpPackage, $script:SupremaPackage)
 
 # Гарантии X-Poker в клубе Ginger+ указаны в рублях, а сетка живёт в фишках (1 фишка = 100 руб.).
 $script:XpRubPerChipPhone = 100
@@ -50,18 +58,64 @@ $script:XpListSchema = @{
 }
 
 $script:XpListPrompt = @'
-This is the MTT tab of a club lobby in the X-Poker mobile app. Extract every tournament row, top to bottom. Skip banners, filters and tabs.
+This is the tournament list of a club lobby in the X-Poker mobile app. Extract every row whose left badge says MTT, MAIN or STEP. Skip SNG rows and FLASH rows (those are cash tables), skip banners and filter chips.
 
 For each row:
-- name: the tournament title exactly as written (Latin or Cyrillic). Decorative icons (trophy, diamond, crown, globe) are not letters.
-- buyin: the number in the "Buy-in" cell or pill; null if not visible.
-- game: from the badge "MTT-NLH" (nlh), "MTT-PLO4" or "PLO4" (plo), "MTT-PLO5" or "PLO5" (plo5), else other.
-- bounty: badge next to the title: MKO -> mystery, PKO -> pko, KO -> ko, else none.
-- guarantee_rub: guarantee in rubles if the row shows one ("500 000", "1 MLN" -> 1000000); null otherwise. Never use the current prize pool.
-- start_time: "MM/DD HH:MM" if the row shows a start date and time, "HH:MM" if only the time is shown, else null.
-- status: "running" if the row says registration is closed or the tournament is late-registering, "future" if it shows a start time, else "unknown".
-- entries: the registered players counter if visible ("18/34" -> 18), else null.
+- name: the tournament title exactly as written (Latin or Cyrillic). Decorative icons (trophy, diamond, crown, clover, globe) are not letters.
+- buyin: the number under the "Buy-in" label at the right edge; null if not visible.
+- game: from the badge under the title: NLH -> nlh, PLO4 -> plo, PLO5 -> plo5, else other.
+- bounty: the coloured badge next to the game: MKO -> mystery, PKO -> pko, KO -> ko, else none.
+- guarantee_rub: the guarantee in rubles when the NAME contains one ("800K" -> 800000, "220k" -> 220000, "15k" -> 15000, "5K" -> 5000). Null when the name has no such number. Never use the prize pool.
+- start_time: "MM/DD HH:MM" from a blue "Start: MM/DD HH:MM" label, else null.
+- status: "running" when the label says "Registration ended" or "Registration closes in N mins", "future" when a start time is shown, else "unknown".
+- entries: the registered players counter ("55/255" -> 55, "12" -> 12), else null.
 - fully_visible: false if the row is cut off by the top or bottom edge of the screen.
+Use null for anything not visible. Do not guess.
+'@
+
+$script:P21Schema = @{
+    type = 'object'
+    additionalProperties = $false
+    required = @('is_lobby', 'cards')
+    properties = @{
+        is_lobby = @{ type = 'boolean' }
+        cards = @{
+            type = 'array'
+            items = @{
+                type = 'object'
+                additionalProperties = $false
+                required = @('name', 'buyin', 'game', 'bounty', 'guarantee', 'start_time', 'status', 'entries', 'level_minutes', 'fully_visible')
+                properties = @{
+                    name = @{ type = 'string' }
+                    buyin = New-NullableType 'number'
+                    game = @{ type = 'string'; enum = @('nlh', 'plo', 'plo5', 'other') }
+                    bounty = @{ type = 'string'; enum = @('none', 'pko', 'ko', 'mystery') }
+                    guarantee = New-NullableType 'number'
+                    start_time = New-NullableType 'string'
+                    status = @{ type = 'string'; enum = @('future', 'running', 'unknown') }
+                    entries = New-NullableType 'integer'
+                    level_minutes = New-NullableType 'string'
+                    fully_visible = @{ type = 'boolean' }
+                }
+            }
+        }
+    }
+}
+
+$script:P21Prompt = @'
+This is a club lobby in the Poker21 app: a two-column grid of cards. Extract only the TOURNAMENT cards - the ones whose left badge says MTT. Skip cash tables (their badge shows the game name over a coloured chip and their card says "Blinds:"), skip OFC, DURAK and "21" tables.
+
+For each tournament card, reading left to right, top to bottom:
+- name: the caption under the card, exactly as written (Latin or Cyrillic).
+- buyin: the number after "Buy-in:".
+- game: from the badge - NLH -> nlh, PLO4 -> plo, PLO5 -> plo5, PLO6 or "21" -> other.
+- bounty: MKO -> mystery, PKO -> pko, KO -> ko, else none.
+- guarantee: the number after "GTD:" ("GTD:36,465" -> 36465, "GTD:250,000" -> 250000).
+- start_time: from "start: YYYY-MM-DD HH:MM" -> "YYYY-MM-DD HH:MM", else null.
+- status: "running" when the card says "Registration ended ..." , "future" when it shows a start time, "unknown" when it only shows "Registration closes in ...".
+- entries: the players counter at the bottom of the card ("2/41" -> 2), else null.
+- level_minutes: the level lengths as written ("lvl 22/12" -> "22/12", "10/8/8m" -> "10/8/8"), else null.
+- fully_visible: false if the card is cut off by the top or bottom edge.
 Use null for anything not visible. Do not guess.
 '@
 
@@ -89,13 +143,48 @@ function Read-XpListPageHaiku {
     }
 }
 
+function Read-P21PageHaiku {
+    param([Parameter(Mandatory)][string]$Shot)
+    $page = Invoke-HaikuVision -ImagePath $Shot -Prompt $script:P21Prompt -Schema $script:P21Schema -MaxTokens 4000
+    if (-not $page.is_lobby) { return @() }
+    foreach ($card in $page.cards) {
+        if (-not $card.fully_visible) { continue }
+        $startsAt = ConvertTo-PhoneStart $card.start_time
+        $status = $card.status
+        if ($startsAt) { $status = 'future' }
+        [pscustomobject]@{
+            name = $card.name
+            buyin = $(if ($null -ne $card.buyin) { [decimal]$card.buyin } else { $null })
+            game_type = $card.game
+            bounty_kind = $card.bounty
+            guarantee = $card.guarantee
+            entries = $card.entries
+            level_minutes = $card.level_minutes
+            starts_at = $startsAt
+            status = $status
+        }
+    }
+}
+
 function ConvertTo-PhoneStart {
-    # "MM/DD HH:MM" или "HH:MM" -> ISO с поясом. Без даты считаем ближайшее наступление времени.
+    # Три формата сразу: Poker21 пишет полную дату с годом, PPPoker и X-Poker - "MM/DD HH:MM",
+    # изредка попадается голое время. Без даты берём ближайшее наступление.
     param([string]$Text)
     if (-not $Text) { return $null }
     $now = Get-Date
-    if ($Text -match '^(\d{1,2})/(\d{1,2})\s+(\d{1,2}):(\d{2})$') {
-        $local = Get-Date -Year $now.Year -Month ([int]$Matches[1]) -Day ([int]$Matches[2]) `
+    if ($Text -match '^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})$') {
+        $local = Get-Date -Year ([int]$Matches[1]) -Month ([int]$Matches[2]) -Day ([int]$Matches[3]) `
+            -Hour ([int]$Matches[4]) -Minute ([int]$Matches[5]) -Second 0 -Millisecond 0
+        return ([DateTimeOffset]$local).ToString('yyyy-MM-ddTHH:mm:sszzz')
+    }
+    if ($Text -match '^(\d{1,2})[/.](\d{1,2})\s+(\d{1,2}):(\d{2})$') {
+        # PPPoker и X-Poker пишут MM/DD, Suprema - DD/MM. Отличаем по значению: месяца больше 12 не бывает.
+        $first = [int]$Matches[1]
+        $second = [int]$Matches[2]
+        $month = $first
+        $day = $second
+        if ($first -gt 12) { $month = $second; $day = $first }
+        $local = Get-Date -Year $now.Year -Month $month -Day $day `
             -Hour ([int]$Matches[3]) -Minute ([int]$Matches[4]) -Second 0 -Millisecond 0
         if ($local -lt $now.AddDays(-30)) { $local = $local.AddYears(1) }
         return ([DateTimeOffset]$local).ToString('yyyy-MM-ddTHH:mm:sszzz')
@@ -130,42 +219,70 @@ function Merge-PhoneCard {
     $Known
 }
 
+function Dismiss-PhoneOverlay {
+    # Поверх лобби периодически висят промо: приглашение привязать почту, карточка клуба,
+    # подсказки, лидерборд союза. Все закрываются крестиком в правом верхнем углу своего окна,
+    # но позиция окна разная - поэтому просто тыкаем в известные места. Лишний тап по пустому
+    # месту безопасен: списки на него не реагируют.
+    param([int]$SettleMs = 1200)
+    foreach ($point in @(@(0.926, 0.080), @(0.896, 0.230), @(0.896, 0.358), @(0.708, 0.198))) {
+        Invoke-PhoneTap -X $point[0] -Y $point[1] -SettleMs 400
+    }
+    Start-Sleep -Milliseconds $SettleMs
+}
+
+function Show-PhoneApp {
+    # Выводим приложение вперёд, но НИКОГДА не перезапускаем: X-Poker после рестарта упрётся
+    # в проверку сети, Suprema потребует ручной вход.
+    param([Parameter(Mandatory)][string]$Package, [int]$WaitSeconds = 25)
+    if ((Get-PhoneTopPackage) -eq $Package) { return $true }
+    if (-not (Start-PhoneApp -Package $Package -WaitSeconds $WaitSeconds)) { return $false }
+    Start-Sleep -Seconds 6
+    $true
+}
+
 function Invoke-PhoneListPass {
     # Общий проход по любому списку: снять страницу -> прочитать -> свайпнуть -> повторить.
-    # Останов: список перестал двигаться (кадр совпал с прошлым) либо две страницы без новых карточек.
+    # Останов - по содержимому: страница не дала новых карточек дважды подряд либо набор
+    # названий совпал с предыдущей страницей. По кадрам сравнивать нельзя: в них тикают таймеры
+    # и счётчики игроков, поэтому одинаковые экраны дают разные картинки (обожглись 26.09).
     param(
         [Parameter(Mandatory)][string]$Package,
         [Parameter(Mandatory)][scriptblock]$Reader,
         [Parameter(Mandatory)][string]$Tag,
         [string]$OutDir,
-        [int]$MaxPages = 12,
-        [int]$ShotsPerPage = 3,
-        [int]$ShotPauseMs = 1300,
+        [int]$MaxPages = 16,
+        [int]$ShotsPerPage = 2,
+        [int]$ShotPauseMs = 2200,
+        [int]$MaxSide = 1568,
+        [double]$SwipeFrom = 0.75,
+        [double]$SwipeTo = 0.45,
         [switch]$KeepShots
     )
     if (-not $OutDir) { $OutDir = Join-Path $env:LOCALAPPDATA ("GingerCollector\{0}" -f (Get-Date -Format 'yyyy-MM-dd')) }
     if (-not (Test-Path $OutDir)) { [void](New-Item -ItemType Directory -Path $OutDir -Force) }
-
-    $top = Get-PhoneTopPackage
-    if ($top -ne $Package) {
-        if (-not (Start-PhoneApp -Package $Package)) { throw "Cannot bring $Package to front (top is $top)" }
-        Start-Sleep -Seconds 6
-    }
+    if (-not (Show-PhoneApp -Package $Package)) { throw "Cannot bring $Package to front (top is $(Get-PhoneTopPackage))" }
 
     $cards = [ordered]@{}
-    $previousHash = $null
+    $previousKeys = @()
     $emptyPages = 0
     for ($page = 1; $page -le $MaxPages; $page++) {
         $newOnPage = 0
-        $pageHash = $null
+        $pageKeys = New-Object System.Collections.Generic.List[string]
         for ($shot = 1; $shot -le $ShotsPerPage; $shot++) {
             $path = Join-Path $OutDir ("{0}-p{1:d2}-{2}.png" -f $Tag, $page, $shot)
-            [void](Get-PhoneShot -Path $path)
-            if ($shot -eq 1) { $pageHash = (Get-FileHash $path -Algorithm MD5).Hash }
+            [void](Get-PhoneShot -Path $path -MaxSide $MaxSide)
             $items = @(& $Reader $path)
+            if ($page -eq 1 -and $shot -eq 1 -and -not $items.Count) {
+                # Пустая первая страница - почти всегда промо поверх лобби, а не пустой клуб.
+                Dismiss-PhoneOverlay
+                [void](Get-PhoneShot -Path $path -MaxSide $MaxSide)
+                $items = @(& $Reader $path)
+            }
             foreach ($item in $items) {
                 $key = Get-PhoneCardKey $item
                 if ($key -eq '|') { continue }
+                $pageKeys.Add($key)
                 if ($cards.Contains($key)) {
                     $cards[$key] = Merge-PhoneCard -Known $cards[$key] -Fresh $item
                 } else {
@@ -177,27 +294,41 @@ function Invoke-PhoneListPass {
             if ($shot -lt $ShotsPerPage) { Start-Sleep -Milliseconds $ShotPauseMs }
         }
         Write-Host ("  page {0}: +{1} new, {2} total" -f $page, $newOnPage, $cards.Count)
-        if ($previousHash -and $pageHash -eq $previousHash) { break }
-        $previousHash = $pageHash
+
+        $keys = @($pageKeys | Select-Object -Unique)
+        $sameAsPrevious = $previousKeys.Count -and $keys.Count -eq $previousKeys.Count -and
+            -not @(Compare-Object $keys $previousKeys).Count
+        if ($sameAsPrevious) { break }
+        $previousKeys = $keys
         if ($newOnPage -eq 0) { $emptyPages++ } else { $emptyPages = 0 }
         if ($emptyPages -ge 2) { break }
-        Invoke-PhoneSwipe -FromY 0.78 -ToY 0.32
+        Invoke-PhoneSwipe -FromY $SwipeFrom -ToY $SwipeTo
     }
     @($cards.Values)
 }
 
 function Invoke-PpMttPassPhone {
-    # PPPoker: лента MTT клуба Ginger. Читает та же схема, что и на десктопе - приложение одно и то же.
-    param([string]$OutDir, [int]$MaxPages = 12, [switch]$KeepShots)
+    # PPPoker: лента MTT клуба. Читает та же схема, что и на десктопе - приложение одно и то же.
+    # Нижняя строка карточки крутится, поэтому кадров на страницу три.
+    param([string]$OutDir, [int]$MaxPages = 16, [switch]$KeepShots)
     Invoke-PhoneListPass -Package $script:PpPackage -Tag 'pppoker-mtt' -OutDir $OutDir -MaxPages $MaxPages `
-        -KeepShots:$KeepShots -Reader { param($shot) Read-PpPageHaiku -Shot $shot }
+        -ShotsPerPage 3 -KeepShots:$KeepShots -Reader { param($shot) Read-PpPageHaiku -Shot $shot }
 }
 
 function Invoke-XpMttPassPhone {
-    # X-Poker: вкладка MTT клуба GINGER+ 2022497. Карточки не открываем - список даёт всё для сетки.
+    # X-Poker: вкладка турниров клуба GINGER+ 2022497. Ниже списка турниров идут SNG и FLASH -
+    # их схема отбрасывает сама, а проход останавливается на двух страницах без новых карточек.
     param([string]$OutDir, [int]$MaxPages = 12, [switch]$KeepShots)
     Invoke-PhoneListPass -Package $script:XpPackage -Tag 'xpoker-mtt' -OutDir $OutDir -MaxPages $MaxPages `
         -KeepShots:$KeepShots -Reader { param($shot) Read-XpListPageHaiku -Shot $shot }
+}
+
+function Invoke-P21MttPassPhone {
+    # Poker21: плитка в два столбца, турниры идут перед кэш-столами. Шрифт мелкий, поэтому
+    # кадр не ужимаем - иначе модель начинает путать цифры бай-ина и гарантии.
+    param([string]$OutDir, [int]$MaxPages = 8, [switch]$KeepShots)
+    Invoke-PhoneListPass -Package $script:P21Package -Tag 'poker21-mtt' -OutDir $OutDir -MaxPages $MaxPages `
+        -MaxSide 0 -ShotsPerPage 1 -KeepShots:$KeepShots -Reader { param($shot) Read-P21PageHaiku -Shot $shot }
 }
 
 function Export-PhonePass {
