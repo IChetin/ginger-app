@@ -62,25 +62,81 @@ function Set-PhoneAddress {
     Connect-Phone -Address $Address
 }
 
+function Find-PhoneByMdns {
+    # Телефон объявляет себя как _adb-tls-connect._tcp. Openscreen-бэкенд ищет надёжнее старого Bonjour.
+    $exe = Get-AdbExe
+    $saved = $env:ADB_MDNS_OPENSCREEN
+    $env:ADB_MDNS_OPENSCREEN = '1'
+    try { $out = & $exe mdns services 2>&1 } finally { $env:ADB_MDNS_OPENSCREEN = $saved }
+    foreach ($line in $out) {
+        $match = [regex]::Match("$line", '_adb-tls-connect\._tcp\s+(\d{1,3}(?:\.\d{1,3}){3}):(\d+)')
+        if ($match.Success) { return "$($match.Groups[1].Value):$($match.Groups[2].Value)" }
+    }
+    $null
+}
+
+function Test-PhoneConnected {
+    param([Parameter(Mandatory)][string]$Target)
+    $exe = Get-AdbExe
+    $result = & $exe connect $Target 2>&1
+    if ("$result" -notmatch 'connected to') { return $false }
+    ("$(& $exe -s $Target get-state 2>&1)").Trim() -eq 'device'
+}
+
 function Connect-Phone {
+    # Порядок: заданный адрес -> сохранённый -> тот же хост на фиксированном порту 5555 ->
+    # поиск по mDNS -> единственное устройство по USB. Так переподключение переживает и сон,
+    # и перезагрузку телефона, не требуя каждый раз лезть в настройки за новым портом.
     param([string]$Address, [switch]$Quiet)
     $exe = Get-AdbExe
     $script:Phone = $null
     $script:PhoneSize = $null
-    $target = Get-PhoneAddress -Address $Address
-    if ($target) {
-        $result = & $exe connect $target 2>&1
-        if ("$result" -notmatch 'connected to') { throw "adb connect $target failed: $result" }
-        $script:Phone = $target
-    } else {
-        # Без адреса берём единственное устройство по USB - удобно на этапе настройки.
-        $lines = @(& $exe devices | Select-Object -Skip 1 | Where-Object { $_ -match '\sdevice$' })
-        if ($lines.Count -ne 1) { throw "Expected exactly one USB device, got $($lines.Count). Set the wireless address with Set-PhoneAddress." }
+
+    $candidates = @()
+    foreach ($value in @($Address, (Get-PhoneAddress))) {
+        if ($value) {
+            $candidates += $value
+            $host4 = ($value -split ':')[0]
+            if ($value -notmatch ':5555$') { $candidates += "${host4}:5555" }
+        }
+    }
+    $mdns = Find-PhoneByMdns
+    if ($mdns) { $candidates += $mdns }
+
+    foreach ($target in ($candidates | Select-Object -Unique)) {
+        if (Test-PhoneConnected -Target $target) { $script:Phone = $target; break }
+    }
+    if (-not $script:Phone) {
+        # Кабель: устройство видно сразу после любой перезагрузки, портов не существует.
+        $lines = @(& $exe devices | Select-Object -Skip 1 | Where-Object { $_ -match '\sdevice$' -and $_ -notmatch ':\d+\s' })
+        if ($lines.Count -ne 1) {
+            throw "Phone not found (tried: $($candidates -join ', ')). Plug in USB, or read the new port from Wireless debugging and run Set-PhoneAddress."
+        }
         $script:Phone = ($lines[0] -split '\s+')[0]
     }
     $size = Get-PhoneSize
     if (-not $Quiet) { Write-Host ("Phone {0}, screen {1}x{2}" -f $script:Phone, $size.Width, $size.Height) }
     $script:Phone
+}
+
+function Set-PhoneFixedPort {
+    # Уводит adbd на постоянный порт 5555: адрес перестаёт меняться до перезагрузки телефона.
+    # Вызывать с любого живого подключения (по кабелю - и подавно).
+    param([int]$Port = 5555)
+    if (-not $script:Phone) { throw 'Connect-Phone first' }
+    $exe = Get-AdbExe
+    [void](& $exe -s $script:Phone tcpip $Port 2>&1)
+    Start-Sleep -Seconds 3
+    $ip = "$(Invoke-PhoneShell 'ip route get 1.1.1.1')" -replace '.*src\s+(\d+\.\d+\.\d+\.\d+).*', '$1'
+    if ($ip -notmatch '^\d+\.\d+\.\d+\.\d+$') { $ip = ($script:Phone -split ':')[0] }
+    $target = "${ip}:$Port"
+    if (-not (Test-PhoneConnected -Target $target)) { throw "Cannot reach $target after tcpip $Port" }
+    $script:Phone = $target
+    $dir = Join-Path $env:USERPROFILE '.ginger'
+    if (-not (Test-Path $dir)) { [void](New-Item -ItemType Directory -Path $dir) }
+    Set-Content -Path (Join-Path $dir 'phone') -Value $target -Encoding Ascii
+    Write-Host "Phone pinned to $target (until the phone reboots)"
+    $target
 }
 
 function Get-PhoneSize {
