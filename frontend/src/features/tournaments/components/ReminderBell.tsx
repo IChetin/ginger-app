@@ -115,11 +115,11 @@ export function ReminderBell({ tournament, now }: { tournament: Tournament; now:
                 aria-checked={active.has(option.kind)}
                 disabled={reminder.pending}
                 onClick={() => void reminder.toggle(option.kind)}
-                className="hover:bg-surface-2 flex w-full items-center gap-2 rounded-[8px] px-2 py-2 text-left text-[13px] font-semibold disabled:opacity-60"
+                className="hover:bg-surface-2 flex w-full items-center gap-2 rounded-none px-2 py-2 text-left text-[13px] font-semibold disabled:opacity-60"
               >
                 <span
                   className={cn(
-                    "flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border text-[11px]",
+                    "flex h-4 w-4 shrink-0 items-center justify-center rounded-none border text-[11px]",
                     active.has(option.kind)
                       ? "border-line-gold bg-gold-grad text-ink-ongold"
                       : "border-line-strong",

@@ -50,7 +50,9 @@ export function OnboardingPage() {
 
         {step === "install" ? (
           <>
-            <h1 className="text-[23px] font-extrabold tracking-tight">Поставьте Ginger на экран</h1>
+            <h1 className="text-[19px] font-bold tracking-[0.18em] uppercase">
+              Поставьте Ginger на экран
+            </h1>
             <p className="text-ink-2 mt-1.5 mb-3 text-[14px]">
               Как обычное приложение: открывается с иконки, работает без Telegram, присылает
               уведомления.
@@ -61,7 +63,7 @@ export function OnboardingPage() {
 
         {step === "notifications" ? (
           <>
-            <h1 className="text-[23px] font-extrabold tracking-tight">Уведомления</h1>
+            <h1 className="text-[19px] font-bold tracking-[0.18em] uppercase">Уведомления</h1>
             <p className="text-ink-2 mt-1.5 text-[15px]">
               Чтобы узнать, что фишки выданы, реквизиты пришли или турнир вот-вот начнётся. Рекламы
               и рассылок не будет.

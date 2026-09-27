@@ -49,8 +49,10 @@ function Chip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "inline-flex h-7 shrink-0 items-center gap-1 rounded-full border px-2.5 text-[11.5px] font-bold whitespace-nowrap",
-        active ? "border-line-gold bg-gold-soft text-gold" : "border-line bg-surface text-ink-2",
+        "font-display inline-flex h-8 shrink-0 items-center gap-1 border px-3 text-[10.5px] font-semibold tracking-[0.1em] whitespace-nowrap uppercase",
+        active
+          ? "border-line-gold bg-gold-soft text-gold"
+          : "text-ink-2 border-[var(--frame-inner)]",
       )}
     >
       {children}
@@ -144,11 +146,7 @@ export function TournamentsPage() {
               ? `${visible.length} ${pluralRu(visible.length, "турнир", "турнира", "турниров")}`
               : ""}
           </span>
-          <div
-            role="tablist"
-            aria-label="Период"
-            className="bg-surface border-line flex shrink-0 rounded-full border p-0.5"
-          >
+          <div role="tablist" aria-label="Период" className="deco-frame-sm flex shrink-0 p-[5px]">
             {RANGE_OPTIONS.map((option) => (
               <button
                 key={option.value}
@@ -163,8 +161,8 @@ export function TournamentsPage() {
                     : update({ range: option.value })
                 }
                 className={cn(
-                  "h-6 rounded-full px-2.5 text-[11.5px] font-bold",
-                  range === option.value ? "bg-surface-3 text-ink" : "text-ink-3",
+                  "h-6 px-2.5 text-[11.5px] font-bold",
+                  range === option.value ? "text-ink-ongold bg-[var(--gold-fill)]" : "text-ink-2",
                 )}
               >
                 {option.label}
@@ -210,7 +208,7 @@ export function TournamentsPage() {
           <button
             type="button"
             onClick={() => void query.refetch()}
-            className="bg-gold-soft text-gold mt-3 h-10 rounded-full px-5 text-[13px] font-bold"
+            className="bg-gold-soft text-gold mt-3 h-10 rounded-none px-5 text-[13px] font-bold"
           >
             Повторить
           </button>

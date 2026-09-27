@@ -53,7 +53,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, Props>(function Passwo
               <div
                 key={n}
                 className={cn(
-                  "h-1 flex-1 rounded-full",
+                  "h-1 flex-1 rounded-none",
                   n <= bars ? STRENGTH_CLASS[level] : "bg-surface-2",
                 )}
               />

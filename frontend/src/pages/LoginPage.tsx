@@ -129,7 +129,7 @@ export function LoginPage() {
     >
       {step === "credentials" ? (
         <div data-testid="login-credentials">
-          <h1 className="mt-[18px] text-[23px] font-extrabold tracking-[-0.02em]">Вход</h1>
+          <h1 className="mt-[18px] text-[19px] font-bold tracking-[0.18em] uppercase">Вход</h1>
           <p className="text-ink-2 mt-1.5 max-w-[300px] text-sm">
             Фишки, диалоги с менеджером и напоминания о турнирах — на всех устройствах.
           </p>

@@ -48,11 +48,7 @@ export function useScheduleNow(items: Tournament[] | undefined): Date {
 }
 
 export function DayHeader({ day, now }: { day: string; now: Date }) {
-  return (
-    <h2 className="text-ink-3 px-4 pt-3 pb-1.5 text-[10.5px] font-bold tracking-[0.04em] uppercase">
-      {formatDayLabel(day, now)} · МСК
-    </h2>
-  );
+  return <h2 className="deco-title px-4 pt-4 pb-2">{formatDayLabel(day, now)} · МСК</h2>;
 }
 
 export type ViewProps = {
@@ -146,7 +142,7 @@ export function TableView({
   /** Без него шапка колонок не прилипает — для коротких списков. */ stickyTop?: number;
 }) {
   const headCell = cn(
-    "bg-bg py-1.5 border-line border-b",
+    "bg-bg py-1.5 border-b border-[var(--frame-outer)] shadow-[0_3px_0_var(--bg),0_4px_0_var(--frame-inner)]",
     stickyTop !== undefined && "sticky z-10",
   );
   return (
@@ -158,7 +154,7 @@ export function TableView({
         <col className="w-[80px]" />
       </colgroup>
       <thead>
-        <tr className="text-ink-3 text-[9.5px] font-bold uppercase">
+        <tr className="text-ink-3 font-display text-[9.5px] font-semibold tracking-[0.18em] uppercase">
           <th style={{ top: stickyTop }} className={cn(headCell, "pl-3 text-left")}>
             МСК
           </th>
@@ -179,9 +175,9 @@ export function TableView({
             <th
               colSpan={4}
               scope="colgroup"
-              className="bg-surface-2 text-ink-2 border-line border-b px-3 py-1 text-left text-[10.5px] font-bold"
+              className="border-b border-[var(--frame-inner)] px-3 pt-3 pb-1.5 text-left font-normal"
             >
-              {formatDayLabel(day, now)}
+              <span className="deco-title">{formatDayLabel(day, now)}</span>
             </th>
           </tr>
           {items.map((item) => {
@@ -194,7 +190,7 @@ export function TableView({
                 key={item.id}
                 className={cn(
                   "hover:bg-surface cursor-pointer",
-                  tier === "hi" && "bg-[linear-gradient(90deg,transparent_35%,var(--gold-soft))]",
+                  tier === "hi" && "bg-gold-soft/50",
                 )}
                 data-testid="tournament-row"
                 data-value={tier ?? undefined}
@@ -231,7 +227,7 @@ export function TableView({
                     {rowTags(item).map((tag) => (
                       <span
                         key={tag}
-                        className="bg-surface-2 text-ink-3 shrink-0 rounded-[4px] px-1 text-[9px] leading-[14px] font-bold tracking-[0.03em]"
+                        className="bg-surface-2 text-ink-3 shrink-0 rounded-none px-1 text-[9px] leading-[14px] font-bold tracking-[0.03em]"
                       >
                         {tag}
                       </span>
@@ -239,7 +235,7 @@ export function TableView({
                     {earlyBirdActive(item, now) ? (
                       <span
                         title="Early Bird: бонус за ранний вход"
-                        className="shrink-0 rounded-[4px] bg-[var(--live-soft)] px-1 text-[9px] leading-[14px] font-extrabold tracking-[0.03em] text-[var(--action-live-fg)]"
+                        className="shrink-0 rounded-none bg-[var(--live-soft)] px-1 text-[9px] leading-[14px] font-extrabold tracking-[0.03em] text-[var(--action-live-fg)]"
                       >
                         EB
                       </span>

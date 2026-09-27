@@ -10,7 +10,7 @@ export function PrivacyPage() {
       <Link to="/" className="text-gold text-sm font-bold">
         ← На главную
       </Link>
-      <h1 className="mt-6 text-[23px] font-extrabold tracking-[-0.02em]">
+      <h1 className="mt-6 text-[19px] font-bold tracking-[0.18em] uppercase">
         Политика конфиденциальности
       </h1>
       <p className="text-ink-2 mt-3 text-sm">

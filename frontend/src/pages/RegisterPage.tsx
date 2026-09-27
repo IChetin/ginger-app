@@ -86,7 +86,7 @@ export function RegisterPage() {
     return (
       <AuthShell toast={null} onBack={() => navigate("/login", { replace: true })}>
         <div data-testid="register-invite-required">
-          <h1 className="mt-[18px] text-[23px] font-extrabold tracking-[-0.02em]">
+          <h1 className="mt-[18px] text-[19px] font-bold tracking-[0.18em] uppercase">
             Регистрация по приглашению
           </h1>
           <p className="text-ink-2 mt-2 text-[14px]">
@@ -193,7 +193,9 @@ export function RegisterPage() {
     >
       {step === "email" ? (
         <div data-testid="register-email-step">
-          <h1 className="mt-[18px] text-[23px] font-extrabold tracking-[-0.02em]">Регистрация</h1>
+          <h1 className="mt-[18px] text-[19px] font-bold tracking-[0.18em] uppercase">
+            Регистрация
+          </h1>
           <p className="text-ink-2 mt-1.5 max-w-[300px] text-sm">
             Подтвердим email кодом из письма, затем зададите пароль и никнейм.
           </p>
@@ -242,7 +244,7 @@ export function RegisterPage() {
                 checked={consent}
                 onChange={(event) => setConsent(event.target.checked)}
                 className={cn(
-                  "border-line-strong bg-surface mt-0.5 h-5 w-5 shrink-0 appearance-none rounded-[6px] border-[1.5px]",
+                  "border-line-strong bg-surface mt-0.5 h-5 w-5 shrink-0 appearance-none rounded-none border-[1.5px]",
                   "checked:bg-gold-grad checked:border-transparent",
                   "relative checked:after:absolute checked:after:top-[2px] checked:after:left-[6px]",
                   "checked:after:h-2.5 checked:after:w-[5px] checked:after:rotate-45",
@@ -347,7 +349,7 @@ export function RegisterPage() {
           ) : null}
           <h1
             className={cn(
-              "text-[23px] font-extrabold tracking-[-0.02em]",
+              "text-[19px] font-bold tracking-[0.18em] uppercase",
               selfSignup ? "mt-1" : "mt-[18px]",
             )}
           >
@@ -452,7 +454,9 @@ export function RegisterPage() {
           <p className="text-ink-3 mt-[18px] text-[11px] font-bold tracking-[0.08em] uppercase">
             Шаг 3 из 3
           </p>
-          <h1 className="mt-1 text-[23px] font-extrabold tracking-[-0.02em]">Чтобы вас узнали</h1>
+          <h1 className="mt-1 text-[19px] font-bold tracking-[0.18em] uppercase">
+            Чтобы вас узнали
+          </h1>
           <p className="text-ink-2 mt-1.5 max-w-[320px] text-sm">
             По этим ответам менеджер откроет доступ к кассе. Можно пропустить — тогда он спросит в
             диалоге.

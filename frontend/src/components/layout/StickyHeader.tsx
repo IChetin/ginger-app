@@ -19,10 +19,10 @@ const COMPACT_AFTER_Y = 80;
 const EXPAND_BEFORE_Y = 40;
 
 const iconClass =
-  "h-5 w-5 stroke-current fill-none [stroke-width:1.8] [stroke-linecap:round] [stroke-linejoin:round]";
+  "h-5 w-5 stroke-current fill-none [stroke-width:1.5] [stroke-linecap:round] [stroke-linejoin:round]";
 
 const backBtnClass =
-  "bg-surface-2 text-ink-2 inline-flex h-[38px] min-h-11 w-[38px] min-w-11 shrink-0 items-center justify-center rounded-md";
+  "text-gold inline-flex h-[38px] min-h-11 w-[38px] min-w-11 shrink-0 items-center justify-center";
 
 type Props = {
   /** Заголовок в компактной строке (и в полном виде, если нет expandedContent / titleInExpanded). */
@@ -154,7 +154,7 @@ export function StickyHeader({
         "sticky top-0 z-20",
         "bg-bg/88 backdrop-blur-[14px]",
         "pt-[env(safe-area-inset-top,0px)]",
-        scrolled && "border-line border-b",
+        scrolled && "border-b border-[var(--frame-inner)]",
         className,
       )}
     >
@@ -205,7 +205,9 @@ export function StickyHeader({
                       </div>
                     ) : null}
                     {showTitle ? (
-                      <div className="truncate text-[17px] font-extrabold">{title}</div>
+                      <div className="font-display truncate text-[16px] font-bold tracking-[0.14em] uppercase">
+                        {title}
+                      </div>
                     ) : null}
                   </>
                 )}
@@ -213,8 +215,8 @@ export function StickyHeader({
             ) : showTitle ? (
               <div
                 className={cn(
-                  "min-w-0 font-extrabold",
-                  isCompact ? "text-[15px]" : "text-[17px]",
+                  "font-display min-w-0 font-bold tracking-[0.14em] uppercase",
+                  isCompact ? "text-[14px]" : "text-[16px]",
                   typeof title === "string" && "truncate",
                 )}
               >

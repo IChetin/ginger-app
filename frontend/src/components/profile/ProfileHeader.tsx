@@ -4,11 +4,11 @@ import { nicknameInitials } from "@/lib/profile";
 export function ProfileHeader({ user, onEdit }: { user: UserMe; onEdit: () => void }) {
   return (
     <header className="flex items-center gap-3.5 px-4 pt-6 pb-5">
-      <div className="bg-gold-grad text-ink-ongold shadow-sheen flex h-16 w-16 shrink-0 -rotate-3 items-center justify-center rounded-[20px] text-[24px] font-extrabold">
+      <div className="deco-frame-hi text-gold font-display flex h-16 w-16 shrink-0 items-center justify-center text-[24px] font-bold tracking-[0.06em]">
         {nicknameInitials(user.nickname)}
       </div>
       <div className="min-w-0">
-        <h1 className="text-ink truncate text-[21px] font-extrabold tracking-[-0.01em]">
+        <h1 className="text-ink truncate text-[19px] font-bold tracking-[0.08em]">
           {user.nickname}
         </h1>
         <p className="text-ink-2 mt-0.5 text-[13px]">
@@ -21,7 +21,7 @@ export function ProfileHeader({ user, onEdit }: { user: UserMe; onEdit: () => vo
       <button
         type="button"
         aria-label="Редактировать профиль"
-        className="bg-surface-2 text-ink-2 ml-auto inline-flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-md"
+        className="text-gold ml-auto inline-flex h-11 w-11 shrink-0 items-center justify-center"
         onClick={onEdit}
       >
         <svg

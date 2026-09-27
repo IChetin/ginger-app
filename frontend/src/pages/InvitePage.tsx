@@ -35,7 +35,7 @@ export function InvitePage() {
     return (
       <AuthShell toast={null} onBack={undefined}>
         <div data-testid="referral-invite">
-          <h1 className="mt-[18px] text-[23px] font-extrabold tracking-[-0.02em]">
+          <h1 className="mt-[18px] text-[19px] font-bold tracking-[0.18em] uppercase">
             {query.data.referrer_nickname} зовёт вас в Ginger
           </h1>
           <p className="text-ink-2 mt-2 text-[14px]">
@@ -57,7 +57,7 @@ export function InvitePage() {
 
   return (
     <AuthShell toast={null} onBack={undefined}>
-      <h1 className="mt-[18px] text-[23px] font-extrabold tracking-[-0.02em]">
+      <h1 className="mt-[18px] text-[19px] font-bold tracking-[0.18em] uppercase">
         Приглашение в Ginger
       </h1>
       <p className="text-ink-2 mt-2 text-[14px]" role="status">

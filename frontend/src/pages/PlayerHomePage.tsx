@@ -20,10 +20,13 @@ function SectionTitle({
   link?: { to: string; label: string };
 }) {
   return (
-    <div className="mt-4 mb-1.5 flex items-baseline justify-between">
-      <h2 className="text-ink-3 text-[11px] font-bold tracking-[0.06em] uppercase">{children}</h2>
+    <div className="mt-5 mb-2.5 flex items-center gap-3">
+      <h2 className="deco-title min-w-0 flex-1">{children}</h2>
       {link ? (
-        <Link to={link.to} className="text-gold text-[12px] font-bold">
+        <Link
+          to={link.to}
+          className="text-gold font-display shrink-0 text-[10.5px] font-semibold tracking-[0.14em] uppercase"
+        >
           {link.label}
         </Link>
       ) : null}
@@ -61,51 +64,51 @@ export function PlayerHomePage() {
   const replies = (threads.data ?? []).filter((thread) => thread.unread);
   return (
     <div className="bg-bg min-h-full px-3 pb-4" data-testid="player-home">
-      <header className="flex items-center gap-2 pt-3">
+      <header className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 pt-3.5 pb-3">
         <img
           src="/icons/ginger-mark-96.png"
           alt=""
           aria-hidden="true"
           className="h-7 w-7 rounded-full"
         />
-        <span className="flex flex-1 items-center">
-          <GingerWordmark className="h-[15px] w-auto" />
+        <GingerWordmark className="h-[16px] w-auto" />
+        <span className="flex min-w-0 justify-end">
+          {user ? (
+            <span className="text-ink-3 truncate text-[12px] font-semibold">{user.nickname}</span>
+          ) : guest ? (
+            <Link
+              to="/login"
+              className="text-gold font-display text-[11px] font-semibold tracking-[0.16em] uppercase"
+            >
+              Войти
+            </Link>
+          ) : null}
         </span>
-        {user ? (
-          <span className="text-ink-3 truncate text-[12px] font-semibold">{user.nickname}</span>
-        ) : guest ? (
-          <Link to="/login" className="text-gold text-[13px] font-bold">
-            Войти
-          </Link>
-        ) : null}
       </header>
+      <div aria-hidden="true" className="deco-rule" />
 
       {guest ? (
         <div
-          className="border-line-gold bg-surface relative mt-3 overflow-hidden rounded-lg border p-3.5"
+          className="deco-frame deco-corners mt-4 px-5 pt-6 pb-5 text-center"
           data-testid="home-guest"
         >
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(110%_80%_at_0%_0%,var(--gold-soft),transparent_65%)]"
-          />
-          <p className="font-display text-ink relative text-[19px] leading-tight font-bold">
+          <p className="font-display text-ink text-[18px] leading-tight font-bold tracking-[0.12em] uppercase">
             Покерные клубы Ginger
           </p>
-          <p className="text-ink-2 relative mt-1 text-[13px]">
+          <p className="text-ink-2 mt-2 text-[13px]">
             Расписание всех клубов, главные турниры и выигрыши игроков. Фишки и связь с менеджером —
             после входа по приглашению.
           </p>
-          <div className="relative mt-3 flex gap-1.5">
+          <div className="mt-4 flex gap-2">
             <Link
               to="/login"
-              className="bg-gold-grad text-ink-ongold flex h-10 flex-1 items-center justify-center rounded-md text-[14px] font-bold"
+              className="bg-gold-grad text-ink-ongold flex h-11 flex-1 items-center justify-center text-[13px] font-bold"
             >
               Войти
             </Link>
             <Link
               to="/clubs"
-              className="border-line-strong bg-surface-2 text-ink flex h-10 flex-1 items-center justify-center rounded-md border text-[14px] font-bold"
+              className="deco-frame-sm text-gold font-display flex h-11 flex-1 items-center justify-center text-[13px] font-semibold tracking-[0.08em] uppercase"
             >
               Клубы
             </Link>
@@ -170,13 +173,13 @@ export function PlayerHomePage() {
           <div className="flex gap-1.5">
             <Link
               to="/chips"
-              className="bg-gold-grad text-ink-ongold flex h-12 flex-1 items-center justify-center rounded-md text-[15px] font-bold"
+              className="bg-gold-grad text-ink-ongold flex h-12 flex-[1.4] items-center justify-center text-[13.5px] font-bold"
             >
               Запросить фишки
             </Link>
             <Link
               to="/dialogs/new"
-              className="border-line-strong bg-surface text-ink flex h-11 flex-1 items-center justify-center self-end rounded-md border text-[14px] font-bold"
+              className="deco-frame-sm text-gold font-display flex h-12 flex-1 items-center justify-center text-[13px] font-semibold tracking-[0.08em] uppercase"
             >
               Написать
             </Link>

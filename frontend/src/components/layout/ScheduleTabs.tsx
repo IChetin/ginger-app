@@ -16,14 +16,19 @@ export function ScheduleTabs({ active }: { active: (typeof TABS)[number]["key"] 
     <nav aria-label="Расписание" className="flex shrink-0 items-baseline gap-2.5">
       {TABS.map((tab) =>
         tab.key === active ? (
-          <h1 key={tab.key} className="text-[16px] font-extrabold tracking-tight">
+          <h1
+            key={tab.key}
+            className="border-gold border-b pb-0.5 text-[15px] font-bold tracking-[0.16em]"
+          >
             {tab.label}
           </h1>
         ) : (
           <Link
             key={tab.key}
             to={tab.to}
-            className={cn("text-ink-3 hover:text-ink-2 text-[16px] font-extrabold tracking-tight")}
+            className={cn(
+              "text-ink-3 hover:text-ink-2 font-display text-[15px] font-bold tracking-[0.16em]",
+            )}
           >
             {tab.label}
           </Link>

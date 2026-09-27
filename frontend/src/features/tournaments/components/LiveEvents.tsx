@@ -34,7 +34,7 @@ export function LiveEvents({ onSelect }: { onSelect: (tournament: Tournament) =>
         onClick={() => setOpen((value) => !value)}
         className="border-line bg-surface flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left"
       >
-        <span className="bg-danger rounded-[4px] px-1 text-[10px] font-extrabold tracking-[0.06em] text-white">
+        <span className="bg-danger rounded-none px-1 text-[10px] font-extrabold tracking-[0.06em] text-white">
           LIVE
         </span>
         <span className="text-ink min-w-0 flex-1 truncate text-[13px] font-bold">

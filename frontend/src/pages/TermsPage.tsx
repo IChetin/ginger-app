@@ -11,7 +11,9 @@ export function TermsPage() {
       <Link to="/" className="text-gold text-sm font-bold">
         ← На главную
       </Link>
-      <h1 className="mt-6 text-[23px] font-extrabold tracking-[-0.02em]">Правила использования</h1>
+      <h1 className="mt-6 text-[19px] font-bold tracking-[0.18em] uppercase">
+        Правила использования
+      </h1>
       <ol className="text-ink-2 mt-4 list-decimal space-y-3 pl-5 text-sm leading-relaxed">
         <li>
           Ginger — информационный сервис для игроков клубов. Расписания, лимиты и подборки

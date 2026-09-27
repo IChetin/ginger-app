@@ -21,9 +21,9 @@ function Icon({ name }: { name: IconName }) {
     list: <path d="M4 6h16M4 12h16M4 18h16" />,
   };
   return (
-    <span className="bg-surface-3 text-gold flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px]">
+    <span className="deco-frame-sm text-gold flex h-[34px] w-[34px] shrink-0 items-center justify-center">
       <svg
-        className="h-[18px] w-[18px] fill-none stroke-current [stroke-width:1.8] [stroke-linecap:round] [stroke-linejoin:round]"
+        className="h-[18px] w-[18px] fill-none stroke-current [stroke-width:1.5] [stroke-linecap:round] [stroke-linejoin:round]"
         viewBox="0 0 24 24"
         aria-hidden="true"
       >
@@ -48,7 +48,7 @@ function Chevron() {
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mx-4 mt-4">
-      <h2 className="text-ink-3 mb-2 text-[13px] font-bold tracking-[0.06em] uppercase">{title}</h2>
+      <h2 className="deco-title mb-2.5">{title}</h2>
       <div className="border-line bg-surface overflow-hidden rounded-md border">{children}</div>
     </section>
   );
@@ -123,8 +123,8 @@ export function SettingsList({
               className="peer sr-only"
               onChange={(event) => onPushChange(event.target.checked)}
             />
-            <span className="bg-surface-3 peer-checked:bg-gold-grad absolute inset-0 cursor-pointer rounded-full transition-colors" />
-            <span className="bg-knob shadow-knob pointer-events-none absolute top-[3px] left-[3px] h-[22px] w-[22px] rounded-full transition-transform peer-checked:translate-x-5" />
+            <span className="bg-surface-3 peer-checked:bg-gold-grad absolute inset-0 cursor-pointer rounded-none transition-colors" />
+            <span className="bg-knob shadow-knob pointer-events-none absolute top-[3px] left-[3px] h-[22px] w-[22px] rounded-none transition-transform peer-checked:translate-x-5" />
           </span>
         </label>
         {pushEnabled && onPushTest ? (

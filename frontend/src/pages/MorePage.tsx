@@ -18,13 +18,15 @@ function Row({
   return (
     <Link
       to={to}
-      className="border-line flex items-center gap-3 border-t px-3 py-3 first:border-t-0"
+      className="flex items-center gap-3.5 border-b border-[var(--frame-inner)] px-1 py-3"
     >
-      <span className="bg-surface-2 text-gold flex size-9 shrink-0 items-center justify-center rounded-[10px] text-[18px]">
+      <span className="deco-frame-sm text-gold flex size-9 shrink-0 items-center justify-center text-[16px]">
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="text-ink block text-[15px] font-bold">{title}</span>
+        <span className="text-ink font-display block text-[13px] font-semibold tracking-[0.14em] uppercase">
+          {title}
+        </span>
         {subtitle ? <span className="text-ink-3 block text-[12px]">{subtitle}</span> : null}
       </span>
       <span className="text-ink-3 text-[18px]" aria-hidden="true">
@@ -41,35 +43,36 @@ export function MorePage() {
 
   return (
     <div className="bg-bg min-h-full px-3 pt-3 pb-4" data-testid="more-page">
-      <h1 className="text-[20px] font-extrabold tracking-tight">Ещё</h1>
-      <nav className="border-line bg-surface mt-2 rounded-md border" aria-label="Разделы">
-        <Row to="/tournaments" title="MTT" subtitle="Расписание турниров всех клубов" icon="🏆" />
-        <Row to="/cash" title="CASH" subtitle="Где сейчас идёт игра" icon="♠" />
-        <Row to="/clubs" title="Клубы" subtitle="ID, курсы, как зайти" icon="♣" />
+      <h1 className="text-[18px] font-bold tracking-[0.18em] uppercase">Ещё</h1>
+      <div aria-hidden="true" className="deco-rule mt-3" />
+      <nav className="mt-2" aria-label="Разделы">
+        <Row to="/tournaments" title="MTT" subtitle="Расписание турниров всех клубов" icon="♠" />
+        <Row to="/cash" title="CASH" subtitle="Где сейчас идёт игра" icon="♣" />
+        <Row to="/clubs" title="Клубы" subtitle="ID, курсы, как зайти" icon="♥" />
         <Row to="/terms" title="Правила" subtitle="Условия использования сервиса" icon="§" />
         {player.data ? (
-          <Row to="/referral" title="Пригласить друга" subtitle="Ссылка и QR" icon="🦊" />
+          <Row to="/referral" title="Пригласить друга" subtitle="Ссылка и QR" icon="♦" />
         ) : null}
         {player.data ? (
           <Row
             to="/offline"
             title="Офлайн-игры"
             subtitle={player.data.offline_access ? "Ближайшие игры" : "По приглашению"}
-            icon="🃏"
+            icon="✦"
           />
         ) : null}
         {user ? (
-          <Row to="/profile" title="Профиль" subtitle={user.email} icon="👤" />
+          <Row to="/profile" title="Профиль" subtitle={user.email} icon="◇" />
         ) : (
           <Row
             to="/login"
             title="Войти"
             subtitle="Фишки, диалоги и профиль — для игроков клуба"
-            icon="🔑"
+            icon="◇"
           />
         )}
         {isStaffUser(user) ? (
-          <Row to="/admin" title="Админка" subtitle="Касса, сетки, игроки" icon="⚙" />
+          <Row to="/admin" title="Админка" subtitle="Касса, сетки, игроки" icon="✱" />
         ) : null}
       </nav>
     </div>

@@ -78,17 +78,19 @@ export function Conversation({
             >
               <div
                 className={cn(
-                  "max-w-[85%] rounded-[14px] px-3 py-2 text-[14px] leading-snug",
+                  "max-w-[85%] rounded-none px-3 py-2 text-[14px] leading-snug",
                   mine
-                    ? "bg-gold-soft text-ink rounded-br-[4px]"
-                    : "bg-surface border-line text-ink rounded-bl-[4px] border",
+                    ? "deco-frame-sm text-ink"
+                    : "bg-surface border-line text-ink rounded-none border",
                 )}
               >
                 {!mine && message.from_manager && viewer === "player" ? (
-                  <p className="text-gold mb-0.5 text-[11px] font-bold">Менеджер</p>
+                  <p className="text-gold font-display mb-0.5 text-[9.5px] font-semibold tracking-[0.2em] uppercase">
+                    Менеджер
+                  </p>
                 ) : null}
                 {!mine && !message.from_manager && viewer === "manager" ? (
-                  <p className="text-gold mb-0.5 text-[11px] font-bold">
+                  <p className="text-gold font-display mb-0.5 text-[9.5px] font-semibold tracking-[0.2em] uppercase">
                     {message.author_nickname ?? "Игрок"}
                   </p>
                 ) : null}
@@ -102,7 +104,7 @@ export function Conversation({
                     <img
                       src={attachmentUrl(message.attachment_id)}
                       alt="Вложение"
-                      className="mb-1 max-h-56 rounded-[10px]"
+                      className="mb-1 max-h-56 rounded-none"
                     />
                   </a>
                 ) : null}

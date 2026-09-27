@@ -37,7 +37,7 @@ function DialogsList() {
   return (
     <div className="bg-bg min-h-full px-3 pt-3 pb-4" data-testid="dialogs-page">
       <div className="flex items-center gap-2">
-        <h1 className="flex-1 text-[20px] font-extrabold tracking-tight">Диалоги</h1>
+        <h1 className="flex-1 text-[18px] font-bold tracking-[0.18em] uppercase">Диалоги</h1>
         <Link
           to="/dialogs/new"
           className="bg-gold-grad text-ink-ongold flex h-9 items-center rounded-md px-3 text-[14px] font-bold"
@@ -68,7 +68,7 @@ function DialogsList() {
           >
             <div className="flex items-center gap-2">
               {thread.unread ? (
-                <span className="bg-gold h-2 w-2 shrink-0 rounded-full" aria-label="Новый ответ" />
+                <span className="bg-gold h-2 w-2 shrink-0 rotate-45" aria-label="Новый ответ" />
               ) : null}
               <span className="text-ink min-w-0 flex-1 truncate text-[14px] font-bold">
                 {thread.subject}
@@ -136,7 +136,7 @@ function NewThread() {
           ← Диалоги
         </Link>
       </header>
-      <h1 className="text-[20px] font-extrabold tracking-tight">
+      <h1 className="text-[18px] font-bold tracking-[0.18em] uppercase">
         {requestId ? "Написать по заявке" : "Написать менеджеру"}
       </h1>
       {!requestId ? (
@@ -149,7 +149,7 @@ function NewThread() {
               aria-checked={topic === value}
               onClick={() => setTopic(value)}
               className={cn(
-                "h-8 rounded-full border px-3 text-[12.5px] font-bold",
+                "h-8 rounded-none border px-3 text-[12.5px] font-bold",
                 topic === value
                   ? "border-line-gold bg-gold-soft text-gold"
                   : "border-line bg-surface text-ink-2",

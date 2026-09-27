@@ -23,10 +23,13 @@ function SectionTitle({
   link?: { to: string; label: string };
 }) {
   return (
-    <div className="mt-5 mb-2 flex items-baseline justify-between">
-      <h2 className="text-ink-3 text-[11px] font-bold tracking-[0.08em] uppercase">{children}</h2>
+    <div className="mt-6 mb-2.5 flex items-center gap-3">
+      <h2 className="deco-title min-w-0 flex-1">{children}</h2>
       {link ? (
-        <Link to={link.to} className="text-gold text-[12px] font-bold">
+        <Link
+          to={link.to}
+          className="text-gold font-display shrink-0 text-[10.5px] font-semibold tracking-[0.14em] uppercase"
+        >
           {link.label}
         </Link>
       ) : null}
@@ -111,7 +114,7 @@ function PostCard({
             {post.club ? ` · ${post.club.name}` : ""}
           </span>
         </div>
-        <h3 className="font-display text-ink mt-1 text-[16px] leading-tight font-bold">
+        <h3 className="text-ink mt-1 font-sans text-[16px] leading-tight font-bold">
           {post.title}
         </h3>
         {body ? (
@@ -164,7 +167,7 @@ function WinCard({ win }: { win: WinItem }) {
     >
       <span
         aria-hidden="true"
-        className="border-line-gold bg-gold-soft text-gold font-display flex h-10 w-10 shrink-0 rotate-45 items-center justify-center rounded-[8px] border text-[13px] font-bold"
+        className="border-line-gold bg-gold-soft text-gold font-display mx-1 flex h-9 w-9 shrink-0 rotate-45 items-center justify-center rounded-none border text-[13px] font-bold"
       >
         <span className="-rotate-45">{win.place ? `#${win.place}` : "★"}</span>
       </span>

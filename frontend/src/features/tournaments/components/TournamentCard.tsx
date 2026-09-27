@@ -17,13 +17,13 @@ import { cn } from "@/lib/utils";
 export function AppIcon({ app, className }: { app: PokerApp; className: string }) {
   const src = APP_ICONS[app];
   if (src) {
-    return <img src={src} alt="" aria-hidden="true" className={cn("rounded-[22%]", className)} />;
+    return <img src={src} alt="" aria-hidden="true" className={cn("rounded-none", className)} />;
   }
   return (
     <span
       aria-hidden="true"
       className={cn(
-        "bg-surface-3 text-ink-2 inline-flex items-center justify-center rounded-[22%] text-[8px] leading-none font-extrabold",
+        "bg-surface-3 text-ink-2 inline-flex items-center justify-center rounded-none text-[8px] leading-none font-extrabold",
         className,
       )}
     >
@@ -86,7 +86,7 @@ export function TournamentCard({ tournament, now }: { tournament: Tournament; no
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="bg-surface-3 text-ink-2 shrink-0 rounded-[4px] px-1 leading-4 font-bold"
+                className="bg-surface-3 text-ink-2 shrink-0 rounded-none px-1 leading-4 font-bold"
               >
                 {tag}
               </span>

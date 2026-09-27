@@ -17,7 +17,7 @@ export function OfflinePage() {
           ← Ещё
         </Link>
       </header>
-      <h1 className="text-[20px] font-extrabold tracking-tight">Офлайн-игры</h1>
+      <h1 className="text-[18px] font-bold tracking-[0.18em] uppercase">Офлайн-игры</h1>
       <div className="border-line bg-surface mt-2 rounded-md border px-3 py-4">
         {hasAccess ? (
           <>

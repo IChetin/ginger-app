@@ -34,7 +34,7 @@ export function EditorsPickChip({
         aria-pressed={active}
         onClick={onToggle}
         className={cn(
-          "inline-flex h-7 shrink-0 items-center gap-1 rounded-full border px-2.5 text-[11.5px] font-bold whitespace-nowrap",
+          "font-display inline-flex h-8 shrink-0 items-center gap-1 border px-3 text-[10.5px] font-semibold tracking-[0.1em] whitespace-nowrap uppercase",
           active
             ? "border-line-gold bg-gold-grad text-ink-ongold"
             : "border-line-gold bg-gold-soft text-gold",
@@ -52,7 +52,7 @@ export function EditorsPickChip({
         type="button"
         aria-label="Что такое Editor's Pick"
         onClick={() => setHelp(true)}
-        className="border-line-gold text-gold flex size-[22px] shrink-0 items-center justify-center rounded-full border text-[11px] leading-none font-extrabold"
+        className="border-line-gold text-gold flex size-[22px] shrink-0 items-center justify-center rounded-none border text-[11px] leading-none font-extrabold"
       >
         ?
       </button>
@@ -64,7 +64,7 @@ export function EditorsPickChip({
               data-testid="editors-pick-help"
               className="border-line-strong bg-surface w-full max-w-[420px] rounded-t-lg border border-b-0 px-5 pt-2.5 pb-[calc(20px+env(safe-area-inset-bottom))] outline-none"
             >
-              <div className="bg-line-strong mx-auto mb-3.5 h-1 w-9 rounded-full" />
+              <div className="deco-grabber mb-3.5" />
               <Drawer.Title className="text-gold text-[18px] font-extrabold">
                 ★ Editor&apos;s Pick
               </Drawer.Title>

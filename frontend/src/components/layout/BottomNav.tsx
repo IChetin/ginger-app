@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const iconClass =
-  "h-[22px] w-[22px] stroke-current fill-none [stroke-width:1.8] [stroke-linecap:round] [stroke-linejoin:round]";
+  "h-[22px] w-[22px] stroke-current fill-none [stroke-width:1.4] [stroke-linecap:round] [stroke-linejoin:round]";
 
 function IconHome() {
   return (
@@ -76,12 +76,14 @@ export function BottomNav({ dialogsUnread = 0 }: { dialogsUnread?: number }) {
     return null;
   }
 
+  // Ар-деко: меню прибито к низу, сверху двойная золотая линия, активный пункт — золото и ромб.
   return (
     <nav
       data-mobile-nav
       className={cn(
-        "fixed bottom-4 left-1/2 z-30 flex w-[calc(100%-32px)] max-w-[388px] -translate-x-1/2",
-        "border-line-strong bg-surface/92 shadow-elevated rounded-lg border p-1.5 backdrop-blur-[12px]",
+        "fixed bottom-0 left-1/2 z-30 flex w-full max-w-[420px] -translate-x-1/2",
+        "bg-bg border-t border-[var(--frame-outer)] px-1 pt-1.5 pb-[calc(6px+env(safe-area-inset-bottom,0px))]",
+        "shadow-[inset_0_3px_0_var(--bg),inset_0_4px_0_var(--frame-inner)]",
       )}
       aria-label="Основная навигация"
     >
@@ -93,19 +95,23 @@ export function BottomNav({ dialogsUnread = 0 }: { dialogsUnread?: number }) {
             key={item.to}
             to={item.to}
             className={cn(
-              "relative flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-0 py-2",
-              "text-ink-3 text-[10px] font-bold",
-              active && "bg-gold-soft text-gold",
+              "relative flex min-h-11 flex-1 flex-col items-center justify-center gap-1 px-0 pt-1.5 pb-1",
+              "text-ink-3 font-display text-[9.5px] font-semibold tracking-[0.16em] uppercase",
+              active && "text-gold",
             )}
             aria-current={active ? "page" : undefined}
           >
             {item.to === "/dialogs" && dialogsUnread > 0 ? (
-              <span className="num bg-gold-grad text-ink-ongold absolute top-1 right-[calc(50%-20px)] flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-extrabold">
+              <span className="num bg-gold-grad text-ink-ongold absolute top-0.5 right-[calc(50%-22px)] flex h-4 min-w-4 items-center justify-center rounded-none px-1 text-[10px] font-extrabold tracking-normal">
                 {dialogsUnread}
               </span>
             ) : null}
             <Icon />
             {item.label}
+            <span
+              aria-hidden="true"
+              className={cn("h-[5px] w-[5px] rotate-45", active ? "bg-gold" : "bg-transparent")}
+            />
           </Link>
         );
       })}

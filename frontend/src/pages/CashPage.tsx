@@ -82,8 +82,10 @@ function Chip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "inline-flex h-7 shrink-0 items-center gap-1 rounded-full border px-2.5 text-[11.5px] font-bold whitespace-nowrap",
-        active ? "border-line-gold bg-gold-soft text-gold" : "border-line bg-surface text-ink-2",
+        "font-display inline-flex h-8 shrink-0 items-center gap-1 border px-3 text-[10.5px] font-semibold tracking-[0.1em] whitespace-nowrap uppercase",
+        active
+          ? "border-line-gold bg-gold-soft text-gold"
+          : "text-ink-2 border-[var(--frame-inner)]",
       )}
     >
       {children}
@@ -231,7 +233,7 @@ export function CashPage() {
               type="button"
               aria-label="Сбросить фильтры"
               onClick={reset}
-              className="text-gold border-line-gold h-7 shrink-0 rounded-full border px-2.5 text-[11.5px] font-bold"
+              className="text-gold border-line-gold h-7 shrink-0 rounded-none border px-2.5 text-[11.5px] font-bold"
             >
               ✕
             </button>
@@ -282,7 +284,7 @@ export function CashPage() {
           <button
             type="button"
             onClick={() => void query.refetch()}
-            className="bg-gold-soft text-gold mt-3 h-10 rounded-full px-5 text-[13px] font-bold"
+            className="bg-gold-soft text-gold mt-3 h-10 rounded-none px-5 text-[13px] font-bold"
           >
             Повторить
           </button>

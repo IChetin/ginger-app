@@ -132,7 +132,7 @@ function DialogIcon({ variant }: { variant: ConfirmVariant }) {
   return (
     <span
       className={cn(
-        "inline-flex size-10 shrink-0 items-center justify-center rounded-[12px]",
+        "inline-flex size-10 shrink-0 items-center justify-center rounded-none",
         variant === "danger" ? "bg-danger-soft text-danger" : "bg-gold-soft text-gold",
       )}
       aria-hidden
@@ -313,7 +313,7 @@ function DialogShell({
           aria-labelledby={titleId}
           aria-describedby={descriptionId}
           className={cn(
-            "border-line-strong bg-surface absolute top-1/2 left-1/2 w-[min(420px,calc(100%-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-[14px] border p-5",
+            "border-line-strong bg-surface absolute top-1/2 left-1/2 w-[min(420px,calc(100%-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-none border p-5",
             "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:duration-150",
           )}
         >
@@ -364,12 +364,12 @@ function DialogShell({
               return true;
             }}
             className={cn(
-              "border-line-strong bg-surface w-full max-w-[420px] rounded-t-[20px] border border-b-0 px-5 pt-2.5 pb-[calc(20px+env(safe-area-inset-bottom))] outline-none",
+              "border-line-strong bg-surface w-full max-w-[420px] rounded-none border border-b-0 px-5 pt-2.5 pb-[calc(20px+env(safe-area-inset-bottom))] outline-none",
               "motion-safe:transition-transform motion-safe:duration-200 motion-reduce:transition-none",
             )}
             data-testid="confirm-dialog-mobile"
           >
-            <div className="bg-line-strong mx-auto mb-3.5 h-1 w-9 rounded-full" />
+            <div className="deco-grabber mb-3.5" />
             {header}
             {children}
             {footer}

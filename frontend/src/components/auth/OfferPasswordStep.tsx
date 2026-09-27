@@ -25,7 +25,7 @@ export function OfferPasswordStep({ isPending, onSave, onSkip }: Props) {
 
   return (
     <div data-testid="offer-password-step">
-      <h1 className="mt-[18px] text-[23px] font-extrabold tracking-[-0.02em]">
+      <h1 className="mt-[18px] text-[19px] font-bold tracking-[0.18em] uppercase">
         Задайте пароль, чтобы входить быстрее
       </h1>
       <p className="text-ink-2 mt-1.5 max-w-[300px] text-sm">

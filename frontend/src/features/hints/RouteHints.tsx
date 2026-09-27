@@ -40,7 +40,7 @@ function HintSheet({
             data-testid="route-hint"
             className="border-line-strong bg-surface w-full max-w-[420px] rounded-t-lg border border-b-0 px-5 pt-2.5 pb-[calc(20px+env(safe-area-inset-bottom))] outline-none"
           >
-            <div className="bg-line-strong mx-auto mb-3.5 h-1 w-9 rounded-full" />
+            <div className="deco-grabber mb-3.5" />
             {hint ? (
               <>
                 <p className="text-gold text-[11px] font-bold tracking-[0.1em] uppercase">
@@ -52,7 +52,7 @@ function HintSheet({
                 <ol className="mt-3 flex flex-col gap-2.5">
                   {steps.map((step, index) => (
                     <li key={step} className="flex gap-2.5 text-[14px] leading-snug">
-                      <span className="bg-gold-soft text-gold num flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-bold">
+                      <span className="bg-gold-soft text-gold num flex h-6 w-6 shrink-0 items-center justify-center rounded-none text-[12px] font-bold">
                         {index + 1}
                       </span>
                       <span className="text-ink-2 pt-0.5">{step}</span>

@@ -34,8 +34,10 @@ const dateFormat = new Intl.DateTimeFormat("ru-RU", {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-surface-2 rounded-md px-3 py-2">
-      <p className="text-ink-3 text-[11px] font-semibold">{label}</p>
+    <div className="border border-[var(--frame-inner)] px-3 py-2 text-center">
+      <p className="text-ink-3 font-display text-[9.5px] font-semibold tracking-[0.2em] uppercase">
+        {label}
+      </p>
       <p className="num text-ink text-[16px] font-bold tabular-nums">{value}</p>
     </div>
   );
@@ -44,8 +46,10 @@ function Stat({ label, value }: { label: string; value: string }) {
 function Param({ label, value }: { label: string; value: string | null }) {
   if (!value) return null;
   return (
-    <div className="border-line flex items-baseline justify-between gap-3 border-b py-2 last:border-b-0">
-      <dt className="text-ink-2 text-[13px]">{label}</dt>
+    <div className="flex items-baseline justify-between gap-2 py-1.5">
+      <dt className="text-ink-2 flex flex-1 items-baseline gap-2 text-[13px] after:min-w-3 after:flex-1 after:-translate-y-1 after:border-b-[1.5px] after:border-dotted after:border-[var(--frame-outer)] after:content-['']">
+        {label}
+      </dt>
       <dd className="num text-ink m-0 text-right text-[13.5px] font-semibold">{value}</dd>
     </div>
   );
@@ -97,9 +101,9 @@ function SheetReminders({ tournament }: { tournament: Tournament }) {
               disabled={reminder.pending}
               onClick={() => void reminder.toggle(option.kind)}
               className={cn(
-                "flex h-11 items-center justify-center gap-1.5 rounded-md border px-2 text-[13px] font-bold disabled:opacity-60",
+                "flex h-11 items-center justify-center gap-1.5 px-2 text-[13px] font-bold disabled:opacity-60",
                 available.length === 1 && "col-span-2",
-                on ? "border-line-gold bg-gold-soft text-gold" : "border-line-strong text-ink",
+                on ? "deco-frame-hi text-gold" : "deco-frame-sm text-ink",
               )}
             >
               <BellIcon filled={on} className="h-4 w-4 shrink-0" />
@@ -163,9 +167,9 @@ function EarlyBird({ tournament }: { tournament: Tournament }) {
   return (
     <div
       data-testid="early-bird"
-      className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 rounded-md border border-[color-mix(in_srgb,var(--live)_35%,transparent)] bg-[var(--live-soft)] px-3 py-2"
+      className="deco-frame mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 px-4 py-3"
     >
-      <span className="text-[11px] font-extrabold tracking-[0.06em] text-[var(--action-live-fg)] uppercase">
+      <span className="font-display text-[10px] font-bold tracking-[0.2em] text-[var(--action-live-fg)] uppercase">
         Early Bird
       </span>
       <span className="text-ink text-[14px] font-bold">
@@ -202,9 +206,9 @@ export function TournamentSheet({
           <Drawer.Popup
             data-testid="tournament-sheet"
             style={tintStyle(tournament)}
-            className="border-line-strong bg-surface max-h-[88vh] w-full max-w-[420px] overflow-y-auto rounded-t-lg border border-b-0 px-5 pt-2.5 pb-[calc(20px+env(safe-area-inset-bottom))] outline-none"
+            className="bg-surface max-h-[88vh] w-full max-w-[420px] overflow-y-auto border border-b-0 border-[var(--frame-outer)] px-5 pt-2.5 pb-[calc(20px+env(safe-area-inset-bottom))] outline-none"
           >
-            <div className="bg-line-strong mx-auto mb-3.5 h-1 w-9 rounded-full" />
+            <div className="deco-grabber mb-3.5" />
             {tournament ? <SheetBody tournament={tournament} /> : null}
           </Drawer.Popup>
         </Drawer.Viewport>
@@ -223,19 +227,19 @@ function SheetBody({ tournament }: { tournament: Tournament }) {
 
   return (
     <>
-      <Drawer.Title className="text-ink text-[20px] leading-tight font-bold">
+      <Drawer.Title className="font-display text-ink text-center text-[20px] leading-tight font-bold tracking-[0.06em]">
         {displayName(tournament)}
       </Drawer.Title>
-      <Drawer.Description className="text-ink-2 mt-1 text-[13px]">
+      <Drawer.Description className="text-ink-2 mt-1 text-center text-[13px]">
         {club.name} · {appLabel} · {dateFormat.format(new Date(tournament.starts_at))},{" "}
         {formatTimeMsk(tournament.starts_at)} МСК
       </Drawer.Description>
 
-      <div className="mt-3 flex flex-wrap gap-1.5">
+      <div className="mt-3 flex flex-wrap justify-center gap-1.5">
         {formatTags(tournament).map((tag) => (
           <span
             key={tag}
-            className="bg-gold-soft text-gold rounded-[6px] px-2 py-0.5 text-[12px] font-bold"
+            className="border-line-gold text-gold font-display border px-2 py-0.5 text-[10.5px] font-semibold tracking-[0.12em] uppercase"
           >
             {tag}
           </span>

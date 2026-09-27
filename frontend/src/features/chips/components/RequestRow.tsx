@@ -29,7 +29,7 @@ export function StatusBadge({
   return (
     <span
       className={cn(
-        "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold whitespace-nowrap",
+        "shrink-0 rounded-none px-2 py-0.5 text-[11px] font-bold whitespace-nowrap",
         TONE_CLASS[statusTone(status)],
         className,
       )}

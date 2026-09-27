@@ -40,7 +40,9 @@
   font-weight: 400 900;
   font-display: swap;
   src: url("/fonts/tektur-cyrillic.woff2") format("woff2");
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+  /* Без строчной «д» (U+0434): у Tektur она как латинская «g» — «go 21:45» вместо «до».
+     Эта буква берётся из Golos Text, следующего шрифта в стеке; прописная «Д» остаётся Tektur. */
+  unicode-range: U+0301, U+0400-0433, U+0435-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
 
 @font-face {

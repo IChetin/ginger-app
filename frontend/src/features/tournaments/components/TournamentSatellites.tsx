@@ -24,9 +24,7 @@ export function TournamentSatellites({ tournament }: { tournament: Tournament })
 
   return (
     <section className="mt-4" data-testid="tournament-satellites">
-      <h3 className="text-ink-3 mb-1 text-[11px] font-bold tracking-[0.08em] uppercase">
-        Попасть дешевле · сателлиты
-      </h3>
+      <h3 className="deco-title mb-2">Попасть дешевле · сателлиты</h3>
       <ul className="border-line rounded-md border">
         {query.data.slice(0, SHOWN).map((item) => (
           <li
@@ -72,7 +70,7 @@ export function LivePlate({ tournament }: { tournament: Tournament }) {
       className="bg-danger-soft mt-3 rounded-md border border-[color-mix(in_srgb,var(--danger)_35%,transparent)] px-3 py-2"
     >
       <p className="text-ink text-[14px] font-bold">
-        <span className="bg-danger mr-1.5 rounded-[4px] px-1 align-[1px] text-[10px] font-extrabold tracking-[0.06em] text-white">
+        <span className="bg-danger mr-1.5 rounded-none px-1 align-[1px] text-[10px] font-extrabold tracking-[0.06em] text-white">
           LIVE
         </span>
         {tournament.live_event}

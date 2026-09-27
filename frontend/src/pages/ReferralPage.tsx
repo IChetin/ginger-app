@@ -59,7 +59,7 @@ export function ReferralPage() {
           ← Ещё
         </Link>
       </header>
-      <h1 className="text-[20px] font-extrabold tracking-tight">Пригласить друга</h1>
+      <h1 className="text-[18px] font-bold tracking-[0.18em] uppercase">Пригласить друга</h1>
       <p className="text-ink-2 text-[13px]">
         Друг регистрируется по вашей ссылке сам — без одобрения. Вы закрепляетесь за ним навсегда.
       </p>

@@ -44,7 +44,7 @@ export function CashGameSheet({
             style={tintStyle(game)}
             className="border-line-strong bg-surface max-h-[88vh] w-full max-w-[420px] overflow-y-auto rounded-t-lg border border-b-0 px-5 pt-2.5 pb-[calc(20px+env(safe-area-inset-bottom))] outline-none"
           >
-            <div className="bg-line-strong mx-auto mb-3.5 h-1 w-9 rounded-full" />
+            <div className="deco-grabber mb-3.5" />
             {game ? <SheetBody game={game} /> : null}
           </Drawer.Popup>
         </Drawer.Viewport>

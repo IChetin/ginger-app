@@ -36,18 +36,26 @@
   --line-gold: rgb(217 179 106 / 35%);
   --text: #f5f2ea;
   --text-2: #a9a395;
-  --text-3: #6e6a5f;
+  --text-3: #8a8577;
   --text-on-gold: #1c1503;
   --gold: #d9b36a;
   --sticky-h: calc(3.25rem + env(safe-area-inset-top, 0px));
   --gold-hi: #f1d68e;
   --gold-lo: #c79e48;
   --gold-soft: rgb(217 179 106 / 13%);
+  /* Ар-деко: плоское золото, гравированная линия на заливке, двойные рамки */
+  --gold-fill: #d9b36a;
+  --engrave: rgb(28 21 3 / 45%);
+  --frame-outer: rgb(217 179 106 / 50%);
+  --frame-inner: rgb(217 179 106 / 22%);
+  --frame-hi-outer: rgb(241 214 142 / 90%);
+  --frame-hi-inner: rgb(241 214 142 / 45%);
+  --ornament: rgb(217 179 106 / 55%);
   --value-hi: #f1d68e;
   --value-mid: #d9b36a;
-  --gold-grad: linear-gradient(180deg, #f1d68e 0%, #d3a94f 100%);
-  --gold-grad-hover: linear-gradient(180deg, #f7e0a0 0%, #ddb55c 100%);
-  --gold-grad-press: linear-gradient(180deg, #e3c271 0%, #bd9440 100%);
+  --gold-grad: linear-gradient(var(--gold-fill), var(--gold-fill));
+  --gold-grad-hover: linear-gradient(#e3c07a, #e3c07a);
+  --gold-grad-press: linear-gradient(#c9a358, #c9a358);
   --live: #43d9a3;
   --live-soft: rgb(67 217 163 / 13%);
   --warn: #f58f3c;
@@ -60,8 +68,8 @@
   --action-live-fg: var(--live);
   --action-warn-fg: var(--warn);
   --shadow-2: 0 8px 24px rgb(0 0 0 / 50%);
-  --glow-gold: 0 4px 18px rgb(211 169 79 / 22%);
-  --glow-gold-lg: 0 6px 20px rgb(211 169 79 / 35%);
+  --glow-gold: 0 0 #0000;
+  --glow-gold-lg: 0 0 #0000;
   --nav-bg: rgb(20 19 17 / 92%);
   --stage: #060505;
 
@@ -84,17 +92,24 @@
   --line-gold: rgb(138 106 43 / 38%);
   --text: #2a2209;
   --text-2: #6e6449;
-  --text-3: #9c9173;
+  --text-3: #766b50;
   --text-on-gold: #241a04;
   --gold: #8a6a2b;
   --gold-hi: #e9c877;
   --gold-lo: #b88e36;
   --gold-soft: rgb(138 106 43 / 12%);
+  --gold-fill: #c9a049;
+  --engrave: rgb(36 26 4 / 45%);
+  --frame-outer: rgb(138 106 43 / 55%);
+  --frame-inner: rgb(138 106 43 / 25%);
+  --frame-hi-outer: rgb(111 79 18 / 90%);
+  --frame-hi-inner: rgb(111 79 18 / 45%);
+  --ornament: rgb(138 106 43 / 60%);
   --value-hi: #6f4f12;
   --value-mid: #9a7432;
-  --gold-grad: linear-gradient(180deg, #e9c877 0%, #c89a3f 100%);
-  --gold-grad-hover: linear-gradient(180deg, #efd285 0%, #d2a64a 100%);
-  --gold-grad-press: linear-gradient(180deg, #dbb863 0%, #b88e36 100%);
+  --gold-grad: linear-gradient(var(--gold-fill), var(--gold-fill));
+  --gold-grad-hover: linear-gradient(#d2ab58, #d2ab58);
+  --gold-grad-press: linear-gradient(#b98f3d, #b98f3d);
   --live: #1f9e6e;
   --live-soft: rgb(31 158 110 / 12%);
   --warn: #c46a15;
@@ -106,8 +121,8 @@
   --action-live-fg: color-mix(in srgb, var(--live) 65%, #000);
   --action-warn-fg: color-mix(in srgb, var(--warn) 70%, #000);
   --shadow-2: 0 8px 24px rgb(80 60 20 / 14%);
-  --glow-gold: 0 4px 18px rgb(200 154 63 / 28%);
-  --glow-gold-lg: 0 6px 20px rgb(200 154 63 / 40%);
+  --glow-gold: 0 0 #0000;
+  --glow-gold-lg: 0 0 #0000;
   --nav-bg: rgb(252 248 239 / 90%);
   --stage: #e5dac4;
 
@@ -130,17 +145,24 @@
     --line-gold: rgb(138 106 43 / 38%);
     --text: #2a2209;
     --text-2: #6e6449;
-    --text-3: #9c9173;
+    --text-3: #766b50;
     --text-on-gold: #241a04;
     --gold: #8a6a2b;
     --gold-hi: #e9c877;
     --gold-lo: #b88e36;
     --gold-soft: rgb(138 106 43 / 12%);
+    --gold-fill: #c9a049;
+    --engrave: rgb(36 26 4 / 45%);
+    --frame-outer: rgb(138 106 43 / 55%);
+    --frame-inner: rgb(138 106 43 / 25%);
+    --frame-hi-outer: rgb(111 79 18 / 90%);
+    --frame-hi-inner: rgb(111 79 18 / 45%);
+    --ornament: rgb(138 106 43 / 60%);
     --value-hi: #6f4f12;
     --value-mid: #9a7432;
-    --gold-grad: linear-gradient(180deg, #e9c877 0%, #c89a3f 100%);
-    --gold-grad-hover: linear-gradient(180deg, #efd285 0%, #d2a64a 100%);
-    --gold-grad-press: linear-gradient(180deg, #dbb863 0%, #b88e36 100%);
+    --gold-grad: linear-gradient(var(--gold-fill), var(--gold-fill));
+    --gold-grad-hover: linear-gradient(#d2ab58, #d2ab58);
+    --gold-grad-press: linear-gradient(#b98f3d, #b98f3d);
     --live: #1f9e6e;
     --live-soft: rgb(31 158 110 / 12%);
     --warn: #c46a15;
@@ -152,8 +174,8 @@
     --action-live-fg: color-mix(in srgb, var(--live) 65%, #000);
     --action-warn-fg: color-mix(in srgb, var(--warn) 70%, #000);
     --shadow-2: 0 8px 24px rgb(80 60 20 / 14%);
-    --glow-gold: 0 4px 18px rgb(200 154 63 / 28%);
-    --glow-gold-lg: 0 6px 20px rgb(200 154 63 / 40%);
+    --glow-gold: 0 0 #0000;
+    --glow-gold-lg: 0 0 #0000;
     --nav-bg: rgb(252 248 239 / 90%);
     --stage: #e5dac4;
 
@@ -176,8 +198,8 @@
   --poster-rpt: var(--poster-default);
 
   /* Блик на золотой заливке: металл выглядит одинаково в обеих темах */
-  --sheen: inset 0 1px 0 rgb(255 255 255 / 40%);
-  --sheen-soft: inset 0 1px 0 rgb(255 255 255 / 35%);
+  --sheen: 0 0 #0000;
+  --sheen-soft: 0 0 #0000;
   --sheen-glow: var(--sheen), var(--glow-gold);
   --sheen-glow-lg: var(--sheen), var(--glow-gold-lg);
   --knob-shadow: 0 1px 2px rgb(0 0 0 / 30%);
@@ -241,9 +263,9 @@
   --font-sans: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Tektur", "Golos Text", system-ui, sans-serif;
 
-  --radius-sm: 10px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
   --radius-full: 999px;
 }
 
@@ -293,7 +315,7 @@
   --border: var(--line-strong);
   --input: var(--line-strong);
   --ring: var(--gold);
-  --radius: 0.75rem;
+  --radius: 0rem;
 }
 
 @layer base {
@@ -337,7 +359,7 @@
   :focus-visible {
     outline: 2px solid var(--gold);
     outline-offset: 2px;
-    border-radius: 4px;
+    border-radius: 0;
   }
 
   #root {
@@ -357,9 +379,9 @@
 .admin-shell {
   font-size: 14px;
   line-height: 1.5;
-  --radius-sm: 8px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
 }
 
 /* Phone with broken layout viewport (desktop site mode, etc.): use full layout width. */
@@ -481,4 +503,154 @@ html.ginger-layout-wide [data-mobile-nav] {
 
 @utility animate-board-card {
   animation: board-card-in 280ms ease-out both;
+}
+
+/* ============ АР-ДЕКО (27.09.2026) ============
+   Прямые углы (радиусы — нули в токенах), плоское золото, двойные золотые рамки.
+   Правило: декор — в шапках, разделителях и одном главном блоке на экран; строки и списки чистые. */
+
+/* Двойная рамка: внешняя линия — border, внутренняя — outline внутрь, фон под ней не нужен. */
+@utility deco-frame {
+  border: 1px solid var(--frame-outer);
+  outline: 1px solid var(--frame-inner);
+  outline-offset: -6px;
+
+  &:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+}
+
+@utility deco-frame-sm {
+  border: 1px solid var(--frame-outer);
+  outline: 1px solid var(--frame-inner);
+  outline-offset: -4px;
+
+  &:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+}
+
+@utility deco-frame-hi {
+  border: 1px solid var(--frame-hi-outer);
+  outline: 1px solid var(--frame-hi-inner);
+  outline-offset: -6px;
+
+  &:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+}
+
+/* Уголки внутри главного блока. Элементу нужен position: relative (утилита ставит сама). */
+@utility deco-corners {
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 9px;
+    pointer-events: none;
+    --c: var(--frame-hi-outer);
+    background:
+      linear-gradient(var(--c), var(--c)) top left / 12px 1.5px no-repeat,
+      linear-gradient(var(--c), var(--c)) top left / 1.5px 12px no-repeat,
+      linear-gradient(var(--c), var(--c)) top right / 12px 1.5px no-repeat,
+      linear-gradient(var(--c), var(--c)) top right / 1.5px 12px no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom left / 12px 1.5px no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom left / 1.5px 12px no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom right / 12px 1.5px no-repeat,
+      linear-gradient(var(--c), var(--c)) bottom right / 1.5px 12px no-repeat;
+  }
+}
+
+/* Орнамент-разделитель: линия, ромб, линия. */
+@utility deco-rule {
+  position: relative;
+  height: 7px;
+  background:
+    linear-gradient(90deg, transparent, var(--ornament)) left center / calc(50% - 10px) 1px
+      no-repeat,
+    linear-gradient(90deg, var(--ornament), transparent) right center / calc(50% - 10px) 1px
+      no-repeat;
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    background: var(--gold);
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+}
+
+/* «Ручка» шторки в том же духе. */
+@utility deco-grabber {
+  position: relative;
+  width: 76px;
+  height: 7px;
+  margin-inline: auto;
+  background:
+    linear-gradient(var(--ornament), var(--ornament)) left center / 30px 1px no-repeat,
+    linear-gradient(var(--ornament), var(--ornament)) right center / 30px 1px no-repeat;
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    background: var(--gold);
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+}
+
+/* Заголовок секции: линия — РАЗРЯДКА — линия. */
+@utility deco-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--gold);
+  white-space: nowrap;
+
+  &::before,
+  &::after {
+    content: "";
+    flex: 1 1 0;
+    min-width: 12px;
+    height: 1px;
+    background: var(--frame-inner);
+  }
+}
+
+/* Подписи и кнопки в разрядку. */
+@utility deco-caps {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+@layer components {
+  /* Золотая кнопка: плоская заливка, гравированная линия внутри, Tektur прописными. */
+  :is(button, a).bg-gold-grad {
+    outline: 1px solid var(--engrave);
+    outline-offset: -4px;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  :is(button, a).bg-gold-grad:focus-visible {
+    outline: 2px solid var(--gold-hi);
+    outline-offset: 2px;
+  }
 }

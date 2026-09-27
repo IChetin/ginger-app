@@ -17,7 +17,7 @@ export function AuthGate({ icon, title, description, returnTo, children }: Props
 
   return (
     <div className="flex flex-col items-center gap-3 px-5 py-8 text-center" data-testid="auth-gate">
-      <div className="bg-gold-soft text-gold flex h-[52px] w-[52px] -rotate-[4deg] items-center justify-center rounded-[16px]">
+      <div className="bg-gold-soft text-gold flex h-[52px] w-[52px] -rotate-[4deg] items-center justify-center rounded-none">
         <span className="flex h-6 w-6 items-center justify-center [&>svg]:h-6 [&>svg]:w-6">
           {icon}
         </span>

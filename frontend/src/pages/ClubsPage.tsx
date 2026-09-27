@@ -46,7 +46,7 @@ function ClubCard({ club, account }: { club: PublicClub; account: string | null 
     >
       <div className="flex items-center gap-2.5">
         {APP_ICONS[club.app] ? (
-          <img src={APP_ICONS[club.app]} alt="" className="h-9 w-9 rounded-[22%]" />
+          <img src={APP_ICONS[club.app]} alt="" className="h-9 w-9 rounded-none" />
         ) : null}
         <div className="min-w-0 flex-1">
           <h2 className="text-ink truncate text-[15px] font-extrabold">{club.name}</h2>
@@ -112,7 +112,7 @@ export function ClubsPage() {
           ← Ещё
         </Link>
       </header>
-      <h1 className="text-[20px] font-extrabold tracking-tight">Клубы</h1>
+      <h1 className="text-[18px] font-bold tracking-[0.18em] uppercase">Клубы</h1>
       {clubs.isPending ? <div className="bg-surface mt-2 h-40 rounded-md" /> : null}
       <div className="mt-2 flex flex-col gap-2">
         {clubs.data?.map((club) => (

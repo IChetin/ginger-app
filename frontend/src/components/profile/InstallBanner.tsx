@@ -13,7 +13,7 @@ export function InstallBanner() {
       className="border-line-gold bg-gold-soft mx-4 mb-2 flex items-center gap-3 rounded-md border p-3.5"
       data-testid="install-banner"
     >
-      <span className="bg-gold-grad text-ink-ongold shadow-sheen flex h-10 w-10 shrink-0 -rotate-[4deg] items-center justify-center rounded-[12px] text-[17px] font-extrabold">
+      <span className="bg-gold-grad text-ink-ongold shadow-sheen flex h-10 w-10 shrink-0 -rotate-[4deg] items-center justify-center rounded-none text-[17px] font-extrabold">
         2
       </span>
       <span className="min-w-0 flex-1">

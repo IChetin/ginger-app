@@ -104,7 +104,7 @@ export function NumberStepper({
 
   const btnClass = (enabled: boolean) =>
     cn(
-      "relative inline-flex shrink-0 items-center justify-center rounded-[8px] font-extrabold select-none",
+      "relative inline-flex shrink-0 items-center justify-center rounded-none font-extrabold select-none",
       "text-gold touch-manipulation before:absolute before:content-['']",
       desktop ? "h-8 w-8 text-[20px] before:-inset-0.5" : "h-9 w-9 text-[22px] before:-inset-1",
       desktop && enabled && "hover:bg-gold-soft",

@@ -49,7 +49,7 @@ function initialRows(
 function ClubIcon({ account, className }: { account: PlayerAccount; className: string }) {
   const src = APP_ICONS[account.club.app];
   return src ? (
-    <img src={src} alt="" aria-hidden="true" className={cn("shrink-0 rounded-[22%]", className)} />
+    <img src={src} alt="" aria-hidden="true" className={cn("shrink-0 rounded-none", className)} />
   ) : null;
 }
 
@@ -309,11 +309,7 @@ function RequestForm({
 }
 
 function SectionTitle({ children }: { children: string }) {
-  return (
-    <h2 className="text-ink-3 mb-1.5 text-[11px] font-bold tracking-[0.06em] uppercase">
-      {children}
-    </h2>
-  );
+  return <h2 className="deco-title mb-2.5">{children}</h2>;
 }
 
 export function ChipsPage() {
@@ -357,7 +353,7 @@ export function ChipsPage() {
     return (
       <div className="bg-bg min-h-full px-3 pb-4" data-testid="chips-page">
         <header className="border-line flex items-center gap-2 border-b pt-2.5 pb-2">
-          <h1 className="text-[18px] font-bold">Фишки</h1>
+          <h1 className="text-[17px] font-bold tracking-[0.18em] uppercase">Фишки</h1>
         </header>
         <ModerationNotice status={me.status} className="mt-3" />
       </div>
@@ -371,18 +367,21 @@ export function ChipsPage() {
   return (
     <div className="bg-bg min-h-full pb-4" data-testid="chips-page">
       <header className="border-line bg-bg/90 sticky top-0 z-20 flex items-center gap-2 border-b px-3 pt-2.5 pb-2 backdrop-blur-[14px]">
-        <h1 className="text-[18px] font-bold">Фишки</h1>
+        <h1 className="text-[17px] font-bold tracking-[0.18em] uppercase">Фишки</h1>
         <span
           className={cn(
-            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold",
+            "font-display inline-flex items-center gap-1.5 px-2 py-1 text-[10px] font-semibold tracking-[0.12em] uppercase",
             me.cashdesk_open ? "bg-live-soft text-live" : "bg-surface-2 text-ink-3",
           )}
         >
-          <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-current" />
+          <span aria-hidden="true" className="h-1.5 w-1.5 rotate-45 bg-current" />
           {me.cashdesk_open ? "Касса открыта" : "Касса закрыта"}
         </span>
         <span className="flex-1" />
-        <Link to="/chips/accounts" className="text-gold text-[13px] font-bold">
+        <Link
+          to="/chips/accounts"
+          className="text-gold font-display text-[10.5px] font-semibold tracking-[0.14em] uppercase"
+        >
           Аккаунты
         </Link>
       </header>
@@ -390,7 +389,7 @@ export function ChipsPage() {
       {me.kind === "deposit" ? (
         <div
           role="tablist"
-          className="bg-surface border-line mx-3 mt-2.5 flex rounded-full border p-0.5"
+          className="mx-3 mt-3 flex justify-center gap-8 border-b border-[var(--frame-inner)]"
         >
           {(["topup", "withdrawal"] as const).map((value) => (
             <button
@@ -400,8 +399,8 @@ export function ChipsPage() {
               aria-selected={kind === value}
               onClick={() => setParams(value === "withdrawal" ? { kind: value } : {})}
               className={cn(
-                "h-8 flex-1 rounded-full text-[13px] font-bold",
-                kind === value ? "bg-surface-3 text-ink" : "text-ink-3",
+                "font-display -mb-px h-9 border-b px-2 text-[12px] font-semibold tracking-[0.22em] uppercase",
+                kind === value ? "border-gold text-gold" : "text-ink-3 border-transparent",
               )}
             >
               {value === "topup" ? "Запрос" : "Вывод"}

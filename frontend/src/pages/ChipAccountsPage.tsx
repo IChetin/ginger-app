@@ -25,7 +25,7 @@ function errorText(error: unknown): string {
 function AppIcon({ app, className }: { app: PokerApp; className: string }) {
   const src = APP_ICONS[app];
   return src ? (
-    <img src={src} alt="" aria-hidden="true" className={cn("rounded-[22%]", className)} />
+    <img src={src} alt="" aria-hidden="true" className={cn("rounded-none", className)} />
   ) : null;
 }
 
@@ -69,7 +69,7 @@ function AppAccountCard({ account, clubs }: { account: AppAccount; clubs: Public
         {account.rows.map((row) => (
           <span
             key={row.id}
-            className="border-line-gold bg-gold-soft text-gold rounded-full border px-2.5 py-1 text-[12px] font-bold"
+            className="border-line-gold bg-gold-soft text-gold rounded-none border px-2.5 py-1 text-[12px] font-bold"
           >
             ✓ {row.club.name}
           </span>
@@ -87,7 +87,7 @@ function AppAccountCard({ account, clubs }: { account: AppAccount; clubs: Public
                 app_account_id: account.appAccountId,
               })
             }
-            className="border-line-strong text-ink-2 rounded-full border border-dashed px-2.5 py-1 text-[12px] font-bold disabled:opacity-45"
+            className="border-line-strong text-ink-2 rounded-none border border-dashed px-2.5 py-1 text-[12px] font-bold disabled:opacity-45"
           >
             + {club.name}
           </button>
@@ -264,7 +264,7 @@ function AddAppAccount({ clubs, onDone }: { clubs: PublicClub[]; onDone?: () => 
                     })
                   }
                   className={cn(
-                    "rounded-full border px-3 py-1.5 text-[13px] font-bold",
+                    "rounded-none border px-3 py-1.5 text-[13px] font-bold",
                     on ? "border-line-gold bg-gold-soft text-gold" : "border-line text-ink-3",
                   )}
                 >

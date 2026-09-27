@@ -46,7 +46,7 @@ export function TelegramBlock() {
       <div className="flex items-center gap-2">
         <span className="text-ink text-[15px] font-bold">Telegram</span>
         {linked ? (
-          <span className="rounded-full bg-[var(--live-soft)] px-2 py-0.5 text-[11px] font-bold text-[var(--action-live-fg)]">
+          <span className="rounded-none bg-[var(--live-soft)] px-2 py-0.5 text-[11px] font-bold text-[var(--action-live-fg)]">
             подключён
           </span>
         ) : null}

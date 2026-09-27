@@ -157,7 +157,7 @@ export function CodeStep({
 
   return (
     <div data-testid="code-step">
-      <h1 className="mt-[18px] text-[23px] font-extrabold tracking-[-0.02em]">Код из письма</h1>
+      <h1 className="mt-[18px] text-[19px] font-bold tracking-[0.18em] uppercase">Код из письма</h1>
       <p className="num text-ink-2 mt-1.5 max-w-[320px] text-sm">
         Отправили код на <b className="text-ink">{maskEmail(email)}</b>{" "}
         <button
