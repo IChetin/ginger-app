@@ -65,6 +65,8 @@ export interface Tournament {
   app_link?: string | null;
   /** Отобран в Editor's Pick — фильтр «★ Editor's Pick»; заметка — почему. */
   is_editor_pick?: boolean;
+  /** Major: крупнейшая гарантия клуба за день по Москве (Иван, 27.09). */
+  is_major?: boolean;
   editor_pick_note?: string | null;
 }
 

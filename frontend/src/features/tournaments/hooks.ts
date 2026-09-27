@@ -5,61 +5,46 @@ import { fetchTournaments } from "@/api/client";
 import type { Tournament } from "@/api/types/tournaments";
 
 export type RangeKey = "day" | "3days" | "week";
-export type PriceTier = "free" | "low" | "high";
+/** Что показывать в списке — один выбор из четырёх (Иван, 27.09; ступени цены убраны). */
+export type ListMode = "all" | "picked" | "free" | "major";
 
 export interface TournamentFilters {
   range: RangeKey;
-  prices: PriceTier[];
-  /** Только отобранное в Editor's Pick. */
-  picked: boolean;
+  mode: ListMode;
 }
 
 export const EMPTY_FILTERS: TournamentFilters = {
   range: "day",
-  prices: [],
-  picked: false,
+  mode: "all",
 };
 
 const RANGE_HOURS: Record<RangeKey, number> = { day: 24, "3days": 72, week: 168 };
-
-/**
- * Ступени цены — рублёвый эквивалент бай-ина, одинаковый для клубов в $ и в ₽. «1–3 тыс.»
- * убрана, вместо неё Free — фрироллы со входом 0 (решение Ивана 15.09).
- */
-export const PRICE_TIERS: { value: PriceTier; label: string }[] = [
-  { value: "free", label: "Free" },
-  { value: "low", label: "до 1 000 ₽" },
-  { value: "high", label: "от 3 000 ₽" },
-];
-
-export function priceTier(buyinRub: string | null, buyin?: string): PriceTier | null {
-  // Фрироллу курс не нужен: вход 0 в любой валюте.
-  if (buyin !== undefined && Number(buyin) === 0) return "free";
-  if (buyinRub === null) return null;
-  const value = Number(buyinRub);
-  if (value === 0) return "free";
-  if (value < 1000) return "low";
-  if (value >= 3000) return "high";
-  return null;
-}
+const LIST_MODES: ListMode[] = ["all", "picked", "free", "major"];
 
 /**
  * Фильтры работают на месте: турниры за выбранный период уже загружены. Сателлиты в выдачу
  * не попадают вовсе — решение Ивана 14.09: они рвут ленту и игрокам неважны.
+ * Free — вход 0 в любой валюте; Major — крупнейшая гарантия клуба за день (флаг с сервера).
  */
 export function applyTournamentFilters<
-  T extends Pick<Tournament, "buyin" | "buyin_rub" | "satellite_target" | "is_editor_pick">,
->(items: T[], filters: TournamentFilters): T[] {
+  T extends Pick<Tournament, "buyin" | "satellite_target" | "is_editor_pick" | "is_major">,
+>(items: T[], filters: Pick<TournamentFilters, "mode">): T[] {
   return items.filter((item) => {
     if (item.satellite_target) return false;
-    if (filters.picked && !item.is_editor_pick) return false;
-    if (filters.prices.length === 0) return true;
-    const tier = priceTier(item.buyin_rub, item.buyin);
-    return tier !== null && filters.prices.includes(tier);
+    switch (filters.mode) {
+      case "picked":
+        return Boolean(item.is_editor_pick);
+      case "free":
+        return Number(item.buyin) === 0;
+      case "major":
+        return Boolean(item.is_major);
+      default:
+        return true;
+    }
   });
 }
 
-const STORAGE_KEY = "ginger.tournaments.filters.v2";
+const STORAGE_KEY = "ginger.tournaments.filters.v3";
 
 function readStoredFilters(): TournamentFilters {
   try {
@@ -68,10 +53,7 @@ function readStoredFilters(): TournamentFilters {
     const stored = JSON.parse(raw) as Partial<TournamentFilters>;
     return {
       range: stored.range && stored.range in RANGE_HOURS ? stored.range : EMPTY_FILTERS.range,
-      prices: Array.isArray(stored.prices)
-        ? stored.prices.filter((tier) => PRICE_TIERS.some((option) => option.value === tier))
-        : [],
-      picked: stored.picked === true,
+      mode: stored.mode && LIST_MODES.includes(stored.mode) ? stored.mode : EMPTY_FILTERS.mode,
     };
   } catch {
     return EMPTY_FILTERS;

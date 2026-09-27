@@ -164,12 +164,12 @@ describe("PlayerHomePage", () => {
           expires_at: null,
         },
       ],
-      main_events: [
+      majors: [
         {
           ...tournament("main", g21, 120),
           name: "Grand Knockout",
           guarantee: "1500000",
-          app_link: "https://pppoker.club/poker/api/share.php?id=1",
+          is_major: true,
         },
       ],
       evening: [tournament("eve", ginger, 300)],
@@ -201,14 +201,12 @@ describe("PlayerHomePage", () => {
     expect(within(open).getAllByTestId("chip-request-row")).toHaveLength(1);
     // Быстрый повтор убран 27.09: навязчиво. Осталась одна кнопка «Запросить фишки».
     expect(screen.queryByTestId("home-repeat")).not.toBeInTheDocument();
-    expect(await screen.findByTestId("feed-main-event")).toHaveTextContent("Grand Knockout");
-    // Проба 24.09: ссылка прямо в турнир — рядом с названием главного события.
-    expect(screen.getByTestId("feed-main-event-link")).toHaveAttribute(
-      "href",
-      "https://pppoker.club/poker/api/share.php?id=1",
-    );
+    // Major дня — таблицей, как в расписании (Иван, 27.09), вместо «главного события».
+    expect(await screen.findByTestId("feed-majors")).toHaveTextContent("Grand Knockout");
     const post = within(screen.getByTestId("feed-posts")).getByTestId("feed-post");
     expect(within(post).getByText("Вторник в клубе")).toBeInTheDocument();
+    // У новости видно, когда она вышла (Иван, 27.09): 09:00 UTC — это 12:00 по Москве.
+    expect(post).toHaveTextContent(/14 сентября, 12:00/);
     expect(within(post).getByRole("link", { name: "Расписание →" })).toHaveAttribute(
       "href",
       "/tournaments",
@@ -235,7 +233,7 @@ describe("PlayerHomePage", () => {
 
     expect(await screen.findByTestId("home-guest")).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "Войти" })[0]).toHaveAttribute("href", "/login");
-    expect(await screen.findByTestId("feed-main-event")).toBeInTheDocument();
+    expect(await screen.findByTestId("feed-majors")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Запросить фишки" })).not.toBeInTheDocument();
   });
 

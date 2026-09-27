@@ -121,6 +121,8 @@ class TournamentRead(TournamentFields):
     app_link: str | None = None
     # Отобран в Editor's Pick (фильтр «★ Editor's Pick»); заметка — почему.
     is_editor_pick: bool = False
+    # Major: крупнейшая гарантия клуба за день по Москве (Иван, 27.09) — фильтр и главная.
+    is_major: bool = False
     editor_pick_note: str | None = None
 
 

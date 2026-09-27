@@ -42,8 +42,14 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         from app.services.tournaments.auto_fetch import run_periodically as run_fetch
 
         schedule_fetch = asyncio.create_task(run_fetch(fetch_interval))
+    autoposts: asyncio.Task[None] | None = None
+    autopost_interval = get_settings().feed_autopost_interval_seconds
+    if autopost_interval > 0:
+        from app.services.feed import run_autoposts_periodically
+
+        autoposts = asyncio.create_task(run_autoposts_periodically(autopost_interval))
     yield
-    for task in (rollforward, housekeeping, schedule_fetch):
+    for task in (rollforward, housekeeping, schedule_fetch, autoposts):
         if task is None:
             continue
         task.cancel()

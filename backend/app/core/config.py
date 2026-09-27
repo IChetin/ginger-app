@@ -128,6 +128,8 @@ class Settings(BaseSettings):
     screenshot_retention_days: int = Field(default=90, ge=1)
     # Проход «сгорание заявок + удаление просроченных скриншотов». 0 — выключено.
     chips_housekeeping_interval_seconds: int = Field(default=60, ge=0)
+    # Автозаписи в «Новостях» о турнирах из Editor's Pick и Major (Иван, 27.09). 0 — выключено.
+    feed_autopost_interval_seconds: int = Field(default=600, ge=0)
 
     # Размер файла сетки клуба (импорт в админке и автозагрузка).
     import_max_file_bytes: int = Field(default=20 * 1024 * 1024, ge=1)

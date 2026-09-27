@@ -1,44 +1,29 @@
-import {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type MouseEvent,
-  type ReactNode,
-} from "react";
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import type { ScheduleView, Tournament } from "@/api/types/tournaments";
 import { ScheduleTabs } from "@/components/layout/ScheduleTabs";
 import { useMe } from "@/features/auth/hooks";
 import { rateLimitMessage, useGuestGate } from "@/features/auth/useGuestGate";
 import { EditorsPickChip } from "@/features/picks/EditorsPick";
-import {
-  AppIcon,
-  LateRegCountdown,
-  TournamentCard,
-} from "@/features/tournaments/components/TournamentCard";
+import { TournamentCard } from "@/features/tournaments/components/TournamentCard";
 import { LiveEvents } from "@/features/tournaments/components/LiveEvents";
+import {
+  DayHeader,
+  TableView,
+  selectOnEnter,
+  selectUnlessButton,
+  useScheduleNow,
+  type ViewProps,
+} from "@/features/tournaments/components/ScheduleTable";
 import { TournamentSheet } from "@/features/tournaments/components/TournamentSheet";
 import {
-  PRICE_TIERS,
   applyTournamentFilters,
-  useNow,
   useTournamentFilters,
   useTournaments,
+  type ListMode,
   type RangeKey,
 } from "@/features/tournaments/hooks";
-import {
-  displayName,
-  earlyBirdActive,
-  formatDayLabel,
-  formatMoney,
-  formatTimeMsk,
-  groupByDay,
-  hasRebuyAddon,
-  tournamentPhase,
-} from "@/features/tournaments/lib/format";
+import { displayName, groupByDay, tournamentPhase } from "@/features/tournaments/lib/format";
 import { pluralRu } from "@/lib/plural";
 import { cn } from "@/lib/utils";
 
@@ -48,40 +33,6 @@ const RANGE_OPTIONS: { value: RangeKey; label: string; title: string }[] = [
   { value: "3days", label: "3д", title: "3 дня" },
   { value: "week", label: "7д", title: "Неделя" },
 ];
-
-function toggle<T>(list: T[], value: T): T[] {
-  return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
-}
-
-/**
- * Время страницы: тик раз в 30 секунд плюс точный перескок на ближайший старт или конец
- * поздней регистрации. Поэтому турнир уходит из списка ровно тогда, когда отсчёт дошёл до нуля,
- * а не висит с «00:00» до следующего тика.
- */
-function useScheduleNow(items: Tournament[] | undefined): Date {
-  const tick = useNow(30_000);
-  const [boundary, setBoundary] = useState<Date | null>(null);
-  const now = boundary && boundary > tick ? boundary : tick;
-
-  useEffect(() => {
-    if (!items) return;
-    const current = now.getTime();
-    let next = Number.POSITIVE_INFINITY;
-    for (const item of items) {
-      for (const iso of [item.starts_at, item.late_reg_closes_at]) {
-        if (!iso) continue;
-        const at = new Date(iso).getTime();
-        if (at > current && at < next) next = at;
-      }
-    }
-    if (!Number.isFinite(next)) return;
-    const wait = Math.min(next - current + 50, 2_147_000_000);
-    const id = window.setTimeout(() => setBoundary(new Date(next + 50)), wait);
-    return () => window.clearTimeout(id);
-  }, [items, now]);
-
-  return now;
-}
 
 function Chip({
   active,
@@ -105,33 +56,6 @@ function Chip({
       {children}
     </button>
   );
-}
-
-function DayHeader({ day, now }: { day: string; now: Date }) {
-  return (
-    <h2 className="text-ink-3 px-4 pt-3 pb-1.5 text-[10.5px] font-bold tracking-[0.04em] uppercase">
-      {formatDayLabel(day, now)} · МСК
-    </h2>
-  );
-}
-
-type ViewProps = {
-  groups: [string, Tournament[]][];
-  now: Date;
-  onSelect: (tournament: Tournament) => void;
-};
-
-/** Тап по турниру открывает карточку; колокольчик и другие кнопки внутри живут своей жизнью. */
-function selectUnlessButton(event: MouseEvent, select: () => void) {
-  if ((event.target as HTMLElement).closest("button, a")) return;
-  select();
-}
-
-function selectOnEnter(event: KeyboardEvent, select: () => void) {
-  if (event.key === "Enter" || event.key === " ") {
-    event.preventDefault();
-    select();
-  }
 }
 
 function CardsView({ groups, now, onSelect }: ViewProps) {
@@ -161,195 +85,6 @@ function CardsView({ groups, now, onSelect }: ViewProps) {
   );
 }
 
-/** «Золото по ценности»: пороги в рублях, общие для всех клубов (гарантия ~$2 000 и ~$500). */
-const GUARANTEE_HI_RUB = 180_000;
-const GUARANTEE_MID_RUB = 45_000;
-const SOON_MINUTES = 60;
-
-type ValueTier = "hi" | "mid" | null;
-
-function valueTier(rub: string | null, hi: number, mid = Number.POSITIVE_INFINITY): ValueTier {
-  if (rub === null) return null;
-  const value = Number(rub);
-  if (value >= hi) return "hi";
-  if (value >= mid) return "mid";
-  return null;
-}
-
-const TIER_TEXT: Record<Exclude<ValueTier, null>, string> = {
-  hi: "text-value-hi",
-  mid: "text-value-mid",
-};
-
-/** Короткие метки формата для строки таблицы: длинные «Early Bird» и «Билет» — в карточках. */
-function rowTags(tournament: Tournament): string[] {
-  const tags: string[] = [];
-  if (tournament.game_type === "plo") tags.push("PLO");
-  if (tournament.game_type === "plo5") tags.push("PLO5");
-  if (tournament.bounty_kind === "pko") tags.push("PKO");
-  if (tournament.bounty_kind === "ko") tags.push("KO");
-  if (tournament.bounty_kind === "mystery") tags.push("MYST");
-  if (hasRebuyAddon(tournament)) tags.push("R+A");
-  return tags;
-}
-
-function StartCell({
-  tournament,
-  now,
-  tierText,
-}: {
-  tournament: Tournament;
-  now: Date;
-  tierText: string | null;
-}) {
-  const phase = tournamentPhase(tournament, now);
-  if (phase.kind === "late_reg") {
-    return <LateRegCountdown closesAt={phase.closesAt} compact />;
-  }
-  const minutes = Math.ceil((new Date(tournament.starts_at).getTime() - now.getTime()) / 60_000);
-  if (minutes <= SOON_MINUTES) {
-    return (
-      <span className="text-live block text-[11px] leading-tight font-bold">in {minutes}m</span>
-    );
-  }
-  return (
-    <span className={cn("font-bold", tierText ?? "text-ink")}>
-      {formatTimeMsk(tournament.starts_at)}
-    </span>
-  );
-}
-
-/**
- * Плотный вид по образцу лобби GG: одна строка — один турнир. Крупная гарантия красит золотом
- * всю строку — время, название и деньги; отдельно деньги не красим, это непонятно игроку.
- * Шапка колонок прилипает под фильтрами.
- */
-function TableView({ groups, now, onSelect, stickyTop }: ViewProps & { stickyTop: number }) {
-  const headCell = "bg-bg sticky z-10 py-1.5 border-line border-b";
-  return (
-    <table className="mt-0 w-full table-fixed border-separate border-spacing-0 text-[12px]">
-      <colgroup>
-        <col className="w-[64px]" />
-        <col />
-        <col className="w-[58px]" />
-        <col className="w-[80px]" />
-      </colgroup>
-      <thead>
-        <tr className="text-ink-3 text-[9.5px] font-bold uppercase">
-          <th style={{ top: stickyTop }} className={cn(headCell, "pl-3 text-left")}>
-            МСК
-          </th>
-          <th style={{ top: stickyTop }} className={cn(headCell, "text-left")}>
-            Турнир
-          </th>
-          <th style={{ top: stickyTop }} className={cn(headCell, "text-right")}>
-            Бай-ин
-          </th>
-          <th style={{ top: stickyTop }} className={cn(headCell, "pr-3 text-right")}>
-            GTD
-          </th>
-        </tr>
-      </thead>
-      {groups.map(([day, items]) => (
-        <tbody key={day}>
-          <tr>
-            <th
-              colSpan={4}
-              scope="colgroup"
-              className="bg-surface-2 text-ink-2 border-line border-b px-3 py-1 text-left text-[10.5px] font-bold"
-            >
-              {formatDayLabel(day, now)}
-            </th>
-          </tr>
-          {items.map((item) => {
-            const tier = valueTier(item.guarantee_rub, GUARANTEE_HI_RUB, GUARANTEE_MID_RUB);
-            const tierText = tier ? TIER_TEXT[tier] : null;
-            const guarantee = formatMoney(item.guarantee, item.club);
-            const cell = "border-line border-b py-1.5";
-            return (
-              <tr
-                key={item.id}
-                className={cn(
-                  "hover:bg-surface cursor-pointer",
-                  tier === "hi" && "bg-[linear-gradient(90deg,transparent_35%,var(--gold-soft))]",
-                )}
-                data-testid="tournament-row"
-                data-value={tier ?? undefined}
-                tabIndex={0}
-                aria-label={`Подробнее: ${displayName(item)}`}
-                onClick={(event) => selectUnlessButton(event, () => onSelect(item))}
-                onKeyDown={(event) => selectOnEnter(event, () => onSelect(item))}
-              >
-                <td className={cn(cell, "num overflow-hidden pl-3 whitespace-nowrap tabular-nums")}>
-                  <StartCell tournament={item} now={now} tierText={tierText} />
-                </td>
-                <td className={cn(cell, "min-w-0 pr-2")}>
-                  <div className="flex min-w-0 items-center gap-1.5">
-                    <AppIcon app={item.club.app} className="h-3.5 w-3.5 shrink-0" />
-                    {item.is_editor_pick ? (
-                      <span className="text-gold shrink-0 text-[11px]" title="Editor's Pick">
-                        ★
-                      </span>
-                    ) : null}
-                    <span
-                      className={cn(
-                        "min-w-0 truncate",
-                        item.is_promoted
-                          ? "text-gold font-bold"
-                          : tier === "hi"
-                            ? cn(tierText, "font-bold")
-                            : tier === "mid"
-                              ? cn(tierText, "font-semibold")
-                              : "text-ink font-semibold",
-                      )}
-                    >
-                      {displayName(item)}
-                    </span>
-                    {rowTags(item).map((tag) => (
-                      <span
-                        key={tag}
-                        className="bg-surface-2 text-ink-3 shrink-0 rounded-[4px] px-1 text-[9px] leading-[14px] font-bold tracking-[0.03em]"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                    {earlyBirdActive(item, now) ? (
-                      <span
-                        title="Early Bird: бонус за ранний вход"
-                        className="shrink-0 rounded-[4px] bg-[var(--live-soft)] px-1 text-[9px] leading-[14px] font-extrabold tracking-[0.03em] text-[var(--action-live-fg)]"
-                      >
-                        EB
-                      </span>
-                    ) : null}
-                  </div>
-                </td>
-                <td
-                  className={cn(
-                    cell,
-                    "num overflow-hidden pl-2 text-right font-bold whitespace-nowrap",
-                    tierText ?? "text-ink",
-                  )}
-                >
-                  {formatMoney(item.buyin, item.club)}
-                </td>
-                <td
-                  className={cn(
-                    cell,
-                    "num overflow-hidden pr-3 pl-2 text-right font-bold whitespace-nowrap",
-                    tierText ?? (guarantee ? "text-ink" : "text-ink-3"),
-                  )}
-                >
-                  {guarantee ?? "—"}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      ))}
-    </table>
-  );
-}
-
 /** Высота липкой шапки страницы — под ней прилипает шапка таблицы. */
 function useElementHeight<T extends HTMLElement>() {
   const ref = useRef<T>(null);
@@ -369,7 +104,7 @@ function useElementHeight<T extends HTMLElement>() {
 
 export function TournamentsPage() {
   const { data: user } = useMe();
-  const { filters, update, reset } = useTournamentFilters();
+  const { filters, update } = useTournamentFilters();
   const gate = useGuestGate();
   // Гостю сервер отдаёт только ближайшие сутки — и переключатель показывает сутки.
   const range: RangeKey = gate.isGuest ? "day" : filters.range;
@@ -379,16 +114,17 @@ export function TournamentsPage() {
   const [headerRef, headerHeight] = useElementHeight<HTMLElement>();
 
   // Сохранённый с прошлого входа Editor's Pick гостю не применяем: флагов сервер ему не отдаёт.
-  const picked = filters.picked && !gate.isGuest;
+  const mode: ListMode = filters.mode === "picked" && gate.isGuest ? "all" : filters.mode;
   const visible = useMemo(
     () =>
-      applyTournamentFilters(query.data ?? [], { ...filters, picked }).filter(
+      applyTournamentFilters(query.data ?? [], { mode }).filter(
         (item) => tournamentPhase(item, now).kind !== "closed",
       ),
-    [query.data, filters, picked, now],
+    [query.data, mode, now],
   );
   const groups = useMemo(() => groupByDay(visible), [visible]);
-  const hasFilters = filters.prices.length > 0 || picked;
+  const hasFilters = mode !== "all";
+  const choose = (next: ListMode) => update({ mode: mode === next ? "all" : next });
   const [selected, setSelected] = useState<Tournament | null>(null);
 
   return (
@@ -437,35 +173,24 @@ export function TournamentsPage() {
           </div>
         </div>
         <div className="flex [scrollbar-width:none] gap-1.5 overflow-x-auto px-3 pb-2 [&::-webkit-scrollbar]:hidden">
-          {hasFilters ? (
-            <button
-              type="button"
-              aria-label="Сбросить фильтры"
-              onClick={reset}
-              className="text-gold border-line-gold h-7 shrink-0 rounded-full border px-2.5 text-[11.5px] font-bold"
-            >
-              ✕
-            </button>
-          ) : null}
+          {/* Один выбор из четырёх (Иван, 27.09): Все · Editor's Pick · Free · Major. */}
+          <Chip active={mode === "all"} onClick={() => update({ mode: "all" })}>
+            Все
+          </Chip>
           <EditorsPickChip
             kind="mtt"
-            active={picked}
+            active={mode === "picked"}
             locked={gate.isGuest}
             onToggle={() =>
-              gate.isGuest
-                ? void gate.requireLogin("Editor's Pick")
-                : update({ picked: !filters.picked })
+              gate.isGuest ? void gate.requireLogin("Editor's Pick") : choose("picked")
             }
           />
-          {PRICE_TIERS.map((tier) => (
-            <Chip
-              key={tier.value}
-              active={filters.prices.includes(tier.value)}
-              onClick={() => update({ prices: toggle(filters.prices, tier.value) })}
-            >
-              {tier.label}
-            </Chip>
-          ))}
+          <Chip active={mode === "free"} onClick={() => choose("free")}>
+            Free
+          </Chip>
+          <Chip active={mode === "major"} onClick={() => choose("major")}>
+            Major
+          </Chip>
         </div>
       </header>
 
@@ -493,7 +218,7 @@ export function TournamentsPage() {
       ) : visible.length === 0 ? (
         <div className="border-line-gold bg-surface mx-3 mt-3 rounded-md border border-dashed px-4 py-6 text-center">
           <p className="text-ink text-[15px] font-bold">
-            {picked ? "Подборка этой недели ещё не готова" : "Турниров не найдено"}
+            {mode === "picked" ? "Подборка этой недели ещё не готова" : "Турниров не найдено"}
           </p>
           <p className="text-ink-2 mt-1 text-[13px]">
             {hasFilters ? "Попробуйте ослабить фильтры" : "Расписание ещё не загружено"}

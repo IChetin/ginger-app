@@ -148,7 +148,7 @@ describe("TournamentsPage", () => {
     expect(within(sheet).getByText(/Турнир в клубе .+ · PPPoker/)).toBeInTheDocument();
   });
 
-  it("сателлитов в выдаче нет, цена фильтрует на месте, выбор запоминается", async () => {
+  it("сателлитов в выдаче нет, Major фильтрует на месте, выбор запоминается", async () => {
     fetchCurrentUser.mockResolvedValue(user);
     const satellite = tournament({
       id: "t3",
@@ -165,6 +165,7 @@ describe("TournamentsPage", () => {
       bounty_kind: "none",
       buyin: "50.00",
       buyin_rub: "4400",
+      is_major: true,
     });
     fetchTournaments.mockResolvedValue([running, tournament({}), satellite, highRoller]);
     renderWithProviders(<AppRoutes />, { route: "/tournaments" });
@@ -173,7 +174,9 @@ describe("TournamentsPage", () => {
     expect(screen.queryByText("Sat → Main Event")).toBeNull();
     expect(screen.queryByRole("checkbox", { name: "Сателлиты" })).toBeNull();
 
-    await userEvent.click(screen.getByRole("button", { name: "от 3 000 ₽" }));
+    // Ступеней цены больше нет — один выбор из четырёх (Иван, 27.09).
+    expect(screen.queryByRole("button", { name: "от 3 000 ₽" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Major" }));
     const cards = screen.getAllByTestId("tournament-card");
     expect(cards).toHaveLength(1);
     expect(within(cards[0]).getByText("HIGH ROLLER")).toBeInTheDocument();
@@ -182,8 +185,12 @@ describe("TournamentsPage", () => {
     const params = fetchTournaments.mock.calls.at(-1)?.[0] as Record<string, unknown>;
     expect(Object.keys(params).sort()).toEqual(["from", "to"]);
     expect(
-      JSON.parse(window.localStorage.getItem("ginger.tournaments.filters.v2") ?? "{}"),
-    ).toEqual({ range: "day", prices: ["high"], picked: false });
+      JSON.parse(window.localStorage.getItem("ginger.tournaments.filters.v3") ?? "{}"),
+    ).toEqual({ range: "day", mode: "major" });
+
+    // «Все» возвращает полный список.
+    await userEvent.click(screen.getByRole("button", { name: "Все" }));
+    expect(screen.getAllByTestId("tournament-card")).toHaveLength(3);
   });
 
   it("Free и Editor's Pick — фильтры на месте, заметка пика в карточке", async () => {

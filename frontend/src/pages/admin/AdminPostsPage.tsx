@@ -276,6 +276,7 @@ export function AdminPostsPage() {
               <div className="min-w-0 flex-1">
                 <p className="text-ink truncate text-[14px] font-bold">
                   {post.is_pinned ? "📌 " : ""}
+                  {post.auto_kind ? "Авто · " : ""}
                   {post.title}
                 </p>
                 <p className="text-ink-3 truncate text-[12px]">

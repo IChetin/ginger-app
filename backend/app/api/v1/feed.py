@@ -23,8 +23,15 @@ async def get_feed(
         return feed
     return feed.model_copy(
         update={
-            "main_events": tournaments_for_guest(feed.main_events),
+            "majors": tournaments_for_guest(feed.majors),
             "evening": tournaments_for_guest(feed.evening),
+            # У автозаписи тот же турнир — гостю без деталей, как в расписании.
+            "posts": [
+                post.model_copy(update={"tournament": tournaments_for_guest([post.tournament])[0]})
+                if post.tournament
+                else post
+                for post in feed.posts
+            ],
         }
     )
 

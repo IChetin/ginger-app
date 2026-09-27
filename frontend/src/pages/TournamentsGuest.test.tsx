@@ -61,8 +61,8 @@ describe("MTT для гостя", () => {
   it("неделя и Editor's Pick просят войти, запрос остаётся на сутки", async () => {
     // Сохранённая неделя от прошлого входа гостю не применяется.
     window.localStorage.setItem(
-      "ginger.tournaments.filters.v2",
-      JSON.stringify({ range: "week", prices: [], picked: true }),
+      "ginger.tournaments.filters.v3",
+      JSON.stringify({ range: "week", mode: "picked" }),
     );
     renderWithProviders(<AppRoutes />, { route: "/tournaments" });
 

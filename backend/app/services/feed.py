@@ -6,7 +6,11 @@
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime, timedelta
+import asyncio
+import logging
+import random
+from datetime import UTC, date, datetime, time, timedelta
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import or_, select
@@ -20,6 +24,7 @@ from app.models.clubs import Club
 from app.models.feed import FeedPost, PlayerWin
 from app.models.players import Player
 from app.models.references import Currency
+from app.models.tournaments import Tournament
 from app.schemas.feed import (
     FeedPostAdminRead,
     FeedPostCreate,
@@ -30,38 +35,45 @@ from app.schemas.feed import (
     WinCreate,
     WinRead,
 )
-from app.schemas.tournaments import TournamentRead
+from app.schemas.tournaments import TournamentClub, TournamentRead
 from app.services import attachments
 from app.services.tournaments.queries import DayPeriod, list_tournaments, period_of
 from app.services.tournaments.schedule_sync import MSK
 
-MAIN_EVENT_DAYS = 7
+logger = logging.getLogger(__name__)
+
 EVENING_LOOKAHEAD = timedelta(days=2)
 WINS_LIMIT = 20
 ANONYMOUS_NICKNAME = "Игрок клуба"
+# Автозаписи о турнирах выходят не раньше 10 утра — ночью их никто не читает.
+AUTOPOST_MORNING = time(10, 0)
+AUTOPOST_LEAD = timedelta(hours=1)
 
 
 def _guarantee(item: TournamentRead) -> float:
     return float(item.guarantee_rub or 0)
 
 
-async def main_events(session: AsyncSession, now: datetime) -> list[TournamentRead]:
-    """Главное событие каждого дня — максимальная гарантия в рублях (вопрос 11.17)."""
-    tournaments = await list_tournaments(
-        session, starts_from=now, starts_to=now + timedelta(days=MAIN_EVENT_DAYS)
-    )
-    best: dict[date, TournamentRead] = {}
-    for item in tournaments:
-        if item.satellite_target or not item.guarantee_rub or item.starts_at < now:
-            continue
-        day = item.starts_at.astimezone(MSK).date()
-        current = best.get(day)
-        if current is None or (_guarantee(item), -item.starts_at.timestamp()) > (
-            _guarantee(current),
-            -current.starts_at.timestamp(),
-        ):
-            best[day] = item
-    return [best[day] for day in sorted(best)]
+def _day_start(day: date) -> datetime:
+    return datetime.combine(day, time.min, tzinfo=MSK)
+
+
+async def majors(session: AsyncSession, now: datetime) -> list[TournamentRead]:
+    """Major на главной (Иван, 27.09): крупнейшая гарантия каждого клуба за сегодня.
+
+    Идущий турнир с открытой поздней регистрацией ещё в списке. Когда сегодняшние все
+    закрылись — показываем завтрашние, чтобы вечером главная не пустела.
+    """
+    today = now.astimezone(MSK).date()
+    for offset in (0, 1):
+        start = _day_start(today + timedelta(days=offset))
+        items = await list_tournaments(
+            session, starts_from=max(now, start), starts_to=start + timedelta(days=1)
+        )
+        found = [item for item in items if item.is_major]
+        if found:
+            return found
+    return []
 
 
 async def evening_by_club(session: AsyncSession, now: datetime) -> list[TournamentRead]:
@@ -127,7 +139,7 @@ async def get_feed(session: AsyncSession, now: datetime | None = None) -> FeedRe
     moment = now or datetime.now(UTC)
     return FeedRead(
         posts=await list_posts(session, now=moment),
-        main_events=await main_events(session, moment),
+        majors=await majors(session, moment),
         evening=await evening_by_club(session, moment),
         wins=await list_wins(session, public=True),
     )
@@ -174,7 +186,7 @@ def _post_club(post: FeedPost) -> WinClub | None:
     return WinClub(id=post.club.id, name=post.club.name, app=post.club.app) if post.club else None
 
 
-def _post_read(post: FeedPost) -> FeedPostRead:
+def _post_read(post: FeedPost, tournament: TournamentRead | None = None) -> FeedPostRead:
     return FeedPostRead(
         id=post.id,
         title=post.title,
@@ -186,7 +198,27 @@ def _post_read(post: FeedPost) -> FeedPostRead:
         is_pinned=post.is_pinned,
         published_at=post.published_at,
         expires_at=post.expires_at,
+        auto_kind=post.auto_kind,
+        tournament=tournament,
     )
+
+
+async def _linked_tournaments(
+    session: AsyncSession, posts: list[FeedPost]
+) -> dict[UUID, TournamentRead]:
+    """Турниры автозаписей в том же виде, что в расписании: тап открывает их карточку."""
+    ids = {post.tournament_id for post in posts if post.tournament_id is not None}
+    if not ids:
+        return {}
+    starts = list(await session.scalars(select(Tournament.starts_at).where(Tournament.id.in_(ids))))
+    if not starts:
+        return {}
+    items = await list_tournaments(
+        session,
+        starts_from=min(starts) - timedelta(minutes=1),
+        starts_to=max(starts) + timedelta(minutes=1),
+    )
+    return {item.id: item for item in items if item.id in ids}
 
 
 def _post_admin_read(post: FeedPost, author: str | None) -> FeedPostAdminRead:
@@ -212,7 +244,12 @@ async def list_posts(
         .order_by(FeedPost.is_pinned.desc(), FeedPost.published_at.desc())
         .limit(limit)
     )
-    return [_post_read(post) for post in posts]
+    visible = list(posts)
+    tournaments = await _linked_tournaments(session, visible)
+    return [
+        _post_read(post, tournaments.get(post.tournament_id) if post.tournament_id else None)
+        for post in visible
+    ]
 
 
 async def list_admin_posts(
@@ -285,6 +322,11 @@ async def update_post(
 
 async def delete_post(session: AsyncSession, post_id: UUID) -> None:
     post = await _load_post(session, post_id)
+    if post.tournament_id is not None:
+        # Автозапись не удаляем, а снимаем с показа: иначе следующий проход создал бы её снова.
+        post.expires_at = post.published_at
+        await session.flush()
+        return
     image = await _post_image(session, post)
     await session.delete(post)
     await session.flush()
@@ -341,3 +383,108 @@ async def post_image(session: AsyncSession, post_id: UUID) -> tuple[bytes, str]:
     if image is None:
         raise AppError("image_not_found", "У записи нет картинки", 404)
     return attachments.read_bytes(image), image.content_type
+
+
+# ---------------------------------------------------------------- автозаписи о турнирах
+
+
+def _chips_money(amount: Decimal, club: TournamentClub) -> str:
+    """«$16», «₽5 000» — как в расписании; без курса клуба — в фишках."""
+    if club.chip_value is None:
+        value, prefix, suffix = amount, "", " фиш."
+    else:
+        value, prefix, suffix = amount * club.chip_value, club.currency_symbol or "", ""
+    number = f"{value.normalize():,f}".replace(",", " ")
+    if "." in number:
+        number = number.rstrip("0").rstrip(".")
+    return f"{prefix}{number}{suffix}"
+
+
+def _autopost_body(item: TournamentRead) -> str:
+    start = item.starts_at.astimezone(MSK)
+    parts = [
+        item.club.name,
+        f"старт {start:%H:%M} МСК",
+        f"бай-ин {_chips_money(item.buyin, item.club)}",
+    ]
+    if item.guarantee:
+        parts.append(f"гарантия {_chips_money(item.guarantee, item.club)}")
+    body = " · ".join(parts)
+    if item.editor_pick_note:
+        body += f"\n{item.editor_pick_note}"
+    return body
+
+
+def _autopost(item: TournamentRead, kind: str, now: datetime) -> FeedPost:
+    name = item.lobby_name or item.name
+    morning = datetime.combine(now.astimezone(MSK).date(), AUTOPOST_MORNING, tzinfo=MSK)
+    return FeedPost(
+        title=f"★ {name}" if kind == "pick" else f"Major дня: {name}",
+        body=_autopost_body(item),
+        club_id=item.club.id,
+        tournament_id=item.id,
+        auto_kind=kind,
+        is_pinned=False,
+        # Утренний выпуск в 10:00, но ранний турнир — за час до старта, а поздно найденный — сразу.
+        published_at=max(now, min(morning, item.starts_at - AUTOPOST_LEAD)),
+        # Запись уходит, когда на турнир уже не сесть.
+        expires_at=item.late_reg_closes_at or item.starts_at,
+    )
+
+
+async def sync_auto_posts(session: AsyncSession, *, now: datetime | None = None) -> int:
+    """Новости сами (Иван, 27.09): каждый старт Editor's Pick за сегодня — отдельная запись.
+
+    Если сегодня ни одного старта из подборки нет — одна запись о случайном Major дня.
+    Выбор случайный, но стабильный в пределах дня: повторный проход не переигрывает его.
+    Возвращает, сколько записей создано.
+    """
+    moment = now or datetime.now(UTC)
+    today = moment.astimezone(MSK).date()
+    today_start, tomorrow = _day_start(today), _day_start(today + timedelta(days=1))
+    upcoming = await list_tournaments(session, starts_from=moment, starts_to=tomorrow)
+    existing = set(
+        await session.scalars(
+            select(FeedPost.tournament_id).where(
+                FeedPost.tournament_id.in_([item.id for item in upcoming])
+            )
+        )
+    )
+    created = 0
+    picks = [item for item in upcoming if item.is_editor_pick]
+    for item in picks:
+        if item.id not in existing:
+            session.add(_autopost(item, "pick", moment))
+            created += 1
+    if not picks:
+        already = await session.scalar(
+            select(FeedPost.id)
+            .join(Tournament, Tournament.id == FeedPost.tournament_id)
+            .where(Tournament.starts_at >= today_start, Tournament.starts_at < tomorrow)
+            .limit(1)
+        )
+        candidates = sorted(
+            (item for item in upcoming if item.is_major), key=lambda item: str(item.id)
+        )
+        if already is None and candidates:
+            chosen = random.Random(today.isoformat()).choice(candidates)
+            session.add(_autopost(chosen, "major", moment))
+            created += 1
+    if created:
+        await session.flush()
+    return created
+
+
+async def run_autoposts_periodically(interval_seconds: int) -> None:
+    from app.core.database import async_session_factory
+
+    while True:
+        try:
+            async with async_session_factory() as session:
+                created = await sync_auto_posts(session)
+                await session.commit()
+            if created:
+                logger.info("feed autoposts: created=%s", created)
+        except Exception:  # noqa: BLE001 — упавший проход не должен убивать цикл
+            logger.exception("feed autoposts failed")
+        await asyncio.sleep(interval_seconds)

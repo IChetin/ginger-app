@@ -5,13 +5,13 @@ import type { Tournament } from "@/api/types/tournaments";
 import { formatMoney as formatAmount, formatNumber } from "@/features/chips/lib/format";
 import { useFeed, type FeedPost, type WinItem } from "@/features/feed/api";
 import { AppIcon } from "@/features/tournaments/components/TournamentCard";
+import { TableView } from "@/features/tournaments/components/ScheduleTable";
 import { TournamentSheet } from "@/features/tournaments/components/TournamentSheet";
 import {
-  APP_TINT,
   displayName,
-  formatDayLabel,
   formatMoney,
   formatTimeMsk,
+  groupByDay,
   mskDayKey,
 } from "@/features/tournaments/lib/format";
 import { cn } from "@/lib/utils";
@@ -31,83 +31,6 @@ function SectionTitle({
           {link.label}
         </Link>
       ) : null}
-    </div>
-  );
-}
-
-/** Главное событие ближайшего дня: крупная карточка — самая большая гарантия (вопрос 11.17). */
-function MainEventCard({
-  tournament,
-  now,
-  onOpen,
-}: {
-  tournament: Tournament;
-  now: Date;
-  onOpen: () => void;
-}) {
-  const guarantee = formatMoney(tournament.guarantee, tournament.club);
-  // Ссылка внутри кнопки — невалидная разметка, поэтому карточка — блок с ролью кнопки,
-  // а «Перейти в турнир» — настоящая ссылка рядом с названием (проба Ивана 24.09).
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={onOpen}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onOpen();
-        }
-      }}
-      data-testid="feed-main-event"
-      className="border-line-gold bg-surface relative block w-full cursor-pointer overflow-hidden rounded-lg border p-3.5 text-left"
-    >
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_90%_at_100%_0%,var(--gold-soft),transparent_60%)]"
-      />
-      <span className="relative flex items-center gap-1.5">
-        <span className="text-gold text-[11px] font-bold tracking-[0.08em] uppercase">
-          Главное событие · {formatDayLabel(mskDayKey(new Date(tournament.starts_at)), now)}
-        </span>
-      </span>
-      <span className="relative mt-1.5 flex items-center gap-2">
-        <span className="font-display text-ink min-w-0 flex-1 text-[20px] leading-tight font-bold">
-          {displayName(tournament)}
-        </span>
-        {tournament.app_link ? (
-          <a
-            href={tournament.app_link}
-            target="_blank"
-            rel="noreferrer"
-            onClick={(event) => event.stopPropagation()}
-            data-testid="feed-main-event-link"
-            className="shrink-0 rounded-md px-2.5 py-1.5 text-[12px] leading-none font-bold text-white"
-            style={{ background: APP_TINT[tournament.club.app] ?? "#1fa35a" }}
-          >
-            Перейти в турнир
-          </a>
-        ) : null}
-      </span>
-      <span className="relative mt-2 flex items-end justify-between gap-3">
-        <span className="text-ink-2 flex min-w-0 items-center gap-1.5 text-[12.5px]">
-          <AppIcon app={tournament.club.app} className="h-4 w-4 shrink-0" />
-          <span className="truncate">
-            {tournament.club.name} · {formatTimeMsk(tournament.starts_at)} МСК · бай-ин{" "}
-            {formatMoney(tournament.buyin, tournament.club)}
-          </span>
-        </span>
-        {guarantee ? (
-          <span className="shrink-0 text-right">
-            <span className="text-ink-3 block text-[10px] font-bold tracking-[0.06em] uppercase">
-              Гарантия
-            </span>
-            <span className="font-display num text-value-hi block text-[22px] leading-none font-bold">
-              {guarantee}
-            </span>
-          </span>
-        ) : null}
-      </span>
     </div>
   );
 }
@@ -140,11 +63,37 @@ function EventRow({ tournament, onOpen }: { tournament: Tournament; onOpen: () =
   );
 }
 
-const postDate = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long" });
+const postDate = new Intl.DateTimeFormat("ru-RU", {
+  day: "numeric",
+  month: "long",
+  timeZone: "Europe/Moscow",
+});
 const LONG_BODY = 220;
 
-/** Запись менеджера: анонс, афиша, итоги вторника. Длинный текст раскрывается по кнопке. */
-function PostCard({ post }: { post: FeedPost }) {
+/** Когда запись вышла (Иван, 27.09): «сегодня, 10:00», «вчера, 18:30», «24 сентября, 12:05». */
+function postStamp(iso: string, now: Date): string {
+  const at = new Date(iso);
+  const day = mskDayKey(at);
+  const time = formatTimeMsk(iso);
+  if (day === mskDayKey(now)) return `сегодня, ${time}`;
+  if (day === mskDayKey(new Date(now.getTime() - 86_400_000))) return `вчера, ${time}`;
+  return `${postDate.format(at)}, ${time}`;
+}
+
+/**
+ * Новость: запись менеджера (анонс, афиша, итоги) или автозапись о турнире — у неё
+ * «Подробнее» открывает карточку турнира. Длинный текст раскрывается по кнопке.
+ */
+function PostCard({
+  post,
+  now,
+  onOpenTournament,
+}: {
+  post: FeedPost;
+  now: Date;
+  onOpenTournament: (tournament: Tournament) => void;
+}) {
+  const tournament = post.tournament ?? null;
   const [expanded, setExpanded] = useState(false);
   const body = post.body ?? "";
   const long = body.length > LONG_BODY;
@@ -165,7 +114,8 @@ function PostCard({ post }: { post: FeedPost }) {
         <div className="text-ink-3 flex items-center gap-1.5 text-[11px] font-bold tracking-[0.08em] uppercase">
           {post.club ? <AppIcon app={post.club.app} className="h-4 w-4 shrink-0" /> : null}
           <span className="truncate">
-            {post.is_pinned ? "Закреплено" : postDate.format(new Date(post.published_at))}
+            {post.is_pinned ? "Закреплено · " : ""}
+            {postStamp(post.published_at, now)}
             {post.club ? ` · ${post.club.name}` : ""}
           </span>
         </div>
@@ -183,6 +133,15 @@ function PostCard({ post }: { post: FeedPost }) {
           </p>
         ) : null}
         <div className="mt-1.5 flex items-center gap-3">
+          {tournament ? (
+            <button
+              type="button"
+              onClick={() => onOpenTournament(tournament)}
+              className="text-gold text-[13px] font-bold"
+            >
+              Подробнее о турнире →
+            </button>
+          ) : null}
           {post.link_url ? (
             <Link to={post.link_url} className="text-gold text-[13px] font-bold">
               {post.link_label || "Подробнее"} →
@@ -250,8 +209,7 @@ export function FeedSections({ now }: { now: Date }) {
     );
   }
 
-  const [main, ...week] = feed.data.main_events;
-  const { posts, evening, wins } = feed.data;
+  const { posts, majors, evening, wins } = feed.data;
 
   return (
     <div data-testid="feed">
@@ -260,16 +218,22 @@ export function FeedSections({ now }: { now: Date }) {
           <SectionTitle>Новости</SectionTitle>
           <div className="flex flex-col gap-1.5" data-testid="feed-posts">
             {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
+              <PostCard key={post.id} post={post} now={now} onOpenTournament={setSelected} />
             ))}
           </div>
         </>
       ) : null}
 
-      {main ? (
+      {majors.length > 0 ? (
         <>
-          <SectionTitle link={{ to: "/tournaments", label: "Всё расписание" }}>Лента</SectionTitle>
-          <MainEventCard tournament={main} now={now} onOpen={() => setSelected(main)} />
+          <SectionTitle link={{ to: "/tournaments", label: "Всё расписание" }}>Major</SectionTitle>
+          {/* Главное в каждом клубе за день — в виде таблицы расписания (Иван, 27.09). */}
+          <div
+            className="border-line bg-surface -mx-0 overflow-hidden rounded-lg border"
+            data-testid="feed-majors"
+          >
+            <TableView groups={groupByDay(majors)} now={now} onSelect={setSelected} />
+          </div>
         </>
       ) : null}
 
@@ -295,18 +259,7 @@ export function FeedSections({ now }: { now: Date }) {
         </>
       ) : null}
 
-      {week.length > 0 ? (
-        <>
-          <SectionTitle>Главное на неделе</SectionTitle>
-          <div className="border-line bg-surface rounded-lg border">
-            {week.map((item) => (
-              <EventRow key={item.id} tournament={item} onOpen={() => setSelected(item)} />
-            ))}
-          </div>
-        </>
-      ) : null}
-
-      {!main && posts.length === 0 && evening.length === 0 && wins.length === 0 ? (
+      {majors.length === 0 && posts.length === 0 && evening.length === 0 && wins.length === 0 ? (
         <p className={cn("text-ink-3 mt-5 text-center text-[13px]")}>
           В ленте пока пусто — загляните в{" "}
           <Link to="/tournaments" className="text-gold font-bold">

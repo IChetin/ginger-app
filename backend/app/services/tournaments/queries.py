@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, time, timedelta
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from enum import StrEnum
 from uuid import UUID
@@ -132,6 +132,7 @@ async def list_tournaments(
     clubs = list({item.club.id: item.club for item in tournaments}.values())
     rates = await rub_per_chip(session, clubs)
     picks = await active_picks(session, "mtt")
+    majors = await major_ids(session, tournaments)
     by_rub = buyin_rub_min is not None or buyin_rub_max is not None
 
     result: list[TournamentRead] = []
@@ -172,9 +173,51 @@ async def list_tournaments(
                 early_bird_closes_at=_early_bird_closes_at(item),
                 is_editor_pick=(pick := match_tournament(picks, item)) is not None,
                 editor_pick_note=pick.note if pick else None,
+                is_major=item.id in majors,
             )
         )
     return result
+
+
+def _msk_day(moment: datetime) -> date:
+    return moment.astimezone(MSK).date()
+
+
+async def major_ids(session: AsyncSession, tournaments: list[Tournament]) -> set[UUID]:
+    """Major — в каждом клубе каждый день турнир с самой большой гарантией (Иван, 27.09).
+
+    Выбираем среди всех стартов дня по Москве, а не только попавших в окно выдачи: иначе к
+    вечеру «главным» стал бы турнир поменьше — утренний крупный уже прошёл. Сравниваем
+    гарантии внутри клуба, поэтому курс не нужен. Сателлиты и турниры без гарантии не в счёт;
+    при равенстве — более ранний старт.
+    """
+    if not tournaments:
+        return set()
+    days = {_msk_day(item.starts_at) for item in tournaments}
+    first, last = min(days), max(days)
+    window_from = datetime.combine(first, time.min, tzinfo=MSK)
+    window_to = datetime.combine(last + timedelta(days=1), time.min, tzinfo=MSK)
+    rows = await session.execute(
+        select(Tournament.id, Tournament.club_id, Tournament.starts_at, Tournament.guarantee).where(
+            Tournament.club_id.in_({item.club_id for item in tournaments}),
+            Tournament.starts_at >= window_from,
+            Tournament.starts_at < window_to,
+            Tournament.status == TournamentStatus.SCHEDULED,
+            Tournament.live_event.is_(None),
+            Tournament.satellite_target.is_(None),
+            Tournament.guarantee > 0,
+        )
+    )
+    best: dict[tuple[UUID, date], tuple[Decimal, datetime, UUID]] = {}
+    for tournament_id, club_id, starts_at, guarantee in rows.tuples():
+        key = (club_id, _msk_day(starts_at))
+        current = best.get(key)
+        if current is None or (guarantee, -starts_at.timestamp()) > (
+            current[0],
+            -current[1].timestamp(),
+        ):
+            best[key] = (guarantee, starts_at, tournament_id)
+    return {tournament_id for _, _, tournament_id in best.values()}
 
 
 async def list_highlights(

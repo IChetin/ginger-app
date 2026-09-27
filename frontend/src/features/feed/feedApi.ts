@@ -25,6 +25,9 @@ export interface FeedPost {
   is_pinned: boolean;
   published_at: string;
   expires_at: string | null;
+  /** Автозапись о турнире (Иван, 27.09): «pick» — старт из Editor's Pick, «major» — Major дня. */
+  auto_kind?: "pick" | "major" | null;
+  tournament?: Tournament | null;
 }
 
 export interface FeedPostAdmin extends FeedPost {
@@ -43,10 +46,10 @@ export interface FeedPostPayload {
   expires_at?: string | null;
 }
 
-/** Лента (этап 7): записи менеджера, главное событие каждого дня, вечер в клубах, выигрыши. */
+/** Лента: новости, Major дня (крупнейшая гарантия каждого клуба), вечер в клубах, выигрыши. */
 export interface Feed {
   posts: FeedPost[];
-  main_events: Tournament[];
+  majors: Tournament[];
   evening: Tournament[];
   wins: WinItem[];
 }

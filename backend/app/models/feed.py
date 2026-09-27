@@ -13,6 +13,7 @@ from sqlalchemy import (
     SmallInteger,
     String,
     Text,
+    text,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -72,7 +73,15 @@ class FeedPost(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     """
 
     __tablename__ = "feed_posts"
-    __table_args__ = (Index("ix_feed_posts_published_at", "published_at"),)
+    __table_args__ = (
+        Index("ix_feed_posts_published_at", "published_at"),
+        Index(
+            "uq_feed_posts_tournament_id",
+            "tournament_id",
+            unique=True,
+            postgresql_where=text("tournament_id IS NOT NULL"),
+        ),
+    )
 
     title: Mapped[str] = mapped_column(String(120), nullable=False)
     body: Mapped[str | None] = mapped_column(Text)
@@ -87,6 +96,13 @@ class FeedPost(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         ForeignKey("clubs.id", ondelete="SET NULL"),
     )
     is_pinned: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # Автозапись о турнире (Иван, 27.09): каждый старт из Editor's Pick, а если сегодня его
+    # нет — случайный Major. Одна запись на старт; «удалённая» просто снята с показа.
+    tournament_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tournaments.id", ondelete="CASCADE"),
+    )
+    auto_kind: Mapped[str | None] = mapped_column(String(16))
     published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_by_user_id: Mapped[uuid.UUID | None] = mapped_column(

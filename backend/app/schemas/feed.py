@@ -65,6 +65,9 @@ class FeedPostRead(BaseModel):
     is_pinned: bool
     published_at: datetime
     expires_at: datetime | None
+    # Автозапись о турнире: тап открывает его карточку (Иван, 27.09).
+    auto_kind: str | None = None
+    tournament: TournamentRead | None = None
 
 
 class FeedPostCreate(BaseModel):
@@ -113,9 +116,9 @@ class FeedPostAdminRead(FeedPostRead):
 
 
 class FeedRead(BaseModel):
-    """Лента (этап 7): записи менеджера, главное событие дня, вечер в клубах, выигрыши."""
+    """Лента: новости, Major дня (крупнейшая гарантия каждого клуба), вечер в клубах, выигрыши."""
 
     posts: list[FeedPostRead]
-    main_events: list[TournamentRead]
+    majors: list[TournamentRead]
     evening: list[TournamentRead]
     wins: list[WinRead]

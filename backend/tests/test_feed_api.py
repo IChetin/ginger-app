@@ -35,7 +35,7 @@ def _tournament(club: Club, name: str, starts_at: datetime, **kw: object) -> Tou
     return Tournament(club_id=club.id, name=name, starts_at=starts_at, **fields)
 
 
-async def test_feed_is_public_with_main_events_and_evening_per_club(
+async def test_feed_is_public_with_majors_and_evening_per_club(
     client: AsyncClient, seeded_db: None, db_session: AsyncSession
 ) -> None:
     ginger21 = await _club(db_session, "ginger21")  # 1 фишка = 1 ₽
@@ -65,9 +65,11 @@ async def test_feed_is_public_with_main_events_and_evening_per_club(
     assert response.status_code == 200, response.text
     feed = response.json()
 
-    tomorrow = _at(1, 12).date().isoformat()
-    main_tomorrow = [item for item in feed["main_events"] if item["starts_at"].startswith(tomorrow)]
-    assert [item["name"] for item in main_tomorrow] == ["Big Sunday"]
+    # Сегодня в этих клубах турниров нет — главная показывает Major завтрашнего дня: в каждом
+    # клубе крупнейшую гарантию дня (Иван, 27.09). Сателлит не в счёт даже с гарантией.
+    majors = {item["club"]["slug"]: item["name"] for item in feed["majors"]}
+    assert majors == {"ginger21": "Big Sunday", "private-g": "PG Evening"}
+    assert all(item["is_major"] for item in feed["majors"])
 
     evening = {item["club"]["slug"]: item["name"] for item in feed["evening"]}
     assert evening["ginger21"] == "Evening Big"
@@ -274,3 +276,61 @@ async def test_player_cannot_manage_posts(user_client: AsyncClient) -> None:
     assert (
         await user_client.post("/api/v1/admin/posts", json={"title": "Свой анонс"})
     ).status_code == 403
+
+
+async def test_autoposts_pick_each_start_or_random_major(
+    admin_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """Новости сами (Иван, 27.09): старт из Editor's Pick — запись; нет подборки — Major дня."""
+    from app.services.feed import sync_auto_posts
+    from app.services.tournaments.queries import list_tournaments
+
+    club = await _club(db_session, "ginger21")
+    # «Сейчас» — полдень сегодняшнего дня: тест не зависит от того, когда его запустили.
+    now = _at(0, 12)
+    big = _tournament(club, "Dream River", _at(0, 18), guarantee=Decimal("300000"))
+    small = _tournament(club, "Small Daily", _at(0, 20), guarantee=Decimal("10000"))
+    db_session.add_all([big, small])
+    await db_session.flush()
+
+    flags = {
+        item.name: item.is_major
+        for item in await list_tournaments(db_session, starts_from=now, starts_to=_at(1, 0))
+    }
+    assert flags == {"Dream River": True, "Small Daily": False}
+
+    # Подборки нет — одна запись о Major дня, повторный проход не плодит новых.
+    assert await sync_auto_posts(db_session, now=now) == 1
+    assert await sync_auto_posts(db_session, now=now) == 0
+
+    picked = await admin_client.post(
+        "/api/v1/admin/editor-picks",
+        json={
+            "club_id": str(club.id),
+            "kind": "mtt",
+            "match": "small daily",
+            "note": "Мягкое поле",
+        },
+    )
+    assert picked.status_code == 201, picked.text
+    # Появился старт из подборки — о нём отдельная запись.
+    assert await sync_auto_posts(db_session, now=now) == 1
+
+    from app.services.feed import list_posts
+
+    posts = await list_posts(db_session, now=now)
+    by_title = {post.title: post for post in posts}
+    assert set(by_title) == {"Major дня: Dream River", "★ Small Daily"}
+    pick = by_title["★ Small Daily"]
+    assert pick.auto_kind == "pick"
+    assert pick.tournament is not None and pick.tournament.id == small.id
+    assert pick.body is not None and "20:00 МСК" in pick.body and "Мягкое поле" in pick.body
+    # Выходит утром в 10:00 — «сейчас» уже полдень, значит сразу.
+    assert pick.published_at == now
+
+    # Удалённая менеджером автозапись снимается с показа и не создаётся снова.
+    deleted = await admin_client.delete(f"/api/v1/admin/posts/{pick.id}")
+    assert deleted.status_code == 204
+    assert await sync_auto_posts(db_session, now=now) == 0
+    titles = {post.title for post in await list_posts(db_session, now=now + timedelta(minutes=1))}
+    assert titles == {"Major дня: Dream River"}
