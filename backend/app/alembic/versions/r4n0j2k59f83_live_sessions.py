@@ -79,8 +79,8 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.CheckConstraint(
-            "(event_id IS NOT NULL) OR "
-            "(manual_name IS NOT NULL AND manual_buyin IS NOT NULL AND manual_currency IS NOT NULL)",
+            "(event_id IS NOT NULL) OR (manual_name IS NOT NULL "
+            "AND manual_buyin IS NOT NULL AND manual_currency IS NOT NULL)",
             name=op.f("ck_live_sessions_linked_or_manual"),
         ),
         sa.ForeignKeyConstraint(

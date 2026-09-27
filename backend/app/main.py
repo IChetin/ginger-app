@@ -67,7 +67,7 @@ def _error_response(
     attempts_left: int | None = None,
     active_session_id: str | None = None,
     result_id: str | None = None,
-    server: dict | None = None,
+    server: dict[str, object] | None = None,
 ) -> JSONResponse:
     payload = ErrorResponse(
         error=ErrorBody(

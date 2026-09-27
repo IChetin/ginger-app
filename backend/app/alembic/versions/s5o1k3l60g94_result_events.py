@@ -73,7 +73,8 @@ def upgrade() -> None:
     op.execute(
         sa.text(
             """
-            INSERT INTO result_events (id, result_id, type, amount, currency_code, text, occurred_at, created_at)
+            INSERT INTO result_events
+                (id, result_id, type, amount, currency_code, text, occurred_at, created_at)
             SELECT
                 gen_random_uuid(),
                 r.id,
@@ -90,7 +91,8 @@ def upgrade() -> None:
     op.execute(
         sa.text(
             """
-            INSERT INTO result_events (id, result_id, type, amount, currency_code, text, occurred_at, created_at)
+            INSERT INTO result_events
+                (id, result_id, type, amount, currency_code, text, occurred_at, created_at)
             SELECT
                 gen_random_uuid(),
                 r.id,
@@ -110,7 +112,8 @@ def upgrade() -> None:
     op.execute(
         sa.text(
             """
-            INSERT INTO result_events (id, result_id, type, amount, currency_code, text, occurred_at, created_at)
+            INSERT INTO result_events
+                (id, result_id, type, amount, currency_code, text, occurred_at, created_at)
             SELECT
                 gen_random_uuid(),
                 r.id,
@@ -145,7 +148,8 @@ def upgrade() -> None:
     op.execute(
         sa.text(
             """
-            INSERT INTO result_events (id, result_id, type, amount, currency_code, text, occurred_at, created_at)
+            INSERT INTO result_events
+                (id, result_id, type, amount, currency_code, text, occurred_at, created_at)
             SELECT
                 gen_random_uuid(),
                 ls.result_id,

@@ -11,6 +11,7 @@ Create Date: 2026-09-13
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Any
 
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
@@ -32,14 +33,14 @@ thread_status = postgresql.ENUM(
 
 def _uuid(
     name: str, target: str | None = None, ondelete: str = "CASCADE", **kw: object
-) -> sa.Column:
+) -> sa.Column[Any]:
     args: list[object] = [name, postgresql.UUID(as_uuid=True)]
     if target:
         args.append(sa.ForeignKey(target, ondelete=ondelete))
     return sa.Column(*args, **kw)  # type: ignore[arg-type]
 
 
-def _ts(name: str, **kw: object) -> sa.Column:
+def _ts(name: str, **kw: object) -> sa.Column[Any]:
     return sa.Column(name, sa.DateTime(timezone=True), **kw)  # type: ignore[arg-type]
 
 

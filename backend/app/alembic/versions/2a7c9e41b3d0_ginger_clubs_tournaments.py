@@ -12,6 +12,7 @@ Create Date: 2026-09-10
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Any
 
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
@@ -37,7 +38,7 @@ game_type = postgresql.ENUM(name="game_type", create_type=False)
 _NEW_ENUMS = (poker_app, club_block, bounty_kind, tournament_status)
 
 
-def _tournament_columns() -> list[sa.Column]:
+def _tournament_columns() -> list[sa.Column[Any]]:
     """Поля, общие для шаблона и турнира (TournamentFieldsMixin)."""
     return [
         sa.Column("name", sa.String(160), nullable=False),
@@ -61,7 +62,7 @@ def _tournament_columns() -> list[sa.Column]:
     ]
 
 
-def _base_columns() -> list[sa.Column]:
+def _base_columns() -> list[sa.Column[Any]]:
     return [
         sa.Column(
             "id",

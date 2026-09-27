@@ -10,6 +10,7 @@ Create Date: 2026-09-13
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Any
 
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
@@ -53,7 +54,7 @@ _NEW_NOTIFICATION_TYPES = (
 )
 
 
-def _id() -> sa.Column:
+def _id() -> sa.Column[Any]:
     return sa.Column(
         "id",
         postgresql.UUID(as_uuid=True),
@@ -62,19 +63,19 @@ def _id() -> sa.Column:
     )
 
 
-def _created_at() -> sa.Column:
+def _created_at() -> sa.Column[Any]:
     return sa.Column(
         "created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
     )
 
 
-def _updated_at() -> sa.Column:
+def _updated_at() -> sa.Column[Any]:
     return sa.Column(
         "updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
     )
 
 
-def _fk(column: str, target: str, ondelete: str, *, nullable: bool = True) -> sa.Column:
+def _fk(column: str, target: str, ondelete: str, *, nullable: bool = True) -> sa.Column[Any]:
     return sa.Column(
         column,
         postgresql.UUID(as_uuid=True),

@@ -9,7 +9,7 @@ class AppError(Exception):
         attempts_left: int | None = None,
         active_session_id: str | None = None,
         result_id: str | None = None,
-        server: dict | None = None,
+        server: dict[str, object] | None = None,
     ) -> None:
         self.code = code
         self.message = message
@@ -44,7 +44,7 @@ class ConflictError(AppError):
         *,
         active_session_id: str | None = None,
         result_id: str | None = None,
-        server: dict | None = None,
+        server: dict[str, object] | None = None,
         code: str = "conflict",
     ) -> None:
         super().__init__(

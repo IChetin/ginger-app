@@ -210,6 +210,9 @@ async def major_ids(session: AsyncSession, tournaments: list[Tournament]) -> set
     )
     best: dict[tuple[UUID, date], tuple[Decimal, datetime, UUID]] = {}
     for tournament_id, club_id, starts_at, guarantee in rows.tuples():
+        # Запрос уже отсеял турниры без гарантии; проверка — чтобы это видел и разбор типов.
+        if guarantee is None:
+            continue
         key = (club_id, _msk_day(starts_at))
         current = best.get(key)
         if current is None or (guarantee, -starts_at.timestamp()) > (
