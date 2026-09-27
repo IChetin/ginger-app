@@ -99,10 +99,14 @@ async def test_collector_updates_details_and_queues_decisions(
         "matched": 1,
         "details_updated": 1,
         "links_updated": 1,
+        "names_updated": 1,
         "new": 1,
         "missing": 1,
         "changed": 1,
     }
+    # Имя из лобби записано сразу, до разбора очереди решений.
+    assert ours.lobby_name == "Magic Bounty 50k"
+    assert template.lobby_name == "Magic Bounty 50k"
 
     # Параметры и ссылка применились сами — и к старту, и к шаблону сетки.
     assert ours.start_stack == 10000

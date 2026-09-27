@@ -282,8 +282,13 @@ async def ingest_snapshot(
             value = getattr(lobby, field)
             if value is not None and not _same(getattr(best, field), value):
                 diff[field] = {"ours": _json(getattr(best, field)), "lobby": _json(value)}
+        # Имя из лобби применяем сразу, без решения человека: игрок ищет турнир в приложении
+        # по нему, а имя с афиши остаётся в `name` (решение Ивана 27.09 — «проходка важнее афиш»).
         if _norm(lobby.name) not in {_norm(best.name), _norm(best.lobby_name)}:
-            diff["lobby_name"] = {"ours": best.lobby_name or best.name, "lobby": lobby.name}
+            best.lobby_name = lobby.name
+            if template is not None:
+                template.lobby_name = lobby.name
+            result.names_updated += 1
         if diff and await _queue(
             session,
             club_id=club.id,

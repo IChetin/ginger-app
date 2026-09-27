@@ -106,6 +106,8 @@ class SnapshotResult(BaseModel):
     matched: int = 0
     details_updated: int = 0
     links_updated: int = 0
+    # Имя турнира в лобби — сборщик пишет его сам, решения человека это не требует.
+    names_updated: int = 0
     new: int = 0
     missing: int = 0
     changed: int = 0
