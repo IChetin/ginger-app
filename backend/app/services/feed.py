@@ -427,8 +427,8 @@ def _autopost(item: TournamentRead, kind: str, now: datetime) -> FeedPost:
         is_pinned=False,
         # Утренний выпуск в 10:00, но ранний турнир — за час до старта, а поздно найденный — сразу.
         published_at=max(now, min(morning, item.starts_at - AUTOPOST_LEAD)),
-        # Запись уходит, когда на турнир уже не сесть.
-        expires_at=item.late_reg_closes_at or item.starts_at,
+        # Новости не исчезают (Иван, 27.09): старые уходят вниз и вытесняются свежими.
+        expires_at=None,
     )
 
 

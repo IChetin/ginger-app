@@ -205,8 +205,8 @@ describe("PlayerHomePage", () => {
     expect(await screen.findByTestId("feed-majors")).toHaveTextContent("Grand Knockout");
     const post = within(screen.getByTestId("feed-posts")).getByTestId("feed-post");
     expect(within(post).getByText("Вторник в клубе")).toBeInTheDocument();
-    // У новости видно, когда она вышла (Иван, 27.09): 09:00 UTC — это 12:00 по Москве.
-    expect(post).toHaveTextContent(/14 сентября, 12:00/);
+    // Время выхода — «число и время», всегда одинаково (Иван, 27.09): 09:00 UTC = 12:00 МСК.
+    expect(post).toHaveTextContent(/14.09 12:00/);
     expect(within(post).getByRole("link", { name: "Расписание →" })).toHaveAttribute(
       "href",
       "/tournaments",

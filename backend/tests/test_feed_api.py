@@ -323,6 +323,8 @@ async def test_autoposts_pick_each_start_or_random_major(
     assert set(by_title) == {"Major дня: Dream River", "★ Small Daily"}
     pick = by_title["★ Small Daily"]
     assert pick.auto_kind == "pick"
+    # Новости не исчезают с закрытием регистрации (Иван, 27.09).
+    assert pick.expires_at is None
     assert pick.tournament is not None and pick.tournament.id == small.id
     assert pick.body is not None and "20:00 МСК" in pick.body and "Мягкое поле" in pick.body
     # Выходит утром в 10:00 — «сейчас» уже полдень, значит сразу.

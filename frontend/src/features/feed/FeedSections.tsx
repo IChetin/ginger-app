@@ -12,7 +12,6 @@ import {
   formatMoney,
   formatTimeMsk,
   groupByDay,
-  mskDayKey,
 } from "@/features/tournaments/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -63,21 +62,16 @@ function EventRow({ tournament, onOpen }: { tournament: Tournament; onOpen: () =
   );
 }
 
-const postDate = new Intl.DateTimeFormat("ru-RU", {
-  day: "numeric",
-  month: "long",
+const postDay = new Intl.DateTimeFormat("ru-RU", {
+  day: "2-digit",
+  month: "2-digit",
   timeZone: "Europe/Moscow",
 });
 const LONG_BODY = 220;
 
-/** Когда запись вышла (Иван, 27.09): «сегодня, 10:00», «вчера, 18:30», «24 сентября, 12:05». */
-function postStamp(iso: string, now: Date): string {
-  const at = new Date(iso);
-  const day = mskDayKey(at);
-  const time = formatTimeMsk(iso);
-  if (day === mskDayKey(now)) return `сегодня, ${time}`;
-  if (day === mskDayKey(new Date(now.getTime() - 86_400_000))) return `вчера, ${time}`;
-  return `${postDate.format(at)}, ${time}`;
+/** Когда запись вышла — коротко и всегда одинаково (Иван, 27.09): «27.09 10:00». */
+function postStamp(iso: string): string {
+  return `${postDay.format(new Date(iso))} ${formatTimeMsk(iso)}`;
 }
 
 /**
@@ -86,11 +80,9 @@ function postStamp(iso: string, now: Date): string {
  */
 function PostCard({
   post,
-  now,
   onOpenTournament,
 }: {
   post: FeedPost;
-  now: Date;
   onOpenTournament: (tournament: Tournament) => void;
 }) {
   const tournament = post.tournament ?? null;
@@ -115,7 +107,7 @@ function PostCard({
           {post.club ? <AppIcon app={post.club.app} className="h-4 w-4 shrink-0" /> : null}
           <span className="truncate">
             {post.is_pinned ? "Закреплено · " : ""}
-            {postStamp(post.published_at, now)}
+            {postStamp(post.published_at)}
             {post.club ? ` · ${post.club.name}` : ""}
           </span>
         </div>
@@ -218,7 +210,7 @@ export function FeedSections({ now }: { now: Date }) {
           <SectionTitle>Новости</SectionTitle>
           <div className="flex flex-col gap-1.5" data-testid="feed-posts">
             {posts.map((post) => (
-              <PostCard key={post.id} post={post} now={now} onOpenTournament={setSelected} />
+              <PostCard key={post.id} post={post} onOpenTournament={setSelected} />
             ))}
           </div>
         </>
