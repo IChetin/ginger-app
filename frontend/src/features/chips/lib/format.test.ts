@@ -33,10 +33,11 @@ const ginger21: AccountClub = {
 const privateG: AccountClub = { ...ginger21, id: "pg", name: "Private.G", chip_value: "100" };
 
 describe("chips format", () => {
-  it("кнопки сумм по клубам (11.10)", () => {
-    expect(amountPresets(ginger)).toEqual([10, 25, 50, 100]);
-    expect(amountPresets(ginger21)).toEqual([1000, 3000, 5000, 10000]);
-    expect(amountPresets(privateG)).toEqual([10, 30, 50, 100]);
+  it("кнопки сумм — одни и те же деньги, разное число фишек", () => {
+    // Доллар: $50…$1000. Рубль: 5 000…100 000 ₽, в фишках зависит от курса клуба.
+    expect(amountPresets(ginger)).toEqual([50, 100, 150, 500, 1000]);
+    expect(amountPresets(ginger21)).toEqual([5000, 10000, 15000, 50000, 100000]);
+    expect(amountPresets(privateG)).toEqual([50, 100, 150, 500, 1000]);
   });
 
   it("итог в деньгах по валютам", () => {

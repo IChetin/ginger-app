@@ -189,7 +189,7 @@ describe("PlayerHomePage", () => {
     });
   });
 
-  it("shows open request, repeat of last topup and the club feed", async () => {
+  it("shows open request and the club feed, without a repeat shortcut", async () => {
     vi.mocked(chipsApi.fetchPlayerMe).mockResolvedValue(player());
     vi.mocked(chipsApi.fetchChipRequests).mockResolvedValue([
       request("open", "sent"),
@@ -199,7 +199,8 @@ describe("PlayerHomePage", () => {
 
     const open = await screen.findByTestId("home-open-requests");
     expect(within(open).getAllByTestId("chip-request-row")).toHaveLength(1);
-    expect(await screen.findByTestId("home-repeat")).toHaveTextContent("Ещё Ginger 100");
+    // Быстрый повтор убран 27.09: навязчиво. Осталась одна кнопка «Запросить фишки».
+    expect(screen.queryByTestId("home-repeat")).not.toBeInTheDocument();
     expect(await screen.findByTestId("feed-main-event")).toHaveTextContent("Grand Knockout");
     // Проба 24.09: ссылка прямо в турнир — рядом с названием главного события.
     expect(screen.getByTestId("feed-main-event-link")).toHaveAttribute(

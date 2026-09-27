@@ -3,17 +3,29 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 
 import { useMe } from "@/features/auth/hooks";
+import { usePlayerMe } from "@/features/chips/hooks";
 import {
   findRouteHint,
+  hintSteps,
   markHintSeen,
   ROUTE_HINTS,
   seenHints,
+  type PlayerKind,
   type RouteHint,
 } from "@/features/hints/hints";
 
 const SHOW_DELAY_MS = 700;
 
-function HintSheet({ hint, onClose }: { hint: RouteHint | null; onClose: () => void }) {
+function HintSheet({
+  hint,
+  kind,
+  onClose,
+}: {
+  hint: RouteHint | null;
+  kind: PlayerKind;
+  onClose: () => void;
+}) {
+  const steps = hint ? hintSteps(hint, kind) : [];
   return (
     <Drawer.Root
       open={hint !== null}
@@ -38,7 +50,7 @@ function HintSheet({ hint, onClose }: { hint: RouteHint | null; onClose: () => v
                   {hint.title}
                 </Drawer.Title>
                 <ol className="mt-3 flex flex-col gap-2.5">
-                  {hint.steps.map((step, index) => (
+                  {steps.map((step, index) => (
                     <li key={step} className="flex gap-2.5 text-[14px] leading-snug">
                       <span className="bg-gold-soft text-gold num flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-bold">
                         {index + 1}
@@ -69,6 +81,7 @@ function HintSheet({ hint, onClose }: { hint: RouteHint | null; onClose: () => v
  */
 export function RouteHints({ enabled = import.meta.env.MODE !== "test" }: { enabled?: boolean }) {
   const { data: user } = useMe();
+  const { data: player } = usePlayerMe();
   const { pathname } = useLocation();
   const [openId, setOpenId] = useState<string | null>(null);
   const hintId = enabled && user ? (findRouteHint(pathname)?.id ?? null) : null;
@@ -84,6 +97,7 @@ export function RouteHints({ enabled = import.meta.env.MODE !== "test" }: { enab
   return (
     <HintSheet
       hint={hint}
+      kind={player?.kind as PlayerKind}
       onClose={() => {
         if (hint) markHintSeen(hint.id);
         setOpenId(null);

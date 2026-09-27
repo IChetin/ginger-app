@@ -61,12 +61,17 @@ export function formatMoney(amount: string | number, symbol: string | null, code
  * Кнопки сумм в фишках клуба (ответ 11.10): долларовые клубы — 10/25/50/100,
  * фишка за 1 ₽ — 1 000…10 000, фишка за 100 ₽ — 10/30/50/100.
  */
+/**
+ * Плашки сумм игрок читает в деньгах, а не в фишках: 5 000 ₽ — это 5 000 фишек в Ginger21
+ * и 50 фишек в Ginger+ (решение Ивана 27.09). Поэтому шаг задан в валюте клуба и делится на курс.
+ */
+const PRESET_MONEY_RUB = [5000, 10000, 15000, 50000, 100000];
+const PRESET_MONEY_USD = [50, 100, 150, 500, 1000];
+
 export function amountPresets(club: AccountClub): number[] {
-  const code = club.chip_currency_code;
-  if (code === "RUB") {
-    return Number(club.chip_value ?? 1) >= 50 ? [10, 30, 50, 100] : [1000, 3000, 5000, 10000];
-  }
-  return [10, 25, 50, 100];
+  const rate = Number(club.chip_value ?? 1) || 1;
+  const money = club.chip_currency_code === "RUB" ? PRESET_MONEY_RUB : PRESET_MONEY_USD;
+  return money.map((amount) => amount / rate);
 }
 
 export function parseAmount(value: string): number {
