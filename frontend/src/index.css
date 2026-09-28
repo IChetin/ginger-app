@@ -565,6 +565,18 @@ html.ginger-layout-wide [data-mobile-nav] {
   }
 }
 
+/* Логотип с надписью на крупных экранах: картинка на чёрном, в двойной рамке —
+   в тёмной теме сливается с фоном, в светлой читается как табличка. */
+@utility deco-logo {
+  display: block;
+  background: #0b0a09;
+  box-shadow:
+    0 0 0 3px var(--bg),
+    0 0 0 4px var(--frame-hi-outer),
+    0 0 0 8px var(--bg),
+    0 0 0 9px var(--frame-inner);
+}
+
 /* Орнамент-разделитель: линия, ромб, линия. */
 @utility deco-rule {
   position: relative;

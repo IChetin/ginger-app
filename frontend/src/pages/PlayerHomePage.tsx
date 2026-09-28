@@ -66,7 +66,7 @@ export function PlayerHomePage() {
     <div className="bg-bg min-h-full px-3 pb-4" data-testid="player-home">
       <header className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 pt-3.5 pb-3">
         <img
-          src="/icons/ginger-mark-96.png"
+          src="/icons/ginger-mark-192.png"
           alt=""
           aria-hidden="true"
           className="h-7 w-7 rounded-full"

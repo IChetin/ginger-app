@@ -36,8 +36,12 @@ export function OnboardingPage() {
       <div className="flex-1">
         {step === "welcome" ? (
           <>
-            <img src="/icons/ginger-mark-96.png" alt="" className="h-16 w-16 rounded-full" />
-            <h1 className="mt-4 text-[26px] leading-tight font-extrabold tracking-tight">
+            <img
+              src="/brand/ginger-logo-600.webp"
+              alt="Ginger"
+              className="deco-logo h-[168px] w-[168px]"
+            />
+            <h1 className="mt-6 text-[26px] leading-tight font-extrabold tracking-tight">
               Ginger — фишки, расписание, связь
             </h1>
             <ul className="text-ink-2 mt-3 space-y-1.5 text-[15px]">

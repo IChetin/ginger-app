@@ -1,8 +1,6 @@
 import type { ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { GingerWordmark } from "@/components/brand/GingerWordmark";
-
 const iconClass =
   "h-5 w-5 stroke-current fill-none [stroke-width:1.5] [stroke-linecap:round] [stroke-linejoin:round]";
 
@@ -51,14 +49,13 @@ export function AuthShell({ children, onBack, toast }: Props) {
           </button>
         </div>
 
-        <div className="mt-6 mb-1.5 flex items-center gap-4">
+        {/* Крупный экран — логотип с надписью; в мелких местах — лиса без надписи. */}
+        <div className="mt-2 mb-1.5 flex">
           <img
-            src="/icons/ginger-mark-96.png"
-            alt=""
-            aria-hidden="true"
-            className="h-11 w-11 rounded-full shadow-[0_0_0_3px_var(--bg),0_0_0_4px_var(--frame-hi-outer),0_0_0_8px_var(--bg),0_0_0_9px_var(--frame-inner)]"
+            src="/brand/ginger-logo-600.webp"
+            alt="Ginger"
+            className="deco-logo h-[132px] w-[132px]"
           />
-          <GingerWordmark className="h-[22px] w-auto" />
         </div>
         <div aria-hidden="true" className="deco-rule mt-4 mb-1" />
 

@@ -77,7 +77,7 @@ function SidebarNav({ showUsers, onNavigate }: { showUsers: boolean; onNavigate?
         className="text-ink hover:bg-surface-2 mb-[18px] flex cursor-pointer items-center gap-[7px] rounded-[10px] px-2 pt-1.5 text-[17px] font-extrabold"
       >
         <img
-          src="/icons/ginger-mark-96.png"
+          src="/icons/ginger-mark-192.png"
           alt=""
           aria-hidden="true"
           className="h-6 w-6 rounded-full"
