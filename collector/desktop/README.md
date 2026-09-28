@@ -40,12 +40,27 @@
 ## Токен сборщика
 
 Общий пароль между сборщиком и приёмником на сервере (`COLLECTOR_TOKEN` в `.env` прода). Не привязан к
-компьютеру: где лежит файл токена — оттуда и можно отправлять. Генерирует и ставит владелец, одной
-командой в PowerShell (значение не печатается; серверный скрипт перезапускает бэкенд, ~10 с):
+компьютеру: где лежит файл токена — оттуда и можно отправлять. Делается в два шага — сначала файл,
+потом сервер. Значение нигде не печатается.
+
+**1. Сгенерировать файл** (PowerShell):
 
 ```powershell
-$b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); $t = [Convert]::ToBase64String($b) -replace '[+/=]', ''; New-Item -ItemType Directory -Force "$env:USERPROFILE\.ginger" | Out-Null; [IO.File]::WriteAllText("$env:USERPROFILE\.ginger\collector_token", $t); $t | ssh ginger bash /opt/ginger/app/deploy/set-env-secret.sh COLLECTOR_TOKEN; Remove-Variable t, b
+$b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); $t = [Convert]::ToBase64String($b) -replace '[+/=]', ''; New-Item -ItemType Directory -Force "$env:USERPROFILE\.ginger" | Out-Null; [IO.File]::WriteAllText("$env:USERPROFILE\.ginger\collector_token", $t); Remove-Variable t, b
 ```
+
+**2. Записать на сервер** — из bash, не из PowerShell (серверный скрипт перезапускает бэкенд, ~10 с):
+
+```bash
+cat ~/.ginger/collector_token | ssh ginger bash /opt/ginger/app/deploy/set-env-secret.sh COLLECTOR_TOKEN
+```
+
+Через `Get-Content | ssh` этого делать нельзя: PowerShell 5.1 добавляет в поток BOM, на сервер уезжают
+три лишних байта, и приёмник отвечает «Неверный токен сборщика» (обожглись 28.09). Проверка — длина
+в ответе скрипта должна совпасть с длиной файла.
+
+Если строки `COLLECTOR_TOKEN=` в `.env` ещё нет, скрипт откажется писать: сначала добавить пустую
+строку (`printf 'COLLECTOR_TOKEN=\n' >> .env` на сервере), затем повторить.
 
 Нужен ssh-доступ `ginger` с этого ПК. Если его нет — сгенерировать на основном ПК и перенести файл
 `%USERPROFILE%\.ginger\collector_token` на резервный. Новый токен отменяет старый.
