@@ -241,16 +241,17 @@ def _tournament_key(value: str) -> str:
     return _NON_WORD.sub("", value.casefold())
 
 
-def _same_win(
-    existing: PlayerWin, nickname: str, tournament: str, place: int | None, prize: Decimal
-) -> bool:
-    """Тот же выигрыш, занесённый руками: ник и турнир (или сумма, или место) либо место и сумма."""
-    same_place = place is not None and existing.place == place
-    same_prize = abs(existing.prize_amount - prize) < 1
-    if _nickname_key(existing.player_nickname) == _nickname_key(nickname):
-        same_tournament = _tournament_key(existing.tournament_name) == _tournament_key(tournament)
-        return same_tournament or same_prize or same_place
-    return same_place and same_prize
+def _same_win(existing: PlayerWin, nickname: str, tournament: str) -> bool:
+    """Тот же выигрыш, занесённый руками: тот же ник и тот же турнир.
+
+    Название сравниваем без регистра и эмодзи, и одно может быть короче другого
+    («Grand Knockout» и «🥊GRAND KNOCKOUT🥊 Main»). Место и сумму не сверяем: в сателлите
+    у нескольких игроков одно место и один приз — это разные выигрыши (W38, 19.09).
+    """
+    if _nickname_key(existing.player_nickname) != _nickname_key(nickname):
+        return False
+    ours, theirs = _tournament_key(existing.tournament_name), _tournament_key(tournament)
+    return bool(ours and theirs) and (ours in theirs or theirs in ours)
 
 
 async def import_wins_csv(session: AsyncSession, actor: User, content: bytes) -> WinsImportResult:
@@ -320,9 +321,7 @@ async def import_wins_csv(session: AsyncSession, actor: User, content: bytes) ->
                 for other in known
                 if other.won_on == win.won_on
                 and other.club_id == win.club_id
-                and _same_win(
-                    other, win.player_nickname, win.tournament_name, win.place, win.prize_amount
-                )
+                and _same_win(other, win.player_nickname, win.tournament_name)
             ),
             None,
         )

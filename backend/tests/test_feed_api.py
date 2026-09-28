@@ -255,6 +255,22 @@ async def test_week_csv_fills_in_manual_wins_without_duplicates(
     assert manual_row["place"] == 2
 
 
+async def test_week_csv_keeps_satellite_ties_apart(admin_client: AsyncClient) -> None:
+    # W38, 19.09: двое взяли 3-е место в одном сателлите с одним призом — это два выигрыша.
+    csv_text = """won_on,club,app,player_nickname,tournament_name,place,prize_amount,currency
+2026-09-19,Ginger+,xpoker,Ангелочкин,Sat 🪄SHR MAGIC🪄,3,10000.00,RUB
+2026-09-19,Ginger+,xpoker,Чистотайт,Sat 🪄SHR MAGIC🪄,3,10000.00,RUB
+2026-09-19,Ginger+,xpoker,Ангелочкин,🪄SHR MAGIC🪄800K,4,69928.00,RUB
+"""
+    result = (
+        await admin_client.post(
+            "/api/v1/admin/wins/import",
+            files={"file": ("wins-2026-W38.csv", csv_text.encode(), "text/csv")},
+        )
+    ).json()
+    assert (result["created"], result["duplicates"]) == (3, 0)
+
+
 async def test_week_csv_needs_all_columns(admin_client: AsyncClient) -> None:
     broken = await admin_client.post(
         "/api/v1/admin/wins/import",
