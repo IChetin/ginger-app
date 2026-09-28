@@ -9,6 +9,7 @@ import {
   fetchAdminPosts,
   fetchAdminWins,
   fetchFeed,
+  fetchWinsHistory,
   updatePost,
   uploadPostImage,
   type FeedPostPayload,
@@ -25,6 +26,7 @@ export type {
 
 const keys = {
   feed: ["feed"] as const,
+  winsHistory: ["feed", "wins"] as const,
   adminWins: ["admin", "wins"] as const,
   adminPosts: ["admin", "posts"] as const,
 };
@@ -36,6 +38,11 @@ export function useFeed() {
     // Турниры стартуют, вечер сменяется — лента живая.
     refetchInterval: 5 * 60_000,
   });
+}
+
+/** Полная история выигрышей — страница по тапу на баннер. */
+export function useWinsHistory() {
+  return useQuery({ queryKey: keys.winsHistory, queryFn: fetchWinsHistory });
 }
 
 export function useAdminWins() {

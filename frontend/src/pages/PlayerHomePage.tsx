@@ -9,8 +9,9 @@ import { RequestRow } from "@/features/chips/components/RequestRow";
 import { useChipRequests, usePlayerMe } from "@/features/chips/hooks";
 import { isOpen } from "@/features/chips/lib/format";
 import { FeedSections } from "@/features/feed/FeedSections";
-import { HomeTicker } from "@/features/feed/HomeTicker";
+import { WinsTicker } from "@/features/feed/WinsTicker";
 import { InstallPlaque } from "@/features/onboarding/InstallPlaque";
+import { Day2Banner } from "@/features/promo/Day2Banner";
 import { useThreads } from "@/features/threads/hooks";
 import { useNow } from "@/features/tournaments/hooks";
 
@@ -65,7 +66,7 @@ export function PlayerHomePage() {
   const open = (requests.data ?? []).filter((item) => isOpen(item.status));
   const replies = (threads.data ?? []).filter((thread) => thread.unread);
   return (
-    <div className="bg-bg min-h-full px-3 pb-4" data-testid="player-home">
+    <div className="bg-bg min-h-full px-3 pb-20" data-testid="player-home">
       {/* Логотип крупно (Иван, 28.09: мелкий не видно): лиса и надпись в строку. */}
       <header className="flex items-center gap-3 pt-3 pb-2.5">
         <span className="flex shrink-0 items-center gap-2.5">
@@ -85,7 +86,7 @@ export function PlayerHomePage() {
           ) : null}
         </span>
       </header>
-      <HomeTicker fallback={<div aria-hidden="true" className="deco-rule" />} />
+      <WinsTicker fallback={<div aria-hidden="true" className="deco-rule" />} />
 
       {guest ? (
         <div
@@ -188,6 +189,7 @@ export function PlayerHomePage() {
       ) : null}
 
       <FeedSections now={now} />
+      <Day2Banner />
     </div>
   );
 }

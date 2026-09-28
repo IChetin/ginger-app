@@ -2,9 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import type { Tournament } from "@/api/types/tournaments";
-import { formatMoney as formatAmount, formatNumber } from "@/features/chips/lib/format";
-import { useFeed, type FeedPost, type WinItem } from "@/features/feed/api";
-import { Day2Banner } from "@/features/promo/Day2Banner";
+import { useFeed, type FeedPost } from "@/features/feed/api";
 import { AppIcon } from "@/features/tournaments/components/TournamentCard";
 import { TableView } from "@/features/tournaments/components/ScheduleTable";
 import { TournamentSheet } from "@/features/tournaments/components/TournamentSheet";
@@ -158,37 +156,10 @@ function PostCard({
   );
 }
 
-const winDate = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" });
-
-function WinCard({ win }: { win: WinItem }) {
-  return (
-    <div
-      className="border-line bg-surface flex items-center gap-3 rounded-lg border px-3 py-2.5"
-      data-testid="feed-win"
-    >
-      <span
-        aria-hidden="true"
-        className="border-line-gold bg-gold-soft text-gold font-display mx-1 flex h-9 w-9 shrink-0 rotate-45 items-center justify-center rounded-none border text-[13px] font-bold"
-      >
-        <span className="-rotate-45">{win.place ? `#${win.place}` : "★"}</span>
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="text-ink block truncate text-[14px] font-bold">{win.player_nickname}</span>
-        <span className="text-ink-3 block truncate text-[12px]">
-          {win.tournament_name}
-          {win.club ? ` · ${win.club.name}` : ""} · {winDate.format(new Date(win.won_on))}
-        </span>
-      </span>
-      <span className="font-display num text-value-hi shrink-0 text-[17px] font-bold">
-        +{formatAmount(win.prize_amount, win.currency_symbol, win.currency_code)}
-      </span>
-    </div>
-  );
-}
-
 /**
  * Лента на главной (этап 7): записи менеджера, главное событие дня, остальные главные
- * события недели, вечер в каждом клубе, выигрыши игроков. Открыта и гостю — это витрина клуба.
+ * события недели, вечер в каждом клубе; выигрыши — баннер сверху главной (WinsTicker).
+ * Открыта и гостю — это витрина клуба.
  */
 export function FeedSections({ now }: { now: Date }) {
   const feed = useFeed();
@@ -233,25 +204,12 @@ export function FeedSections({ now }: { now: Date }) {
         </>
       ) : null}
 
-      <Day2Banner />
-
       {evening.length > 0 ? (
         <>
           <SectionTitle>Вечер в клубах</SectionTitle>
           <div className="border-line bg-surface rounded-lg border" data-testid="feed-evening">
             {evening.map((item) => (
               <EventRow key={item.id} tournament={item} onOpen={() => setSelected(item)} />
-            ))}
-          </div>
-        </>
-      ) : null}
-
-      {wins.length > 0 ? (
-        <>
-          <SectionTitle>Выигрыши</SectionTitle>
-          <div className="flex flex-col gap-1.5">
-            {wins.slice(0, 10).map((win) => (
-              <WinCard key={win.id} win={win} />
             ))}
           </div>
         </>
@@ -266,8 +224,6 @@ export function FeedSections({ now }: { now: Date }) {
           .
         </p>
       ) : null}
-
-      <p className="sr-only">{formatNumber(wins.length)} выигрышей в ленте</p>
 
       <TournamentSheet
         tournament={selected}

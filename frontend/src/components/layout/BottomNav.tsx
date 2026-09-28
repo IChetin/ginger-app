@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 import { cn } from "@/lib/utils";
@@ -49,7 +50,8 @@ type NavItem = {
 
 // Четыре пункта — больше на телефон не помещается без потери читаемости (экраны §1).
 const items: NavItem[] = [
-  { to: "/", label: "Главная", icon: IconHome, sections: [] },
+  // /wins — история выигрышей с баннера на главной, пункт остаётся «Главной».
+  { to: "/", label: "Главная", icon: IconHome, sections: ["/wins"] },
   { to: "/chips", label: "Фишки", icon: IconChips, sections: ["/chips"] },
   { to: "/dialogs", label: "Диалоги", icon: IconDialogs, sections: ["/dialogs"] },
   {
@@ -61,7 +63,7 @@ const items: NavItem[] = [
 ];
 
 function isItemActive(pathname: string, item: NavItem): boolean {
-  if (item.sections.length === 0) return pathname === item.to;
+  if (pathname === item.to) return true;
   return item.sections.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
@@ -70,15 +72,38 @@ const THREAD_PATH = /^\/dialogs\/(?!new$)[^/]+$/;
 
 export function BottomNav({ dialogsUnread = 0 }: { dialogsUnread?: number }) {
   const { pathname } = useLocation();
-
+  const navRef = useRef<HTMLElement>(null);
   // Внутри переписки меню не показываем — как в мессенджерах, низ экрана отдан полю ввода.
-  if (THREAD_PATH.test(pathname)) {
+  const hidden = THREAD_PATH.test(pathname);
+
+  // Высота меню — в --nav-h: над ним встаёт полоса Day2 на главной.
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    const el = navRef.current;
+    if (!el) return;
+    const publish = () => {
+      root.style.setProperty("--nav-h", `${Math.round(el.getBoundingClientRect().height)}px`);
+    };
+    publish();
+    if (typeof ResizeObserver === "undefined") {
+      return () => root.style.removeProperty("--nav-h");
+    }
+    const observer = new ResizeObserver(publish);
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--nav-h");
+    };
+  }, [hidden]);
+
+  if (hidden) {
     return null;
   }
 
   // Ар-деко: меню прибито к низу, сверху двойная золотая линия, активный пункт — золото и ромб.
   return (
     <nav
+      ref={navRef}
       data-mobile-nav
       className={cn(
         "fixed bottom-0 left-1/2 z-30 flex w-full max-w-[420px] -translate-x-1/2",

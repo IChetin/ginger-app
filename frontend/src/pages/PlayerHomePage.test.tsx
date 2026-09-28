@@ -212,7 +212,11 @@ describe("PlayerHomePage", () => {
       "/tournaments",
     );
     expect(within(screen.getByTestId("feed-evening")).getByText("T eve")).toBeInTheDocument();
-    expect(within(screen.getByTestId("feed-win")).getByText("Player123")).toBeInTheDocument();
+    // Выигрыши — баннером сверху главной, тап ведёт в историю (Иван, 28.09).
+    const wins = screen.getByTestId("wins-ticker");
+    expect(within(wins).getByText("Player123")).toBeInTheDocument();
+    expect(within(wins).getByRole("link")).toHaveAttribute("href", "/wins");
+    expect(screen.getByTestId("day2-banner")).toHaveAttribute("href", "https://day2.pro");
     expect(screen.queryByTestId("home-guest")).not.toBeInTheDocument();
   });
 

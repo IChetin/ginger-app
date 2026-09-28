@@ -13,7 +13,7 @@ from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -44,6 +44,10 @@ logger = logging.getLogger(__name__)
 
 EVENING_LOOKAHEAD = timedelta(days=2)
 WINS_LIMIT = 20
+# Баннер на главной крутит всю последнюю неделю (Иван, 28.09); потолок — на случай сбоя импорта.
+WEEK_WINS_LIMIT = 200
+# Полная история — по тапу на баннер.
+HISTORY_WINS_LIMIT = 1000
 ANONYMOUS_NICKNAME = "Игрок клуба"
 # Автозаписи о турнирах выходят не раньше 10 утра — ночью их никто не читает.
 AUTOPOST_MORNING = time(10, 0)
@@ -120,11 +124,17 @@ def _win_read(win: PlayerWin, *, public: bool) -> WinRead:
 
 
 async def list_wins(
-    session: AsyncSession, *, public: bool, limit: int = WINS_LIMIT
+    session: AsyncSession,
+    *,
+    public: bool,
+    limit: int = WINS_LIMIT,
+    since: date | None = None,
 ) -> list[WinRead]:
+    query = select(PlayerWin)
+    if since is not None:
+        query = query.where(PlayerWin.won_on >= since)
     wins = await session.scalars(
-        select(PlayerWin)
-        .options(
+        query.options(
             selectinload(PlayerWin.player),
             selectinload(PlayerWin.club),
             selectinload(PlayerWin.currency),
@@ -135,13 +145,22 @@ async def list_wins(
     return [_win_read(win, public=public) for win in wins]
 
 
+async def latest_week_wins(session: AsyncSession) -> list[WinRead]:
+    """Все выигрыши недели (пн–вс), в которую попал самый свежий, — для баннера на главной."""
+    latest = await session.scalar(select(func.max(PlayerWin.won_on)))
+    if latest is None:
+        return []
+    monday = latest - timedelta(days=latest.weekday())
+    return await list_wins(session, public=True, limit=WEEK_WINS_LIMIT, since=monday)
+
+
 async def get_feed(session: AsyncSession, now: datetime | None = None) -> FeedRead:
     moment = now or datetime.now(UTC)
     return FeedRead(
         posts=await list_posts(session, now=moment),
         majors=await majors(session, moment),
         evening=await evening_by_club(session, moment),
-        wins=await list_wins(session, public=True),
+        wins=await latest_week_wins(session),
     )
 
 

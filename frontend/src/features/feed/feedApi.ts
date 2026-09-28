@@ -66,6 +66,7 @@ export interface WinCreatePayload {
 
 // Запросы отдельно от хуков: тесты подменяют модуль целиком.
 export const fetchFeed = () => apiGet<Feed>("/api/v1/feed");
+export const fetchWinsHistory = () => apiGet<WinItem[]>("/api/v1/feed/wins");
 export const fetchAdminWins = () => apiGet<WinItem[]>("/api/v1/admin/wins");
 export const createWin = (body: WinCreatePayload) => apiPost<WinItem>("/api/v1/admin/wins", body);
 export const deleteWin = (id: string) => apiDelete(`/api/v1/admin/wins/${id}`);

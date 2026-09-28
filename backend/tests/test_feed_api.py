@@ -77,6 +77,40 @@ async def test_feed_is_public_with_majors_and_evening_per_club(
     assert all("Sat" not in name for name in evening.values())
 
 
+async def test_feed_shows_latest_week_and_history_shows_all(
+    client: AsyncClient, db_session: AsyncSession, seeded_db: None
+) -> None:
+    latest = datetime(2026, 9, 27, tzinfo=UTC).date()  # воскресенье
+    days = {
+        "Sunday": latest,
+        "Monday": latest - timedelta(days=6),  # тот же понедельник — та же неделя
+        "PrevSunday": latest - timedelta(days=7),  # прошлая неделя
+    }
+    for nickname, won_on in days.items():
+        db_session.add(
+            PlayerWin(
+                player_nickname=nickname,
+                tournament_name="Main Event",
+                prize_amount=Decimal("1000"),
+                currency_code="RUB",
+                won_on=won_on,
+            )
+        )
+    await db_session.flush()
+
+    feed = (await client.get("/api/v1/feed")).json()
+    assert [item["player_nickname"] for item in feed["wins"]] == ["Sunday", "Monday"]
+
+    history = await client.get("/api/v1/feed/wins")
+    assert history.status_code == 200, history.text
+    assert [item["player_nickname"] for item in history.json()] == [
+        "Sunday",
+        "Monday",
+        "PrevSunday",
+    ]
+    assert (await client.get("/api/v1/feed/wins", params={"limit": 0})).status_code == 422
+
+
 async def test_admin_adds_win_and_feed_respects_consent(
     admin_client: AsyncClient, db_session: AsyncSession
 ) -> None:

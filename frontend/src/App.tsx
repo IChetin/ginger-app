@@ -39,6 +39,7 @@ import { InvitePage } from "@/pages/InvitePage";
 import { OnboardingPage } from "@/pages/OnboardingPage";
 import { ReferralPage } from "@/pages/ReferralPage";
 import { TournamentsPage } from "@/pages/TournamentsPage";
+import { WinsPage } from "@/pages/WinsPage";
 import { ForgotPasswordPage, ResetPasswordPage, VerifyEmailPage } from "@/pages/AuthLegacyRedirect";
 import { InstallPage } from "@/pages/InstallPage";
 import { LoginPage } from "@/pages/LoginPage";
@@ -60,6 +61,7 @@ export function AppRoutes() {
         <Route path="/cash" element={<CashPage />} />
         <Route path="/clubs" element={<ClubsPage />} />
         <Route path="/more" element={<MorePage />} />
+        <Route path="/wins" element={<WinsPage />} />
         <Route element={<AuthGuard />}>
           <Route path="/offline" element={<OfflinePage />} />
           <Route path="/dialogs/*" element={<DialogsPage />} />
