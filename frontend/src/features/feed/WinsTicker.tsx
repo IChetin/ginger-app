@@ -27,7 +27,7 @@ function useReducedMotion(): boolean {
 }
 
 /**
- * Баннер выигрышей сверху главной (Иван, 28.09): окно в три строки, список медленно и без
+ * Баннер «Выигрыши» сверху главной (Иван, 28.09): окно в три строки, список медленно и без
  * остановок ползёт вверх, как титры. Выигрыши — за две недели, от 10 000 ₽ (так отдаёт лента).
  * Тап — вся история на /wins. Движение можно остановить (WCAG 2.2.2); при «уменьшить движение»
  * окно стоит и листается пальцем.
@@ -53,7 +53,7 @@ export function WinsTicker({ fallback = null }: { fallback?: ReactNode }) {
       )}
     >
       <h2 className="bg-bg text-gold font-display absolute top-0 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 px-2.5 text-[9.5px] leading-[14px] font-semibold tracking-[0.24em] whitespace-nowrap uppercase">
-        Выигрыши недели
+        Выигрыши
       </h2>
       <Link
         to="/wins"
