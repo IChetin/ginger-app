@@ -257,7 +257,10 @@ function Invoke-PhoneListPass {
         [int]$MaxSide = 1568,
         [double]$SwipeFrom = 0.75,
         [double]$SwipeTo = 0.45,
-        [switch]$KeepShots
+        [switch]$KeepShots,
+        # Без ключа распознавания проход всё равно полезен: снимает лобби и складывает кадры,
+        # читать их можно потом. Конец списка в этом режиме не виден — листаем до MaxPages.
+        [switch]$NoRead
     )
     if (-not $OutDir) { $OutDir = Join-Path $env:LOCALAPPDATA ("GingerCollector\{0}" -f (Get-Date -Format 'yyyy-MM-dd')) }
     if (-not (Test-Path $OutDir)) { [void](New-Item -ItemType Directory -Path $OutDir -Force) }
@@ -272,6 +275,10 @@ function Invoke-PhoneListPass {
         for ($shot = 1; $shot -le $ShotsPerPage; $shot++) {
             $path = Join-Path $OutDir ("{0}-p{1:d2}-{2}.png" -f $Tag, $page, $shot)
             [void](Get-PhoneShot -Path $path -MaxSide $MaxSide)
+            if ($NoRead) {
+                if ($shot -lt $ShotsPerPage) { Start-Sleep -Milliseconds $ShotPauseMs }
+                continue
+            }
             $items = @(& $Reader $path)
             if ($page -eq 1 -and $shot -eq 1 -and -not $items.Count) {
                 # Пустая первая страница - почти всегда промо поверх лобби, а не пустой клуб.
@@ -293,6 +300,11 @@ function Invoke-PhoneListPass {
             if (-not $KeepShots -and $shot -lt $ShotsPerPage) { [System.IO.File]::Delete((Resolve-Path $path).Path) }
             if ($shot -lt $ShotsPerPage) { Start-Sleep -Milliseconds $ShotPauseMs }
         }
+        if ($NoRead) {
+            Write-Host ("  page {0}: кадры сняты" -f $page)
+            Invoke-PhoneSwipe -FromY $SwipeFrom -ToY $SwipeTo
+            continue
+        }
         Write-Host ("  page {0}: +{1} new, {2} total" -f $page, $newOnPage, $cards.Count)
 
         $keys = @($pageKeys | Select-Object -Unique)
@@ -310,25 +322,25 @@ function Invoke-PhoneListPass {
 function Invoke-PpMttPassPhone {
     # PPPoker: лента MTT клуба. Читает та же схема, что и на десктопе - приложение одно и то же.
     # Нижняя строка карточки крутится, поэтому кадров на страницу три.
-    param([string]$OutDir, [int]$MaxPages = 16, [switch]$KeepShots)
+    param([string]$OutDir, [int]$MaxPages = 16, [switch]$KeepShots, [switch]$NoRead)
     Invoke-PhoneListPass -Package $script:PpPackage -Tag 'pppoker-mtt' -OutDir $OutDir -MaxPages $MaxPages `
-        -ShotsPerPage 3 -KeepShots:$KeepShots -Reader { param($shot) Read-PpPageHaiku -Shot $shot }
+        -ShotsPerPage 3 -KeepShots:$KeepShots -NoRead:$NoRead -Reader { param($shot) Read-PpPageHaiku -Shot $shot }
 }
 
 function Invoke-XpMttPassPhone {
     # X-Poker: вкладка турниров клуба GINGER+ 2022497. Ниже списка турниров идут SNG и FLASH -
     # их схема отбрасывает сама, а проход останавливается на двух страницах без новых карточек.
-    param([string]$OutDir, [int]$MaxPages = 12, [switch]$KeepShots)
+    param([string]$OutDir, [int]$MaxPages = 12, [switch]$KeepShots, [switch]$NoRead)
     Invoke-PhoneListPass -Package $script:XpPackage -Tag 'xpoker-mtt' -OutDir $OutDir -MaxPages $MaxPages `
-        -KeepShots:$KeepShots -Reader { param($shot) Read-XpListPageHaiku -Shot $shot }
+        -KeepShots:$KeepShots -NoRead:$NoRead -Reader { param($shot) Read-XpListPageHaiku -Shot $shot }
 }
 
 function Invoke-P21MttPassPhone {
     # Poker21: плитка в два столбца, турниры идут перед кэш-столами. Шрифт мелкий, поэтому
     # кадр не ужимаем - иначе модель начинает путать цифры бай-ина и гарантии.
-    param([string]$OutDir, [int]$MaxPages = 8, [switch]$KeepShots)
+    param([string]$OutDir, [int]$MaxPages = 8, [switch]$KeepShots, [switch]$NoRead)
     Invoke-PhoneListPass -Package $script:P21Package -Tag 'poker21-mtt' -OutDir $OutDir -MaxPages $MaxPages `
-        -MaxSide 0 -ShotsPerPage 1 -KeepShots:$KeepShots -Reader { param($shot) Read-P21PageHaiku -Shot $shot }
+        -MaxSide 0 -ShotsPerPage 1 -KeepShots:$KeepShots -NoRead:$NoRead -Reader { param($shot) Read-P21PageHaiku -Shot $shot }
 }
 
 function Export-PhonePass {

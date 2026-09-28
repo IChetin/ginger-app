@@ -50,11 +50,16 @@ try {
     $battery = Get-PhoneBattery
     Write-Host ("Battery: level {0}%, {1} mV, health {2}, {3} C" -f $battery.level, $battery.voltage_mv, $battery.health, $battery.temperature_c)
 
+    # Без ключа распознавания проход не падает, а работает наблюдателем: снимает лобби и
+    # складывает кадры в папку дня. Прочитать их можно потом — глазами или когда появится ключ.
+    $noRead = -not ($env:ANTHROPIC_API_KEY -or (Test-Path (Join-Path $env:USERPROFILE '.ginger\anthropic_key')))
+    if ($noRead) { Write-Warning 'No Anthropic key: shots only, nothing is parsed or sent' }
+
     $stamp = Get-Date -Format 'yyyyMMdd-HHmm'
     $passes = @(
-        [pscustomobject]@{ Skip = $SkipPPPoker; Name = 'PPPoker'; Tag = 'pppoker-mtt'; Slug = 'ginger'; App = 'pppoker'; Run = { Invoke-PpMttPassPhone -OutDir $day -KeepShots:$KeepShots } },
-        [pscustomobject]@{ Skip = $SkipXPoker; Name = 'X-Poker'; Tag = 'xpoker-mtt'; Slug = 'ginger-plus'; App = 'xpoker'; Run = { Invoke-XpMttPassPhone -OutDir $day -KeepShots:$KeepShots } },
-        [pscustomobject]@{ Skip = $SkipPoker21; Name = 'Poker21'; Tag = 'poker21-mtt'; Slug = 'ginger21'; App = 'poker21'; Run = { Invoke-P21MttPassPhone -OutDir $day -KeepShots:$KeepShots } }
+        [pscustomobject]@{ Skip = $SkipPPPoker; Name = 'PPPoker'; Tag = 'pppoker-mtt'; Slug = 'ginger'; App = 'pppoker'; Run = { Invoke-PpMttPassPhone -OutDir $day -KeepShots:($KeepShots -or $noRead) -NoRead:$noRead } },
+        [pscustomobject]@{ Skip = $SkipXPoker; Name = 'X-Poker'; Tag = 'xpoker-mtt'; Slug = 'ginger-plus'; App = 'xpoker'; Run = { Invoke-XpMttPassPhone -OutDir $day -KeepShots:($KeepShots -or $noRead) -NoRead:$noRead } },
+        [pscustomobject]@{ Skip = $SkipPoker21; Name = 'Poker21'; Tag = 'poker21-mtt'; Slug = 'ginger21'; App = 'poker21'; Run = { Invoke-P21MttPassPhone -OutDir $day -KeepShots:($KeepShots -or $noRead) -NoRead:$noRead } }
     )
 
     foreach ($pass in $passes) {
@@ -63,6 +68,10 @@ try {
         # Одно упавшее приложение не должно уносить весь проход: остальные всё равно снимаем.
         try {
             $cards = @(& $pass.Run)
+            if ($noRead) {
+                Write-Host ("{0}: shots saved to {1}" -f $pass.Name, $day)
+                continue
+            }
             $withStart = @($cards | Where-Object { $_.starts_at }).Count
             Write-Host ("{0}: {1} cards, {2} with start" -f $pass.Name, $cards.Count, $withStart)
             if (-not $cards.Count) { throw 'empty pass' }

@@ -31,11 +31,17 @@ function Get-AdbExe {
 
 function Invoke-Adb {
     # Прямой вызов adb к выбранному устройству; stderr приклеиваем к выводу, чтобы видеть причины.
+    # ErrorActionPreference внутри снижаем намеренно: в Windows PowerShell 5.1 склейка 2>&1 у
+    # внешней программы делает каждую строку stderr записью об ошибке, и при Stop проход падал
+    # на безобидной болтовне monkey (обожглись 28.09). Строки отдаём текстом.
     param([Parameter(ValueFromRemainingArguments)][string[]]$Arguments)
     $exe = Get-AdbExe
     $prefix = @()
     if ($script:Phone) { $prefix = @('-s', $script:Phone) }
-    & $exe @prefix @Arguments 2>&1
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try { & $exe @prefix @Arguments 2>&1 | ForEach-Object { "$_" } }
+    finally { $ErrorActionPreference = $previous }
 }
 
 function Invoke-PhoneShell {
