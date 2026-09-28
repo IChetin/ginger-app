@@ -721,3 +721,33 @@ html.ginger-layout-wide [data-mobile-nav] {
   -webkit-text-fill-color: transparent;
   animation: deco-shimmer 4s ease-in-out infinite;
 }
+
+/* Лента выигрышей ползёт вверх, как титры (Иван, 28.09): список повторён дважды. */
+@keyframes deco-credits {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+/* Экран загрузки: логотип мерцает, полоска бежит. */
+@keyframes deco-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes deco-loading {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}

@@ -6,7 +6,8 @@ import { WIN_ROW_PX, WinRow } from "@/features/feed/WinRow";
 import { cn } from "@/lib/utils";
 
 const VISIBLE_ROWS = 3;
-const STEP_MS = 3000;
+/** Секунд на строку: около 16 px в секунду — читается на ходу, как титры. */
+const SECONDS_PER_ROW = 3;
 
 function useReducedMotion(): boolean {
   const [reduced, setReduced] = useState(
@@ -26,42 +27,22 @@ function useReducedMotion(): boolean {
 }
 
 /**
- * Баннер выигрышей сверху главной (Иван, 28.09): окно в три строки, строки листаются вверх по
- * одной. Крутится вся последняя неделя — её отдаёт лента. Тап — полная история на /wins.
- * Листание можно остановить (WCAG 2.2.2); при «уменьшить движение» окно стоит.
+ * Баннер выигрышей сверху главной (Иван, 28.09): окно в три строки, список медленно и без
+ * остановок ползёт вверх, как титры. Выигрыши — за две недели, от 10 000 ₽ (так отдаёт лента).
+ * Тап — вся история на /wins. Движение можно остановить (WCAG 2.2.2); при «уменьшить движение»
+ * окно стоит и листается пальцем.
  */
 export function WinsTicker({ fallback = null }: { fallback?: ReactNode }) {
   const feed = useFeed();
   const wins = feed.data?.wins ?? [];
   const reduced = useReducedMotion();
   const [paused, setPaused] = useState(false);
-  const [index, setIndex] = useState(0);
-  const [animate, setAnimate] = useState(true);
-  const scrolling = wins.length > VISIBLE_ROWS && !reduced;
-
-  useEffect(() => {
-    if (!scrolling || paused) return;
-    const timer = window.setInterval(() => setIndex((value) => value + 1), STEP_MS);
-    return () => window.clearInterval(timer);
-  }, [scrolling, paused]);
-
-  // За последней строкой идут копии первых трёх: доехали — без анимации прыгаем в начало.
-  useEffect(() => {
-    if (animate) return;
-    let second = 0;
-    const first = window.requestAnimationFrame(() => {
-      second = window.requestAnimationFrame(() => setAnimate(true));
-    });
-    return () => {
-      window.cancelAnimationFrame(first);
-      window.cancelAnimationFrame(second);
-    };
-  }, [animate]);
 
   if (wins.length === 0) return <>{fallback}</>;
 
-  const rows = scrolling ? [...wins, ...wins.slice(0, VISIBLE_ROWS)] : wins;
-  const offset = scrolling ? index : 0;
+  const scrolling = wins.length > VISIBLE_ROWS && !reduced;
+  // Вторая копия — чтобы титры шли по кругу без рывка; читалке она не нужна.
+  const rows = scrolling ? [...wins, ...wins] : wins;
 
   return (
     <section
@@ -76,28 +57,27 @@ export function WinsTicker({ fallback = null }: { fallback?: ReactNode }) {
       </h2>
       <Link
         to="/wins"
-        aria-label="Выигрыши недели — открыть всю историю"
-        className="block overflow-hidden"
+        aria-label="Выигрыши — открыть всю историю"
+        className={cn("block", reduced ? "overflow-y-auto" : "overflow-hidden")}
         style={{ height: WIN_ROW_PX * Math.min(VISIBLE_ROWS, wins.length) }}
       >
         <div
           data-testid="wins-ticker-track"
-          onTransitionEnd={() => {
-            if (index >= wins.length) {
-              setAnimate(false);
-              setIndex(0);
-            }
-          }}
-          style={{
-            transform: `translateY(-${offset * WIN_ROW_PX}px)`,
-            transition: animate ? "transform 600ms cubic-bezier(0.6, 0, 0.2, 1)" : "none",
-          }}
+          className={cn(scrolling && "animate-[deco-credits_60s_linear_infinite]")}
+          style={
+            scrolling
+              ? {
+                  animationDuration: `${wins.length * SECONDS_PER_ROW}s`,
+                  animationPlayState: paused ? "paused" : "running",
+                }
+              : undefined
+          }
         >
           {rows.map((win, position) => (
             <div
               key={`${win.id}-${position}`}
               aria-hidden={position >= wins.length || undefined}
-              className="border-b border-[var(--frame-inner)] last:border-b-0"
+              className="border-b border-[var(--frame-inner)]"
             >
               <WinRow win={win} />
             </div>
@@ -108,7 +88,7 @@ export function WinsTicker({ fallback = null }: { fallback?: ReactNode }) {
         <button
           type="button"
           aria-pressed={paused}
-          aria-label={paused ? "Листать выигрыши" : "Остановить выигрыши"}
+          aria-label={paused ? "Запустить выигрыши" : "Остановить выигрыши"}
           onClick={() => setPaused((value) => !value)}
           className="bg-bg text-gold absolute right-3 bottom-0 z-10 flex h-6 w-7 translate-y-1/2 items-center justify-center"
         >

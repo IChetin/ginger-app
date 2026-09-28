@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
 import pytest
@@ -11,7 +11,7 @@ from app.models.clubs import Club
 from app.models.feed import PlayerWin
 from app.models.players import Player
 from app.models.tournaments import Tournament
-from app.services.feed import ANONYMOUS_NICKNAME
+from app.services.feed import ANONYMOUS_NICKNAME, recent_wins_since
 from app.services.tournaments.schedule_sync import MSK
 
 pytestmark = pytest.mark.integration
@@ -77,21 +77,23 @@ async def test_feed_is_public_with_majors_and_evening_per_club(
     assert all("Sat" not in name for name in evening.values())
 
 
-async def test_feed_shows_latest_week_and_history_shows_all(
+async def test_feed_and_history_show_two_weeks_without_small_wins(
     client: AsyncClient, db_session: AsyncSession, seeded_db: None
 ) -> None:
-    latest = datetime(2026, 9, 27, tzinfo=UTC).date()  # воскресенье
-    days = {
-        "Sunday": latest,
-        "Monday": latest - timedelta(days=6),  # тот же понедельник — та же неделя
-        "PrevSunday": latest - timedelta(days=7),  # прошлая неделя
+    today = datetime.now(MSK).date()
+    this_monday = today - timedelta(days=today.weekday())
+    wins = {
+        "Today": (today, "10000"),  # ровно 10 000 ₽ — видно
+        "Small": (today, "9999"),  # мелочь не показываем
+        "TwoWeeksAgo": (this_monday - timedelta(days=14), "50000"),  # позапрошлая неделя
+        "Stale": (this_monday - timedelta(days=15), "50000"),  # раньше — уже неинтересно
     }
-    for nickname, won_on in days.items():
+    for nickname, (won_on, prize) in wins.items():
         db_session.add(
             PlayerWin(
                 player_nickname=nickname,
                 tournament_name="Main Event",
-                prize_amount=Decimal("1000"),
+                prize_amount=Decimal(prize),
                 currency_code="RUB",
                 won_on=won_on,
             )
@@ -99,16 +101,19 @@ async def test_feed_shows_latest_week_and_history_shows_all(
     await db_session.flush()
 
     feed = (await client.get("/api/v1/feed")).json()
-    assert [item["player_nickname"] for item in feed["wins"]] == ["Sunday", "Monday"]
+    assert [item["player_nickname"] for item in feed["wins"]] == ["Today", "TwoWeeksAgo"]
 
     history = await client.get("/api/v1/feed/wins")
     assert history.status_code == 200, history.text
-    assert [item["player_nickname"] for item in history.json()] == [
-        "Sunday",
-        "Monday",
-        "PrevSunday",
-    ]
-    assert (await client.get("/api/v1/feed/wins", params={"limit": 0})).status_code == 422
+    assert [item["player_nickname"] for item in history.json()] == ["Today", "TwoWeeksAgo"]
+
+
+def test_recent_window_starts_two_mondays_back() -> None:
+    monday = datetime(2026, 9, 28, 9, tzinfo=MSK)  # понедельник: прошлая и позапрошлая
+    sunday = datetime(2026, 10, 4, 23, tzinfo=MSK)  # воскресенье: плюс текущая
+    assert recent_wins_since(monday) == date(2026, 9, 14)
+    assert recent_wins_since(sunday) == date(2026, 9, 14)
+    assert recent_wins_since(datetime(2026, 10, 5, 0, 30, tzinfo=MSK)) == date(2026, 9, 21)
 
 
 async def test_admin_adds_win_and_feed_respects_consent(
@@ -144,7 +149,7 @@ async def test_admin_adds_win_and_feed_respects_consent(
             player_id=shy.id,
             player_nickname="ShyShark",
             tournament_name="Daily",
-            prize_amount=Decimal("5000"),
+            prize_amount=Decimal("50000"),
             currency_code="RUB",
             won_on=datetime.now(UTC).date(),
         )
@@ -245,6 +250,9 @@ async def test_week_csv_fills_in_manual_wins_without_duplicates(
     wins = (await admin_client.get("/api/v1/admin/wins")).json()
     week = [item for item in wins if item["won_on"] == "2026-09-22"]
     assert len(week) == 4
+    manual_row = next(item for item in week if item["player_nickname"] == "молоток")
+    # В ручной записи места не было — выгрузка его дополнила.
+    assert manual_row["place"] == 2
 
 
 async def test_week_csv_needs_all_columns(admin_client: AsyncClient) -> None:

@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -37,14 +37,12 @@ async def get_feed(
 
 
 @router.get("/feed/wins", response_model=list[WinRead])
-async def get_wins(
-    db: Annotated[AsyncSession, Depends(get_db)],
-    limit: Annotated[int, Query(ge=1, le=feed_service.HISTORY_WINS_LIMIT)] = (
-        feed_service.HISTORY_WINS_LIMIT
-    ),
-) -> list[WinRead]:
-    """Полная история выигрышей — по тапу на баннер. Открыта всем; ники без согласия скрыты."""
-    return await feed_service.list_wins(db, public=True, limit=limit)
+async def get_wins(db: Annotated[AsyncSession, Depends(get_db)]) -> list[WinRead]:
+    """История по тапу на баннер: текущая и прошлая неделя, старше — неинтересно (Иван, 28.09).
+
+    Открыта всем; ники без согласия на публикацию скрыты.
+    """
+    return await feed_service.recent_wins(db)
 
 
 @router.get("/feed/posts/{post_id}/image")

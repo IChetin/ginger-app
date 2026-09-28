@@ -50,7 +50,7 @@ export function WinRow({ win, showDate = true }: { win: WinItem; showDate?: bool
           <span className="text-ink truncate text-[13.5px] font-bold">{win.player_nickname}</span>
         </span>
         <span className="text-ink-3 block truncate text-[11.5px]">
-          {win.place ? `#${win.place} · ` : ""}
+          {win.place ? `${win.place} место · ` : ""}
           {win.tournament_name}
         </span>
       </span>

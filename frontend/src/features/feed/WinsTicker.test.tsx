@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import * as feedApi from "@/features/feed/feedApi";
 import type { WinItem } from "@/features/feed/feedApi";
@@ -37,32 +37,25 @@ function renderWith(node: React.ReactNode) {
   );
 }
 
-afterEach(() => {
-  vi.useRealTimers();
-});
-
 describe("WinsTicker", () => {
-  it("листает строки по одной вверх и останавливается кнопкой", async () => {
+  it("ползёт вверх, как титры, и останавливается кнопкой", async () => {
     vi.mocked(feedApi.fetchFeed).mockResolvedValue({
       posts: [],
       majors: [],
       evening: [],
       wins: ["a", "b", "c", "d"].map((id) => win(id, `Игрок ${id}`, "2026-09-27")),
     });
-    vi.useFakeTimers({ shouldAdvanceTime: true });
     renderWith(<WinsTicker />);
     const track = await screen.findByTestId("wins-ticker-track");
-    expect(track.style.transform).toBe("translateY(-0px)");
-    // Копии первых трёх — для бесшовного круга, читалке они не нужны.
-    expect(within(track).getAllByTestId("win-row")).toHaveLength(7);
-
-    act(() => vi.advanceTimersByTime(3000));
-    expect(track.style.transform).toBe("translateY(-48px)");
+    // Список повторён дважды — титры идут по кругу без рывка.
+    expect(within(track).getAllByTestId("win-row")).toHaveLength(8);
+    expect(track.style.animationDuration).toBe("12s");
+    expect(track.style.animationPlayState).toBe("running");
+    expect(track).toHaveTextContent("1 место · Дижестив");
 
     fireEvent.click(screen.getByRole("button", { name: "Остановить выигрыши" }));
-    act(() => vi.advanceTimersByTime(9000));
-    expect(track.style.transform).toBe("translateY(-48px)");
-    expect(screen.getByRole("button", { name: "Листать выигрыши" })).toHaveAttribute(
+    expect(track.style.animationPlayState).toBe("paused");
+    expect(screen.getByRole("button", { name: "Запустить выигрыши" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );

@@ -16,7 +16,7 @@ from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -41,6 +41,7 @@ from app.schemas.feed import (
 )
 from app.schemas.tournaments import TournamentClub, TournamentRead
 from app.services import attachments
+from app.services.clubs import latest_rates_rub
 from app.services.tournaments.queries import DayPeriod, list_tournaments, period_of
 from app.services.tournaments.schedule_sync import MSK
 
@@ -48,10 +49,10 @@ logger = logging.getLogger(__name__)
 
 EVENING_LOOKAHEAD = timedelta(days=2)
 WINS_LIMIT = 20
-# Баннер на главной крутит всю последнюю неделю (Иван, 28.09); потолок — на случай сбоя импорта.
-WEEK_WINS_LIMIT = 200
-# Полная история — по тапу на баннер.
-HISTORY_WINS_LIMIT = 1000
+# Баннер и история — две недели (Иван, 28.09); потолок — на случай сбоя импорта.
+RECENT_WINS_LIMIT = 400
+# Мелочь в баннер не идёт (Иван, 28.09): выигрыш от 10 000 ₽, валюта — по курсу.
+MIN_WIN_RUB = Decimal("10000")
 ANONYMOUS_NICKNAME = "Игрок клуба"
 # Автозаписи о турнирах выходят не раньше 10 утра — ночью их никто не читает.
 AUTOPOST_MORNING = time(10, 0)
@@ -149,13 +150,29 @@ async def list_wins(
     return [_win_read(win, public=public) for win in wins]
 
 
-async def latest_week_wins(session: AsyncSession) -> list[WinRead]:
-    """Все выигрыши недели (пн–вс), в которую попал самый свежий, — для баннера на главной."""
-    latest = await session.scalar(select(func.max(PlayerWin.won_on)))
-    if latest is None:
-        return []
-    monday = latest - timedelta(days=latest.weekday())
-    return await list_wins(session, public=True, limit=WEEK_WINS_LIMIT, since=monday)
+def recent_wins_since(now: datetime) -> date:
+    """Понедельник позапрошлой недели по Москве: старше — неинтересно (Иван, 28.09).
+
+    Видны прошлая и позапрошлая неделя целиком и то, что занесено за текущую.
+    """
+    today = now.astimezone(MSK).date()
+    return today - timedelta(days=today.weekday() + 14)
+
+
+async def recent_wins(session: AsyncSession, now: datetime | None = None) -> list[WinRead]:
+    """Баннер на главной и история по тапу: две недели, без мелочи дешевле 10 000 ₽."""
+    since = recent_wins_since(now or datetime.now(UTC))
+    wins = await list_wins(session, public=True, limit=RECENT_WINS_LIMIT, since=since)
+    rates = await latest_rates_rub(session, {win.currency_code for win in wins} - {"RUB"})
+
+    def in_rub(win: WinRead) -> Decimal | None:
+        if win.currency_code == "RUB":
+            return win.prize_amount
+        rate = rates.get(win.currency_code)
+        return win.prize_amount * rate if rate is not None else None
+
+    # Без курса валюты не судим — показываем.
+    return [win for win in wins if (rub := in_rub(win)) is None or rub >= MIN_WIN_RUB]
 
 
 async def get_feed(session: AsyncSession, now: datetime | None = None) -> FeedRead:
@@ -164,7 +181,7 @@ async def get_feed(session: AsyncSession, now: datetime | None = None) -> FeedRe
         posts=await list_posts(session, now=moment),
         majors=await majors(session, moment),
         evening=await evening_by_club(session, moment),
-        wins=await latest_week_wins(session),
+        wins=await recent_wins(session, moment),
     )
 
 
@@ -297,14 +314,21 @@ async def import_wins_csv(session: AsyncSession, actor: User, content: bytes) ->
     )
     created = duplicates = 0
     for win in rows:
-        if any(
-            other.won_on == win.won_on
-            and other.club_id == win.club_id
-            and _same_win(
-                other, win.player_nickname, win.tournament_name, win.place, win.prize_amount
-            )
-            for other in known
-        ):
+        same = next(
+            (
+                other
+                for other in known
+                if other.won_on == win.won_on
+                and other.club_id == win.club_id
+                and _same_win(
+                    other, win.player_nickname, win.tournament_name, win.place, win.prize_amount
+                )
+            ),
+            None,
+        )
+        if same is not None:
+            # Занесённое руками дополняем местом, если его не указали.
+            same.place = same.place or win.place
             duplicates += 1
             continue
         session.add(win)

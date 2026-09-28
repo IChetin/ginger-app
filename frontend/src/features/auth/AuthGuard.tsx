@@ -2,7 +2,7 @@ import { Outlet } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
 import { useMe } from "@/api/auth";
-import { DetailSkeleton } from "@/components/ui/DetailSkeleton";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { AuthGate } from "@/features/auth/AuthGate";
 
 /**
@@ -13,11 +13,7 @@ export function AuthGuard() {
   const { data: user, isLoading, isError, error } = useMe();
 
   if (isLoading) {
-    return (
-      <div className="mx-auto max-w-5xl px-4 py-8">
-        <DetailSkeleton />
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   const guest = !user || (isError && error instanceof ApiError && error.status === 401);
