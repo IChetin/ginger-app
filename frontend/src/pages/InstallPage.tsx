@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { GingerLogo } from "@/components/brand/GingerLogo";
 
 import { InstallSteps } from "@/features/onboarding/InstallSteps";
 
@@ -10,11 +11,7 @@ export function InstallPage() {
         ← Главная
       </Link>
       <div className="pt-6">
-        <img
-          src="/brand/ginger-logo-600.webp"
-          alt="Ginger"
-          className="deco-logo h-[144px] w-[144px]"
-        />
+        <GingerLogo className="w-[150px]" />
         <h1 className="mt-6 text-[19px] font-bold tracking-[0.18em] uppercase">
           Установите Ginger
         </h1>

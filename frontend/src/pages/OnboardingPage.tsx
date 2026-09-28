@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { GingerLogo } from "@/components/brand/GingerLogo";
 import { useNavigate } from "react-router-dom";
 
 import { InstallSteps } from "@/features/onboarding/InstallSteps";
@@ -36,11 +37,7 @@ export function OnboardingPage() {
       <div className="flex-1">
         {step === "welcome" ? (
           <>
-            <img
-              src="/brand/ginger-logo-600.webp"
-              alt="Ginger"
-              className="deco-logo h-[168px] w-[168px]"
-            />
+            <GingerLogo className="w-[170px]" />
             <h1 className="mt-6 text-[26px] leading-tight font-extrabold tracking-tight">
               Ginger — фишки, расписание, связь
             </h1>

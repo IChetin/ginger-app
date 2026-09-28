@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
 import { ModerationNotice } from "@/features/auth/ModerationNotice";
+import { GingerFox } from "@/components/brand/GingerFox";
 import { GingerWordmark } from "@/components/brand/GingerWordmark";
 import { isStaffUser, useMe } from "@/features/auth/hooks";
 import { RequestRow } from "@/features/chips/components/RequestRow";
@@ -64,15 +65,13 @@ export function PlayerHomePage() {
   const replies = (threads.data ?? []).filter((thread) => thread.unread);
   return (
     <div className="bg-bg min-h-full px-3 pb-4" data-testid="player-home">
-      <header className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 pt-3.5 pb-3">
-        <img
-          src="/icons/ginger-mark-192.png"
-          alt=""
-          aria-hidden="true"
-          className="h-7 w-7 rounded-full"
-        />
-        <GingerWordmark className="h-[16px] w-auto" />
-        <span className="flex min-w-0 justify-end">
+      {/* Логотип крупно (Иван, 28.09: мелкий не видно): лиса и надпись в строку. */}
+      <header className="flex items-center gap-3 pt-3 pb-2.5">
+        <span className="flex shrink-0 items-center gap-2.5">
+          <GingerFox className="h-12 w-auto" />
+          <GingerWordmark className="h-[21px] w-auto" />
+        </span>
+        <span className="flex min-w-0 flex-1 justify-end">
           {user ? (
             <span className="text-ink-3 truncate text-[12px] font-semibold">{user.nickname}</span>
           ) : guest ? (

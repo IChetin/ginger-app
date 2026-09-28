@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { GingerLogo } from "@/components/brand/GingerLogo";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const iconClass =
@@ -50,12 +51,8 @@ export function AuthShell({ children, onBack, toast }: Props) {
         </div>
 
         {/* Крупный экран — логотип с надписью; в мелких местах — лиса без надписи. */}
-        <div className="mt-2 mb-1.5 flex">
-          <img
-            src="/brand/ginger-logo-600.webp"
-            alt="Ginger"
-            className="deco-logo h-[132px] w-[132px]"
-          />
+        <div className="mt-1 mb-1.5 flex justify-center">
+          <GingerLogo className="w-[156px]" />
         </div>
         <div aria-hidden="true" className="deco-rule mt-4 mb-1" />
 
