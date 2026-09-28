@@ -102,6 +102,7 @@ async def test_collector_updates_details_and_queues_decisions(
         "names_updated": 1,
         "new": 1,
         "missing": 1,
+        "cancelled": 0,
         "changed": 1,
     }
     # Имя из лобби записано сразу, до разбора очереди решений.
@@ -148,3 +149,52 @@ async def test_collector_updates_details_and_queues_decisions(
     )
     assert finished.status_code == 200
     assert finished.json()["stats"]["snapshots"] == 1
+
+
+async def test_full_pass_cancels_what_lobby_no_longer_shows(
+    admin_client: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Полный проход — источник истины: чего нет в лобби, того игрок не видит (28.09).
+
+    Частичная отправка так не работает: у неё в окне сверки оказывается всё подряд.
+    """
+    monkeypatch.setattr(get_settings(), "collector_token", TOKEN)
+    club = await db_session.scalar(select(Club).where(Club.slug == "ginger"))
+    assert club is not None
+    now = datetime.now(UTC).replace(second=0, microsecond=0)
+    phantom = Tournament(
+        club_id=club.id,
+        name="ФАНТОМ 100K",
+        buyin=Decimal("10"),
+        starts_at=now + timedelta(hours=4),
+    )
+    db_session.add(phantom)
+    await db_session.flush()
+
+    async def send(*, complete: bool) -> dict[str, int]:
+        run = await admin_client.post(
+            "/api/v1/collector/runs", json={"kind": "mtt", "app": "pppoker"}, headers=AUTH
+        )
+        assert run.status_code == 201, run.text
+        snapshot = await admin_client.post(
+            f"/api/v1/collector/runs/{run.json()['id']}/snapshots",
+            headers=AUTH,
+            json={
+                "club_slug": "ginger",
+                "window_from": now.isoformat(),
+                "window_to": (now + timedelta(hours=6)).isoformat(),
+                "complete": complete,
+                "tournaments": [],
+            },
+        )
+        assert snapshot.status_code == 200, snapshot.text
+        return snapshot.json()
+
+    partial = await send(complete=False)
+    assert partial["missing"] == 1
+    assert partial["cancelled"] == 0
+    assert phantom.status is TournamentStatus.SCHEDULED
+
+    full = await send(complete=True)
+    assert full["cancelled"] == 1
+    assert phantom.status is TournamentStatus.CANCELLED

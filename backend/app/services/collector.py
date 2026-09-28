@@ -303,7 +303,7 @@ async def ingest_snapshot(
     for item in unmatched.values():
         if not body.window_from <= item.starts_at <= body.window_to:
             continue
-        if await _queue(
+        queued = await _queue(
             session,
             club_id=club.id,
             kind=TournamentChangeKind.MISSING,
@@ -311,8 +311,15 @@ async def ingest_snapshot(
             title=item.lobby_name or item.name,
             tournament_id=item.id,
             payload={},
-        ):
+        )
+        if queued:
             result.missing += 1
+        # Полный проход видел всё лобби, поэтому пропажа — это факт, а не повод для решения:
+        # турнир снимаем с расписания сразу. Частичная отправка так не умеет — у неё в окне
+        # оказывается всё подряд, и она бы вычистила живые турниры (обожглись 28.09).
+        if body.complete and item.status is TournamentStatus.SCHEDULED:
+            item.status = TournamentStatus.CANCELLED
+            result.cancelled += 1
 
     snapshot.summary = result.model_dump()
     run.stats = {**run.stats, "snapshots": int(run.stats.get("snapshots", 0)) + 1}

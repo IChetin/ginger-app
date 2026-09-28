@@ -78,7 +78,8 @@ try {
             $jsonPath = Export-PhonePass -Cards $cards -Path (Join-Path $day ("{0}-{1}.json" -f $pass.Tag, $stamp))
             if (-not $NoSend -and $withStart) {
                 Write-Host ("== {0} send" -f $pass.Name)
-                $result = Send-CollectorSnapshot -JsonPath $jsonPath -ClubSlug $pass.Slug -App $pass.App -Apply
+                # -Complete: проход прошёл лобби целиком, значит пропавшие турниры сервер снимет сам.
+                $result = Send-CollectorSnapshot -JsonPath $jsonPath -ClubSlug $pass.Slug -App $pass.App -Apply -Complete
                 $result | ConvertTo-Json -Compress | Write-Host
             }
         } catch {
@@ -94,7 +95,12 @@ try {
     Write-Error "Phone pass failed: $_"
     exit 2
 } finally {
-    if ($stayOn) { try { Set-PhoneStayOn 'false' } catch { Write-Warning "stayon reset failed: $_" } }
+    # Экран гасим сразу: от USB телефон почти не заряжается, а горящее лобби съедает батарею
+    # за ночь (решение Ивана 28.09). Разбудит его следующий проход.
+    if ($stayOn) {
+        try { Set-PhoneStayOn 'false'; Invoke-PhoneKey 'KEYCODE_SLEEP' -SettleMs 300 }
+        catch { Write-Warning "screen off failed: $_" }
+    }
     [System.IO.File]::Delete($lock)
     Stop-Transcript | Out-Null
 }

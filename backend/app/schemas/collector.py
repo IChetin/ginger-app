@@ -98,6 +98,10 @@ class SnapshotIn(BaseModel):
     window_from: datetime
     window_to: datetime
     tournaments: list[CollectedTournament] = Field(default_factory=list, max_length=500)
+    # Полный проход по лобби, а не отправка нескольких турниров руками. Только у полного
+    # прохода отсутствие турнира что-то значит: чего нет в лобби, того не видит и игрок
+    # (решение Ивана 28.09). У частичной отправки пропажи просто идут в очередь решений.
+    complete: bool = False
 
     _aware = field_validator("window_from", "window_to")(_require_timezone)
 
@@ -110,6 +114,8 @@ class SnapshotResult(BaseModel):
     names_updated: int = 0
     new: int = 0
     missing: int = 0
+    # Снято с расписания полным проходом: в лобби турнира нет — игроку его не показываем.
+    cancelled: int = 0
     changed: int = 0
 
 

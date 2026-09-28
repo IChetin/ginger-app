@@ -26,7 +26,10 @@ function Send-CollectorSnapshot {
         [string]$ClubSlug = 'ginger-plus',
         [string]$App = 'xpoker',
         [string]$BaseUrl = 'https://lisa52.com',
-        [switch]$Apply
+        [switch]$Apply,
+        # Полный проход по лобби: турниры сетки, которых в нём не оказалось, сервер снимет
+        # с расписания сам. Для отправки нескольких турниров руками флаг не ставить.
+        [switch]$Complete
     )
     # Windows PowerShell 5.1: ConvertFrom-Json отдаёт массив одним объектом (раскрываем конвейером)
     # и сам превращает ISO-даты в DateTime — возвращаем им строку с часовым поясом.
@@ -63,6 +66,7 @@ function Send-CollectorSnapshot {
         club_slug = $ClubSlug
         window_from = $windowFrom.ToString('yyyy-MM-ddTHH:mm:sszzz')
         window_to = ([DateTimeOffset]$windowTo).ToString('yyyy-MM-ddTHH:mm:sszzz')
+        complete = [bool]$Complete
         tournaments = $tournaments
     }
 
