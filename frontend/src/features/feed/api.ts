@@ -10,6 +10,7 @@ import {
   fetchAdminWins,
   fetchFeed,
   fetchWinsHistory,
+  importWinsCsv,
   updatePost,
   uploadPostImage,
   type FeedPostPayload,
@@ -53,6 +54,17 @@ export function useCreateWin() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createWin,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: keys.adminWins });
+      void queryClient.invalidateQueries({ queryKey: keys.feed });
+    },
+  });
+}
+
+export function useImportWins() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => importWinsCsv(file, file.name),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: keys.adminWins });
       void queryClient.invalidateQueries({ queryKey: keys.feed });

@@ -84,5 +84,18 @@ export function uploadPostImage(id: string, file: Blob, filename: string) {
   return apiPostForm<FeedPostAdmin>(`/api/v1/admin/posts/${id}/image`, form);
 }
 
+export interface WinsImportResult {
+  created: number;
+  duplicates: number;
+  errors: string[];
+}
+
+/** Неделя из CSV «Текучки»: дополняет занесённое руками, дублей не создаёт. */
+export function importWinsCsv(file: Blob, filename: string) {
+  const form = new FormData();
+  form.append("file", file, filename);
+  return apiPostForm<WinsImportResult>("/api/v1/admin/wins/import", form);
+}
+
 export const deletePostImage = (id: string) =>
   apiDelete<FeedPostAdmin>(`/api/v1/admin/posts/${id}/image`, { allowEmpty: false });

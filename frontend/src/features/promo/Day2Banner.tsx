@@ -24,9 +24,7 @@ export function Day2Banner() {
         DAY2
       </span>
       <span className="relative min-w-0 flex-1 leading-tight">
-        <span className="text-ink block truncate text-[12px] font-semibold">
-          Для живых серий
-        </span>
+        <span className="text-ink block truncate text-[12px] font-semibold">Для живых серий</span>
         <span className="text-ink-3 font-display mt-0.5 block truncate text-[9px] tracking-[0.14em] uppercase">
           Расписание · Банкролл
         </span>

@@ -3,13 +3,13 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, File, Response, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.auth import User
-from app.schemas.feed import WinCreate, WinRead
+from app.schemas.feed import WinCreate, WinRead, WinsImportResult
 from app.services import feed as feed_service
 
 router = APIRouter()
@@ -26,6 +26,14 @@ async def list_wins(db: Db) -> list[WinRead]:
 @router.post("/wins", response_model=WinRead, status_code=201)
 async def create_win(body: WinCreate, actor: Manager, db: Db) -> WinRead:
     return await feed_service.create_win(db, actor, body)
+
+
+@router.post("/wins/import", response_model=WinsImportResult)
+async def import_wins(
+    actor: Manager, db: Db, file: Annotated[UploadFile, File()]
+) -> WinsImportResult:
+    """Неделя из CSV «Текучки» (по понедельникам): дополняет занесённое руками, без дублей."""
+    return await feed_service.import_wins_csv(db, actor, await file.read())
 
 
 @router.delete("/wins/{win_id}", status_code=204)

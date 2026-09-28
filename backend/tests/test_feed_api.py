@@ -196,6 +196,64 @@ async def test_win_validation_and_player_cannot_add(
 
 async def test_player_cannot_manage_wins(user_client: AsyncClient) -> None:
     assert (await user_client.get("/api/v1/admin/wins")).status_code == 403
+    upload = await user_client.post(
+        "/api/v1/admin/wins/import", files={"file": ("w.csv", b"won_on\n", "text/csv")}
+    )
+    assert upload.status_code == 403
+
+
+WEEK_CSV = """won_on,club,app,player_nickname,tournament_name,place,prize_amount,currency
+2026-09-22,Ginger+,xpoker,IFWeterok,Дижестив,1,40920.00,RUB
+2026-09-22,Ginger+,xpoker,молотoк,Дижестив,2,38330.00,RUB
+2026-09-22,Ginger+,xpoker,Чистотайт,NLH KNOCKOUT 220k🥊,21,1630.00,RUB
+2026-09-22,Ginger+,xpoker,Чистотайт,Sat HR 5000🎯3 🎫,1,5000.00,RUB
+2026-09-27,Нет такого,pppoker,кто-то,Турнир,1,100.00,RUB
+"""
+
+
+async def test_week_csv_fills_in_manual_wins_without_duplicates(
+    admin_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    club = await _club(db_session, "ginger-plus")
+    # Внутри недели Иван заносит заметное руками — ник кириллицей, место не указал.
+    manual = await admin_client.post(
+        "/api/v1/admin/wins",
+        json={
+            "player_nickname": "молоток",
+            "club_id": str(club.id),
+            "tournament_name": "Дижестив",
+            "prize_amount": "38330",
+            "currency_code": "RUB",
+            "won_on": "2026-09-22",
+        },
+    )
+    assert manual.status_code == 201, manual.text
+
+    def upload() -> dict[str, object]:
+        return {"file": ("wins-2026-W39.csv", WEEK_CSV.encode(), "text/csv")}
+
+    first = await admin_client.post("/api/v1/admin/wins/import", files=upload())
+    assert first.status_code == 200, first.text
+    result = first.json()
+    # «молотoк» с латинской o — тот же выигрыш; у Чистотайта два разных турнира за день.
+    assert (result["created"], result["duplicates"]) == (3, 1)
+    assert result["errors"] == ["строка 6: клуб «Нет такого» не найден"]
+
+    again = (await admin_client.post("/api/v1/admin/wins/import", files=upload())).json()
+    assert (again["created"], again["duplicates"]) == (0, 4)
+
+    wins = (await admin_client.get("/api/v1/admin/wins")).json()
+    week = [item for item in wins if item["won_on"] == "2026-09-22"]
+    assert len(week) == 4
+
+
+async def test_week_csv_needs_all_columns(admin_client: AsyncClient) -> None:
+    broken = await admin_client.post(
+        "/api/v1/admin/wins/import",
+        files={"file": ("w.csv", b"won_on,club\n2026-09-22,Ginger+\n", "text/csv")},
+    )
+    assert broken.status_code == 422
+    assert broken.json()["error"]["code"] == "bad_csv"
 
 
 async def test_manager_publishes_post_and_feed_shows_it(

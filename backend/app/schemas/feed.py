@@ -52,6 +52,14 @@ class WinCreate(BaseModel):
         return value.strip().upper()
 
 
+class WinsImportResult(BaseModel):
+    """Итог загрузки недели: сколько добавлено, сколько уже было, какие строки не разобраны."""
+
+    created: int
+    duplicates: int
+    errors: list[str]
+
+
 class FeedPostRead(BaseModel):
     """Запись менеджера в ленте: текст, картинка и ссылка внутрь приложения."""
 

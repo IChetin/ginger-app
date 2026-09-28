@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ApiError } from "@/api/client";
 import { formatMoney } from "@/features/chips/lib/format";
 import { usePublicClubs } from "@/features/chips/hooks";
-import { useAdminWins, useCreateWin, useDeleteWin } from "@/features/feed/api";
+import { useAdminWins, useCreateWin, useDeleteWin, useImportWins } from "@/features/feed/api";
 
 const CURRENCIES = ["RUB", "USDT", "USD"] as const;
 
@@ -12,6 +12,60 @@ const todayMsk = () =>
 
 const inputClass =
   "border-line-strong bg-surface-2 block h-10 w-full rounded-md border px-2.5 text-[14px]";
+
+/**
+ * Неделя из выгрузок (по понедельникам): CSV «Текучки» из settlements/wins/ дополняет то, что
+ * занесли руками за неделю. Повторная загрузка ничего не задваивает.
+ */
+function WeekImport() {
+  const importWins = useImportWins();
+  const result = importWins.data;
+  return (
+    <div
+      className="border-line bg-surface mt-3 rounded-md border px-3 py-2.5"
+      data-testid="wins-import"
+    >
+      <p className="text-ink text-[14px] font-bold">Неделя из выгрузок</p>
+      <p className="text-ink-2 mt-0.5 text-[12.5px]">
+        Файл wins-2026-W&lt;номер&gt;.csv — добавит всё, чего ещё нет; занесённое руками не задвоит.
+      </p>
+      <label className="bg-gold-grad text-ink-ongold mt-2 inline-flex h-10 cursor-pointer items-center px-4 text-[13px] font-bold">
+        {importWins.isPending ? "Загружаем…" : "Загрузить CSV недели"}
+        <input
+          type="file"
+          accept=".csv,text/csv"
+          className="sr-only"
+          disabled={importWins.isPending}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            event.target.value = "";
+            if (file) importWins.mutate(file);
+          }}
+        />
+      </label>
+      {result ? (
+        <p role="status" className="text-ink mt-2 text-[13px]">
+          Добавлено {result.created}, уже было {result.duplicates}
+          {result.errors.length > 0 ? `, не разобрано ${result.errors.length}` : ""}.
+        </p>
+      ) : null}
+      {result && result.errors.length > 0 ? (
+        <ul className="text-danger mt-1 list-none p-0 text-[12px]">
+          {result.errors.map((error) => (
+            <li key={error}>{error}</li>
+          ))}
+        </ul>
+      ) : null}
+      {importWins.error ? (
+        <p role="alert" className="text-danger mt-2 text-[12px] font-semibold">
+          {importWins.error instanceof ApiError
+            ? importWins.error.message
+            : "Не удалось загрузить файл"}
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 /** Выигрыши для ленты (этап 7): менеджер заносит — лента показывает сразу. */
 export function AdminWinsPage() {
@@ -37,6 +91,8 @@ export function AdminWinsPage() {
         Попадают в ленту на главной. Если игрок привязан и не дал согласия на публикацию, лента
         покажет «Игрок клуба».
       </p>
+
+      <WeekImport />
 
       <form
         className="border-line bg-surface mt-3 grid grid-cols-2 gap-1.5 rounded-md border px-3 py-2.5"

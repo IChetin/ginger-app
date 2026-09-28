@@ -7,8 +7,11 @@
 from __future__ import annotations
 
 import asyncio
+import csv
+import io
 import logging
 import random
+import re
 from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal
 from uuid import UUID
@@ -34,6 +37,7 @@ from app.schemas.feed import (
     WinClub,
     WinCreate,
     WinRead,
+    WinsImportResult,
 )
 from app.schemas.tournaments import TournamentClub, TournamentRead
 from app.services import attachments
@@ -194,6 +198,120 @@ async def delete_win(session: AsyncSession, win_id: UUID) -> None:
         raise AppError("win_not_found", "Запись не найдена", 404)
     await session.delete(win)
     await session.flush()
+
+
+# CSV недели от «Текучки» (settlements/wins/wins-YYYY-WNN.csv); клуб ищем по имени, app не нужен.
+WINS_CSV_COLUMNS = (
+    "won_on",
+    "club",
+    "player_nickname",
+    "tournament_name",
+    "place",
+    "prize_amount",
+    "currency",
+)
+# Латиница, которую на экране не отличить от кириллицы: «молотoк» и «мoлоток» — один ник.
+_HOMOGLYPHS = str.maketrans("aeopcxykm", "аеорсхукм")
+_NON_WORD = re.compile(r"[\W_]+")
+
+
+def _nickname_key(value: str) -> str:
+    return value.strip().casefold().translate(_HOMOGLYPHS)
+
+
+def _tournament_key(value: str) -> str:
+    """Без эмодзи, пробелов и регистра: «🥊GRAND KNOCKOUT🥊» = «Grand Knockout»."""
+    return _NON_WORD.sub("", value.casefold())
+
+
+def _same_win(
+    existing: PlayerWin, nickname: str, tournament: str, place: int | None, prize: Decimal
+) -> bool:
+    """Тот же выигрыш, занесённый руками: ник и турнир (или сумма, или место) либо место и сумма."""
+    same_place = place is not None and existing.place == place
+    same_prize = abs(existing.prize_amount - prize) < 1
+    if _nickname_key(existing.player_nickname) == _nickname_key(nickname):
+        same_tournament = _tournament_key(existing.tournament_name) == _tournament_key(tournament)
+        return same_tournament or same_prize or same_place
+    return same_place and same_prize
+
+
+async def import_wins_csv(session: AsyncSession, actor: User, content: bytes) -> WinsImportResult:
+    """Неделя из выгрузок (понедельник): дополняет то, что менеджер занёс руками, без дублей.
+
+    Строку, которую не разобрать, пропускаем и называем в ответе — остальные загружаются.
+    """
+    try:
+        text = content.decode("utf-8-sig")
+    except UnicodeDecodeError as exc:
+        raise AppError("bad_csv", "Файл не в UTF-8", 422) from exc
+    reader = csv.DictReader(io.StringIO(text))
+    missing = [column for column in WINS_CSV_COLUMNS if column not in (reader.fieldnames or [])]
+    if missing:
+        raise AppError("bad_csv", f"В файле нет колонок: {', '.join(missing)}", 422)
+
+    clubs = {club.name.casefold(): club for club in await session.scalars(select(Club))}
+    currencies = set(await session.scalars(select(Currency.code)))
+    rows: list[PlayerWin] = []
+    errors: list[str] = []
+    for number, row in enumerate(reader, start=2):
+        cell = {key: (row.get(key) or "").strip() for key in WINS_CSV_COLUMNS}
+        try:
+            won_on = date.fromisoformat(cell["won_on"])
+            club = clubs.get(cell["club"].casefold())
+            if club is None:
+                raise ValueError(f"клуб «{cell['club']}» не найден")
+            if not cell["player_nickname"] or not cell["tournament_name"]:
+                raise ValueError("пустой ник или турнир")
+            place = int(cell["place"]) if cell["place"] else None
+            prize = Decimal(cell["prize_amount"].replace(",", "."))
+            if prize <= 0:
+                raise ValueError("приз должен быть больше нуля")
+            currency = cell["currency"].upper()
+            if currency not in currencies:
+                raise ValueError(f"валюта «{currency}» неизвестна")
+        except (ValueError, ArithmeticError) as exc:
+            errors.append(f"строка {number}: {exc}")
+            continue
+        rows.append(
+            PlayerWin(
+                player_nickname=cell["player_nickname"][:64],
+                club_id=club.id,
+                tournament_name=cell["tournament_name"][:160],
+                place=place,
+                prize_amount=prize,
+                currency_code=currency,
+                won_on=won_on,
+                created_by_user_id=actor.id,
+            )
+        )
+    if not rows:
+        return WinsImportResult(created=0, duplicates=0, errors=errors)
+
+    first = min(row.won_on for row in rows)
+    last = max(row.won_on for row in rows)
+    known = list(
+        await session.scalars(
+            select(PlayerWin).where(PlayerWin.won_on >= first, PlayerWin.won_on <= last)
+        )
+    )
+    created = duplicates = 0
+    for win in rows:
+        if any(
+            other.won_on == win.won_on
+            and other.club_id == win.club_id
+            and _same_win(
+                other, win.player_nickname, win.tournament_name, win.place, win.prize_amount
+            )
+            for other in known
+        ):
+            duplicates += 1
+            continue
+        session.add(win)
+        known.append(win)
+        created += 1
+    await session.flush()
+    return WinsImportResult(created=created, duplicates=duplicates, errors=errors)
 
 
 POST_IMAGE_PURPOSE = "feed_post"
