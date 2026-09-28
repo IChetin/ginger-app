@@ -51,6 +51,7 @@
   --frame-hi-outer: rgb(241 214 142 / 90%);
   --frame-hi-inner: rgb(241 214 142 / 45%);
   --ornament: rgb(217 179 106 / 55%);
+  --shimmer-hi: #fff3cf;
   --value-hi: #f1d68e;
   --value-mid: #d9b36a;
   --gold-grad: linear-gradient(var(--gold-fill), var(--gold-fill));
@@ -105,6 +106,7 @@
   --frame-hi-outer: rgb(111 79 18 / 90%);
   --frame-hi-inner: rgb(111 79 18 / 45%);
   --ornament: rgb(138 106 43 / 60%);
+  --shimmer-hi: #e2c27a;
   --value-hi: #6f4f12;
   --value-mid: #9a7432;
   --gold-grad: linear-gradient(var(--gold-fill), var(--gold-fill));
@@ -158,6 +160,7 @@
     --frame-hi-outer: rgb(111 79 18 / 90%);
     --frame-hi-inner: rgb(111 79 18 / 45%);
     --ornament: rgb(138 106 43 / 60%);
+    --shimmer-hi: #e2c27a;
     --value-hi: #6f4f12;
     --value-mid: #9a7432;
     --gold-grad: linear-gradient(var(--gold-fill), var(--gold-fill));
@@ -653,4 +656,68 @@ html.ginger-layout-wide [data-mobile-nav] {
     outline: 2px solid var(--gold-hi);
     outline-offset: 2px;
   }
+}
+
+/* ============ АР-ДЕКО · ДВИЖЕНИЕ (28.09.2026) ============
+   Бегущая строка на главной и баннер Day2. При «уменьшить движение» всё стоит — общее правило выше. */
+@keyframes deco-ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes deco-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes deco-shimmer {
+  0% {
+    background-position: 150% 0;
+  }
+  55%,
+  100% {
+    background-position: -50% 0;
+  }
+}
+
+@keyframes deco-glint {
+  0%,
+  65% {
+    transform: translateX(-120%) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(330%) skewX(-20deg);
+  }
+}
+
+@keyframes deco-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* Золото с бегущим бликом — для одного слова-акцента, не для текста. */
+@utility deco-shimmer-text {
+  background: linear-gradient(
+    100deg,
+    var(--gold) 0%,
+    var(--gold) 40%,
+    var(--shimmer-hi) 50%,
+    var(--gold) 60%,
+    var(--gold) 100%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: deco-shimmer 4s ease-in-out infinite;
 }

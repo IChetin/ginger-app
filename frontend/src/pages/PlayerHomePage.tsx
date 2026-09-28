@@ -9,6 +9,7 @@ import { RequestRow } from "@/features/chips/components/RequestRow";
 import { useChipRequests, usePlayerMe } from "@/features/chips/hooks";
 import { isOpen } from "@/features/chips/lib/format";
 import { FeedSections } from "@/features/feed/FeedSections";
+import { HomeTicker } from "@/features/feed/HomeTicker";
 import { InstallPlaque } from "@/features/onboarding/InstallPlaque";
 import { useThreads } from "@/features/threads/hooks";
 import { useNow } from "@/features/tournaments/hooks";
@@ -84,7 +85,7 @@ export function PlayerHomePage() {
           ) : null}
         </span>
       </header>
-      <div aria-hidden="true" className="deco-rule" />
+      <HomeTicker fallback={<div aria-hidden="true" className="deco-rule" />} />
 
       {guest ? (
         <div

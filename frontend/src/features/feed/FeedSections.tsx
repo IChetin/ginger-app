@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import type { Tournament } from "@/api/types/tournaments";
 import { formatMoney as formatAmount, formatNumber } from "@/features/chips/lib/format";
 import { useFeed, type FeedPost, type WinItem } from "@/features/feed/api";
+import { Day2Banner } from "@/features/promo/Day2Banner";
 import { AppIcon } from "@/features/tournaments/components/TournamentCard";
 import { TableView } from "@/features/tournaments/components/ScheduleTable";
 import { TournamentSheet } from "@/features/tournaments/components/TournamentSheet";
@@ -231,6 +232,8 @@ export function FeedSections({ now }: { now: Date }) {
           </div>
         </>
       ) : null}
+
+      <Day2Banner />
 
       {evening.length > 0 ? (
         <>
