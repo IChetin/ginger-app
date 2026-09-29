@@ -92,7 +92,10 @@ function ClubPassCard({ pass }: { pass: ClubPass }) {
     ([key, label]) => `${label} ${pass.summary[key]}`,
   );
   return (
-    <div className="border-line bg-surface rounded-md border px-3 py-2" data-testid="collector-club">
+    <div
+      className="border-line bg-surface rounded-md border px-3 py-2"
+      data-testid="collector-club"
+    >
       <div className="flex items-baseline gap-2">
         <span className="text-ink text-[14px] font-bold">{pass.club_name}</span>
         <span className="text-ink-3 text-[12px]">{APP_LABELS[pass.app]}</span>

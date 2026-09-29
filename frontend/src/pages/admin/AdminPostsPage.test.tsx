@@ -35,6 +35,7 @@ function makePost(overrides: Partial<FeedPostAdmin> = {}): FeedPostAdmin {
     link_label: null,
     club: null,
     is_pinned: false,
+    is_promo: false,
     published_at: "2026-09-22T09:00:00Z",
     expires_at: null,
     author_nickname: "admin",
@@ -70,6 +71,7 @@ describe("AdminPostsPage", () => {
       link_label: null,
       club_id: null,
       is_pinned: true,
+      is_promo: false,
       published_at: null,
       expires_at: null,
     });

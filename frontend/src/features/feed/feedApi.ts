@@ -23,6 +23,8 @@ export interface FeedPost {
   link_label: string | null;
   club: { id: string; name: string; app: PokerApp } | null;
   is_pinned: boolean;
+  /** Акция клуба: запись идёт и в ленту, и в раздел «Акции» рядом с MTT и CASH. */
+  is_promo: boolean;
   published_at: string;
   expires_at: string | null;
   /** Автозапись о турнире (Иван, 27.09): «pick» — старт из Editor's Pick, «major» — Major дня. */
@@ -42,6 +44,7 @@ export interface FeedPostPayload {
   link_label?: string | null;
   club_id?: string | null;
   is_pinned: boolean;
+  is_promo: boolean;
   published_at?: string | null;
   expires_at?: string | null;
 }
@@ -66,6 +69,7 @@ export interface WinCreatePayload {
 
 // Запросы отдельно от хуков: тесты подменяют модуль целиком.
 export const fetchFeed = () => apiGet<Feed>("/api/v1/feed");
+export const fetchPromotions = () => apiGet<FeedPost[]>("/api/v1/promotions");
 export const fetchWinsHistory = () => apiGet<WinItem[]>("/api/v1/feed/wins");
 export const fetchAdminWins = () => apiGet<WinItem[]>("/api/v1/admin/wins");
 export const createWin = (body: WinCreatePayload) => apiPost<WinItem>("/api/v1/admin/wins", body);

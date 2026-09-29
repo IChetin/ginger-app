@@ -452,3 +452,45 @@ async def test_autoposts_pick_each_start_or_random_major(
     assert await sync_auto_posts(db_session, now=now) == 0
     titles = {post.title for post in await list_posts(db_session, now=now + timedelta(minutes=1))}
     assert titles == {"Major дня: Dream River"}
+
+
+async def test_promo_post_goes_to_feed_and_to_its_own_section(
+    admin_client: AsyncClient, client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """Акция — это запись ленты с галочкой: видна и в ленте, и в разделе «Акции» (29.09)."""
+    club = await _club(db_session, "ginger")
+    promo = await admin_client.post(
+        "/api/v1/admin/posts",
+        json={
+            "title": "Рейкбек 35% в октябре",
+            "body": "Считаем со всего фи, выплата по понедельникам.",
+            "club_id": str(club.id),
+            "is_pinned": False,
+            "is_promo": True,
+        },
+    )
+    assert promo.status_code == 201, promo.text
+    assert promo.json()["is_promo"] is True
+
+    news = await admin_client.post(
+        "/api/v1/admin/posts",
+        json={"title": "Итоги вторника", "club_id": str(club.id), "is_pinned": False},
+    )
+    assert news.status_code == 201, news.text
+    assert news.json()["is_promo"] is False
+
+    feed = (await client.get("/api/v1/feed")).json()
+    assert [item["title"] for item in feed["posts"]] == ["Итоги вторника", "Рейкбек 35% в октябре"]
+
+    # Раздел открыт и гостю: условия клубов от него скрывать незачем.
+    promos = await client.get("/api/v1/promotions")
+    assert promos.status_code == 200, promos.text
+    assert [item["title"] for item in promos.json()] == ["Рейкбек 35% в октябре"]
+
+    # Галочку можно снять — запись останется в ленте, но уйдёт из раздела.
+    edited = await admin_client.put(
+        f"/api/v1/admin/posts/{promo.json()['id']}",
+        json={"title": "Рейкбек 35% в октябре", "is_pinned": False, "is_promo": False},
+    )
+    assert edited.status_code == 200, edited.text
+    assert (await client.get("/api/v1/promotions")).json() == []

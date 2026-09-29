@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.rate_limit import ScheduleViewer
-from app.schemas.feed import FeedRead, WinRead
+from app.schemas.feed import FeedPostRead, FeedRead, WinRead
 from app.services import feed as feed_service
 from app.services.tournaments.guest import tournaments_for_guest
 
@@ -34,6 +34,19 @@ async def get_feed(
             ],
         }
     )
+
+
+@router.get("/promotions", response_model=list[FeedPostRead])
+async def get_promotions(
+    db: Annotated[AsyncSession, Depends(get_db)], viewer: ScheduleViewer
+) -> list[FeedPostRead]:
+    """Акции клубов — третий раздел рядом с MTT и CASH (решение Ивана 29.09).
+
+    Те же записи ленты, отмеченные акцией: гостю показываем целиком, деталей турниров
+    в них нет, а скрывать условия клубов от него незачем — это витрина.
+    """
+    del viewer
+    return await feed_service.list_posts(db, only_promo=True)
 
 
 @router.get("/feed/wins", response_model=list[WinRead])

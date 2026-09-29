@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 const TABS = [
   { key: "tournaments", to: "/tournaments", label: "MTT" },
   { key: "cash", to: "/cash", label: "CASH" },
+  // Акции клубов (решение Ивана 29.09) — третий раздел; по-русски, потому что так их зовут.
+  { key: "promos", to: "/promos", label: "АКЦИИ" },
 ] as const;
 
 /**

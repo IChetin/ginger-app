@@ -81,6 +81,8 @@ class FeedPost(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             unique=True,
             postgresql_where=text("tournament_id IS NOT NULL"),
         ),
+        # Вкладка «Акции» просит только их и только живые.
+        Index("ix_feed_posts_promo_published", "published_at", postgresql_where=text("is_promo")),
     )
 
     title: Mapped[str] = mapped_column(String(120), nullable=False)
@@ -95,7 +97,14 @@ class FeedPost(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         UUID(as_uuid=True),
         ForeignKey("clubs.id", ondelete="SET NULL"),
     )
-    is_pinned: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_pinned: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
+    # Акция клуба (решение Ивана 29.09): такая запись идёт и в ленту, и во вкладку «Акции»
+    # рядом с MTT и CASH. Поля те же — клуб, текст, афиша, ссылка и срок показа.
+    is_promo: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
     # Автозапись о турнире (Иван, 27.09): каждый старт из Editor's Pick, а если сегодня его
     # нет — случайный Major. Одна запись на старт; «удалённая» просто снята с показа.
     tournament_id: Mapped[uuid.UUID | None] = mapped_column(

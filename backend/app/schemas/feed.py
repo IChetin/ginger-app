@@ -71,6 +71,7 @@ class FeedPostRead(BaseModel):
     link_label: str | None
     club: WinClub | None
     is_pinned: bool
+    is_promo: bool = False
     published_at: datetime
     expires_at: datetime | None
     # Автозапись о турнире: тап открывает его карточку (Иван, 27.09).
@@ -85,6 +86,8 @@ class FeedPostCreate(BaseModel):
     link_label: str | None = Field(default=None, max_length=40)
     club_id: UUID | None = None
     is_pinned: bool = False
+    # Акция клуба: попадает и в ленту, и во вкладку «Акции».
+    is_promo: bool = False
     published_at: datetime | None = None
     expires_at: datetime | None = None
 

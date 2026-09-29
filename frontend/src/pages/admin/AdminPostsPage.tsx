@@ -25,6 +25,7 @@ interface FormState {
   linkLabel: string;
   clubId: string;
   isPinned: boolean;
+  isPromo: boolean;
   publishedAt: string;
   expiresAt: string;
 }
@@ -36,6 +37,7 @@ const EMPTY: FormState = {
   linkLabel: "",
   clubId: "",
   isPinned: false,
+  isPromo: false,
   publishedAt: "",
   expiresAt: "",
 };
@@ -60,6 +62,7 @@ function toForm(post: FeedPostAdmin): FormState {
     linkLabel: post.link_label ?? "",
     clubId: post.club?.id ?? "",
     isPinned: post.is_pinned,
+    isPromo: post.is_promo,
     publishedAt: toLocalInput(post.published_at),
     expiresAt: toLocalInput(post.expires_at),
   };
@@ -73,6 +76,7 @@ function toPayload(form: FormState): FeedPostPayload {
     link_label: form.linkLabel.trim() || null,
     club_id: form.clubId || null,
     is_pinned: form.isPinned,
+    is_promo: form.isPromo,
     published_at: fromLocalInput(form.publishedAt),
     expires_at: fromLocalInput(form.expiresAt),
   };
@@ -196,6 +200,15 @@ export function AdminPostsPage() {
             className="size-4"
           />
           Закрепить наверху
+        </label>
+        <label className="text-ink-2 flex h-10 items-center gap-2 text-[13px] font-semibold">
+          <input
+            type="checkbox"
+            checked={form.isPromo}
+            onChange={(event) => set("isPromo", event.target.checked)}
+            className="size-4"
+          />
+          Акция — ещё и в раздел «Акции»
         </label>
         <label className="text-ink-3 text-[11px] font-bold">
           Публикация

@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import Date, ForeignKey, Numeric, String, text
+from sqlalchemy import Date, ForeignKey, Index, Numeric, String, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -25,6 +25,15 @@ class Organizer(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     """Союз клубов: NUTS, Black Sea, Poker21, ProSto. По нему выбирается парсер сетки."""
 
     __tablename__ = "organizers"
+    __table_args__ = (
+        # Поиск по названию союза в админке — триграммный индекс из миграции j6f2b4c71d05.
+        Index(
+            "ix_organizers_name_trgm",
+            "name",
+            postgresql_using="gin",
+            postgresql_ops={"name": "gin_trgm_ops"},
+        ),
+    )
 
     name: Mapped[str] = mapped_column(String(128), nullable=False)
     slug: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)

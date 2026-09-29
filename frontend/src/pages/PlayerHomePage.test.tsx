@@ -160,6 +160,7 @@ describe("PlayerHomePage", () => {
           link_label: "Расписание",
           club: null,
           is_pinned: true,
+          is_promo: false,
           published_at: "2026-09-14T09:00:00Z",
           expires_at: null,
         },

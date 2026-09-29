@@ -80,7 +80,7 @@ function postStamp(iso: string): string {
  * Новость: запись менеджера (анонс, афиша, итоги) или автозапись о турнире — у неё
  * «Подробнее» открывает карточку турнира. Длинный текст раскрывается по кнопке.
  */
-function PostCard({
+export function PostCard({
   post,
   onOpenTournament,
 }: {

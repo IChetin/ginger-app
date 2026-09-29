@@ -356,6 +356,7 @@ def _post_read(post: FeedPost, tournament: TournamentRead | None = None) -> Feed
         link_label=post.link_label,
         club=_post_club(post),
         is_pinned=post.is_pinned,
+        is_promo=post.is_promo,
         published_at=post.published_at,
         expires_at=post.expires_at,
         auto_kind=post.auto_kind,
@@ -390,11 +391,18 @@ def _post_admin_read(post: FeedPost, author: str | None) -> FeedPostAdminRead:
 
 
 async def list_posts(
-    session: AsyncSession, *, now: datetime | None = None, limit: int = POSTS_LIMIT
+    session: AsyncSession,
+    *,
+    now: datetime | None = None,
+    limit: int = POSTS_LIMIT,
+    only_promo: bool = False,
 ) -> list[FeedPostRead]:
-    """Записи в ленте: опубликованные, не просроченные; закреплённые — сверху."""
+    """Записи в ленте: опубликованные, не просроченные; закреплённые — сверху.
+
+    `only_promo` — вкладка «Акции»: те же записи, но лишь отмеченные акцией.
+    """
     moment = now or datetime.now(UTC)
-    posts = await session.scalars(
+    query = (
         select(FeedPost)
         .options(selectinload(FeedPost.club))
         .where(
@@ -404,6 +412,9 @@ async def list_posts(
         .order_by(FeedPost.is_pinned.desc(), FeedPost.published_at.desc())
         .limit(limit)
     )
+    if only_promo:
+        query = query.where(FeedPost.is_promo.is_(True))
+    posts = await session.scalars(query)
     visible = list(posts)
     tournaments = await _linked_tournaments(session, visible)
     return [
@@ -451,6 +462,7 @@ async def create_post(
         link_label=body.link_label,
         club_id=body.club_id,
         is_pinned=body.is_pinned,
+        is_promo=body.is_promo,
         published_at=body.published_at or now or datetime.now(UTC),
         expires_at=body.expires_at,
         created_by_user_id=actor.id,
@@ -472,6 +484,7 @@ async def update_post(
     post.link_label = body.link_label
     post.club_id = body.club_id
     post.is_pinned = body.is_pinned
+    post.is_promo = body.is_promo
     if body.published_at is not None:
         post.published_at = body.published_at
     post.expires_at = body.expires_at

@@ -9,6 +9,7 @@ import {
   fetchAdminPosts,
   fetchAdminWins,
   fetchFeed,
+  fetchPromotions,
   fetchWinsHistory,
   importWinsCsv,
   updatePost,
@@ -27,6 +28,7 @@ export type {
 
 const keys = {
   feed: ["feed"] as const,
+  promotions: ["feed", "promotions"] as const,
   winsHistory: ["feed", "wins"] as const,
   adminWins: ["admin", "wins"] as const,
   adminPosts: ["admin", "posts"] as const,
@@ -39,6 +41,11 @@ export function useFeed() {
     // Турниры стартуют, вечер сменяется — лента живая.
     refetchInterval: 5 * 60_000,
   });
+}
+
+/** Акции клубов — раздел рядом с MTT и CASH; те же записи ленты, отмеченные акцией. */
+export function usePromotions() {
+  return useQuery({ queryKey: keys.promotions, queryFn: fetchPromotions });
 }
 
 /** Полная история выигрышей — страница по тапу на баннер. */
