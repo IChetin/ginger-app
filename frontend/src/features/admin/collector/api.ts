@@ -18,8 +18,19 @@ export interface CollectorRun {
   stats: Record<string, unknown>;
 }
 
+/** Последний проход по клубу: когда, сколько турниров увидели и что с ними сделали. */
+export interface ClubPass {
+  club_id: string;
+  club_name: string;
+  app: PokerApp;
+  captured_at: string;
+  tournaments: number;
+  summary: Record<string, number>;
+}
+
 export interface CollectorStatus {
   runs: CollectorRun[];
+  clubs: ClubPass[];
   pending_changes: number;
 }
 

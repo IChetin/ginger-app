@@ -33,6 +33,7 @@ from app.models.enums import (
 )
 from app.models.tournaments import Tournament, TournamentTemplate
 from app.schemas.collector import (
+    ClubPassRead,
     CollectedTournament,
     CollectorStatus,
     RunFinish,
@@ -458,7 +459,27 @@ async def collector_status(session: AsyncSession) -> CollectorStatus:
         .select_from(TournamentChange)
         .where(TournamentChange.status == TournamentChangeStatus.PENDING)
     )
+    # По одному последнему снимку на клуб: когда проходили и что там нашли.
+    passes = await session.execute(
+        select(CollectorSnapshot, Club.name, Club.app)
+        .join(Club, Club.id == CollectorSnapshot.club_id)
+        .order_by(CollectorSnapshot.club_id, CollectorSnapshot.captured_at.desc())
+        .distinct(CollectorSnapshot.club_id)
+    )
+    clubs = [
+        ClubPassRead(
+            club_id=snapshot.club_id,
+            club_name=club_name,
+            app=app,
+            captured_at=snapshot.captured_at,
+            tournaments=len(snapshot.payload.get("tournaments", [])),
+            summary=snapshot.summary,
+        )
+        for snapshot, club_name, app in passes
+    ]
+    clubs.sort(key=lambda item: item.captured_at, reverse=True)
     return CollectorStatus(
         runs=[RunRead.model_validate(run) for run in latest.values()],
+        clubs=clubs,
         pending_changes=int(pending or 0),
     )

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type {
+  ClubPass,
   CollectorRun,
   TournamentChange,
   TournamentChangeKind,
@@ -75,6 +76,36 @@ function RunCard({ run }: { run: CollectorRun }) {
   );
 }
 
+/** Итог прохода по клубу — словами: сколько увидели в лобби и что из этого вышло. */
+const SUMMARY_LABEL: [key: string, label: string][] = [
+  ["matched", "совпало"],
+  ["new", "новых"],
+  ["cancelled", "снято"],
+  ["missing", "пропало"],
+  ["changed", "расхождений"],
+  ["details_updated", "параметров"],
+  ["names_updated", "имён"],
+];
+
+function ClubPassCard({ pass }: { pass: ClubPass }) {
+  const parts = SUMMARY_LABEL.filter(([key]) => (pass.summary[key] ?? 0) > 0).map(
+    ([key, label]) => `${label} ${pass.summary[key]}`,
+  );
+  return (
+    <div className="border-line bg-surface rounded-md border px-3 py-2" data-testid="collector-club">
+      <div className="flex items-baseline gap-2">
+        <span className="text-ink text-[14px] font-bold">{pass.club_name}</span>
+        <span className="text-ink-3 text-[12px]">{APP_LABELS[pass.app]}</span>
+        <span className="text-ink-3 num ml-auto text-[12px]">{ago(pass.captured_at)}</span>
+      </div>
+      <p className="text-ink-2 text-[12.5px]">
+        В лобби {pass.tournaments}
+        {parts.length > 0 ? ` · ${parts.join(", ")}` : ""}
+      </p>
+    </div>
+  );
+}
+
 function ChangeDetails({ change }: { change: TournamentChange }) {
   if (change.kind === "changed") {
     return (
@@ -139,6 +170,18 @@ export function AdminCollectorPage() {
       <div className="grid gap-1.5 sm:grid-cols-2">
         {status.data?.runs.map((run) => (
           <RunCard key={run.id} run={run} />
+        ))}
+      </div>
+
+      <h2 className="text-ink-3 mt-5 mb-1.5 text-[11px] font-bold tracking-[0.08em] uppercase">
+        Что прошли по клубам
+      </h2>
+      {status.data && status.data.clubs.length === 0 ? (
+        <p className="text-ink-3 text-[13px]">Ни по одному клубу проходов ещё не было.</p>
+      ) : null}
+      <div className="flex flex-col gap-1.5">
+        {status.data?.clubs.map((pass) => (
+          <ClubPassCard key={pass.club_id} pass={pass} />
         ))}
       </div>
 

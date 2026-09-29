@@ -133,8 +133,20 @@ class TournamentChangeRead(BaseModel):
     created_at: datetime
 
 
+class ClubPassRead(BaseModel):
+    """Последний проход по клубу: когда был, сколько турниров увидел и что с ними сделал."""
+
+    club_id: UUID
+    club_name: str
+    app: PokerApp
+    captured_at: datetime
+    tournaments: int
+    summary: dict[str, Any]
+
+
 class CollectorStatus(BaseModel):
     """Жив ли сборщик: последний проход по каждому приложению и виду, сколько ждёт решений."""
 
     runs: list[RunRead]
+    clubs: list[ClubPassRead] = []
     pending_changes: int
