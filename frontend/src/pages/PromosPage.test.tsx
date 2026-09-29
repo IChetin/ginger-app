@@ -67,6 +67,6 @@ describe("Акции", () => {
 
     expect(await screen.findByText("Сейчас акций нет")).toBeInTheDocument();
     const tabs = screen.getByRole("navigation", { name: "Расписание" });
-    expect(within(tabs).getByRole("heading", { name: "АКЦИИ" })).toBeInTheDocument();
+    expect(within(tabs).getByRole("heading", { name: "PROMO" })).toBeInTheDocument();
   });
 });
