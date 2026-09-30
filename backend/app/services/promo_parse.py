@@ -98,13 +98,14 @@ def _clean_label(raw: str) -> str:
     return cleaned.strip()
 
 
-def _currency(text: str) -> str | None:
+def _currency(text: str, from_image: bool) -> str | None:
     lowered = text.lower()
     if "usdt" in lowered:
         return "USDT"
     if "₽" in text or re.search(r"\bруб", lowered):
         return "RUB"
-    if "$" in text or re.search(r"\busd\b", lowered):
+    # На картинке «$» — частый мусор распознавания: доллару верим только в тексте поста.
+    if not from_image and ("$" in text or re.search(r"\busd\b", lowered)):
         return "USD"
     if "€" in text:
         return "EUR"
@@ -126,15 +127,28 @@ def _prizes(lines: list[str]) -> list[ParsedPrize]:
         value = match.group(2)
         if place < 1 or place > 100 or place in found:
             continue
-        # После суммы допускаем пару букв мусора: распознанный «₽» бывает «Р», «P», «в».
-        amount = re.match(rf"^\W*({_NUMBER})\s*[^\d\s]{{0,3}}\W*$", value, re.IGNORECASE)
-        if amount:
-            found[place] = ParsedPrize(place=place, amount=_money(amount.group(1)))
+        # Сумма — число в начале: от сотни или с валютой. Хвост после неё — мусор
+        # распознавания («150000Р aoe»), а «3 билета на Major» — подпись, не сумма.
+        amount = re.match(rf"^\W*({_NUMBER})(\s*(?:{_CURRENCY}))?", value, re.IGNORECASE)
+        if amount and (amount.group(2) or _money(amount.group(1)) >= 100):
+            # «2—0» с картинки — мусор, а не приз.
+            if _money(amount.group(1)) > 0:
+                found[place] = ParsedPrize(place=place, amount=_money(amount.group(1)))
         else:
             label = _clean_label(value)
             # Подпись приза — со словами: «28 14:00 - 12-28» из строки дат призом не считаем.
             if label and re.search(r"[A-Za-zА-Яа-я]", label):
                 found[place] = ParsedPrize(place=place, label=label[:60])
+    # С картинки строка приза обрастает мусором: «м“ (1 — 250000P ) ©”», «4 - - 5000».
+    # Ищем пару «место — сумма от тысячи» внутри строки; первое вхождение места побеждает.
+    inline = re.compile(
+        r"(?<![\d.:])(\d{1,2})\s*[—\-=:][^\d\n]{0,6}?(\d{1,3}(?:[ .,]?\d{3})+)(?![\d:])"
+    )
+    for line in lines:
+        for match in inline.finditer(line):
+            place = int(match.group(1))
+            if 1 <= place <= 100 and place not in found:
+                found[place] = ParsedPrize(place=place, amount=_money(match.group(2)))
     # Места идут подряд с первого: «2 — 14:00» из расписания — не приз.
     prizes: list[ParsedPrize] = []
     for place in range(1, 101):
@@ -151,7 +165,11 @@ def _unnumbered_prizes(lines: list[str], fund: Decimal | None) -> list[ParsedPri
     (второй проход распознавания) пропускаем.
     """
     start = next(
-        (index for index, line in enumerate(lines) if re.search(r"призов", line, re.IGNORECASE)),
+        (
+            index
+            for index, line in enumerate(lines)
+            if re.search(r"призов|преми|награды", line, re.IGNORECASE)
+        ),
         None,
     )
     if start is None:
@@ -162,8 +180,8 @@ def _unnumbered_prizes(lines: list[str], fund: Decimal | None) -> list[ParsedPri
         if match is None:
             continue
         value = _money(match.group(1))
-        # Сам фонд стоит рядом с «Призовой фонд» — это не приз за место.
-        if value < 100 or (fund is not None and value >= fund):
+        # Сам фонд стоит рядом с «Призовой фонд» — это не приз за место; «477» — мусор.
+        if value < 1000 or (fund is not None and value >= fund):
             continue
         if amounts and value >= amounts[-1]:
             break
@@ -278,11 +296,18 @@ def _title(lines: list[str], kind: str, monthly: bool) -> tuple[str, bool]:
             cleaned = _clean_label(line.replace("🏆", " "))
             if 3 <= len(cleaned) <= 60:
                 return cleaned, False
+    # Проходов распознавания несколько: «LEADERBOARD м MTF» в одном и «LEADERBOARD МТТ»
+    # в другом — берём строку, где тип турниров прочитался.
+    plain: str | None = None
     for line in lines:
         match = re.search(r"leaderboard(?:\s+(mtt|мтт|cash|кэш))?", line, re.IGNORECASE)
         if match and len(_clean_label(line)) <= 40:
-            suffix = f" {match.group(1).upper().replace('МТТ', 'MTT')}" if match.group(1) else ""
-            return f"Leaderboard{suffix}", False
+            if match.group(1):
+                suffix = match.group(1).upper().replace("МТТ", "MTT").replace("КЭШ", "CASH")
+                return f"Leaderboard {suffix}", False
+            plain = plain or "Leaderboard"
+    if plain:
+        return plain, False
     if kind == "leaderboard":
         base = "Месячный Leaderboard" if monthly else "Leaderboard"
         mtt = any(re.search(r"\b(mtt|мтт)\b", line, re.IGNORECASE) for line in lines)
@@ -317,7 +342,10 @@ def _club(text: str, clubs: list[ClubRef]) -> tuple[ClubRef | None, bool]:
     return None, True
 
 
-def parse_promo(text: str, clubs: list[ClubRef], now: datetime | None = None) -> ParsedPromo:
+def parse_promo(
+    text: str, clubs: list[ClubRef], now: datetime | None = None, *, from_image: bool = False
+) -> ParsedPromo:
+    """`from_image` — текст пришёл из распознавания: мусорным «$» не верим, счётчик фонда ищем."""
     now = (now or datetime.now(UTC)).astimezone(MSK)
     text = _ocr_cleanup(_normalize(text))
     lines = [line.strip() for line in text.splitlines() if line.strip()]
@@ -351,6 +379,15 @@ def parse_promo(text: str, clubs: list[ClubRef], now: datetime | None = None) ->
         rf"(?:призов\w*\s+фонд\w*|фонд\w*|награды)\D{{0,30}}?({_NUMBER})", text, re.IGNORECASE
     )
     stated_fund = _money(fund.group(1)) if fund else None
+    counter_fund = False
+    if stated_fund is None and from_image:
+        # Лобби показывает фонд табло-счётчиком «00,090,000» без подписи.
+        for line in lines:
+            if re.fullmatch(r"0[\d ,.]{5,12}\.?", line):
+                digits = re.sub(r"\D", "", line)
+                if digits.strip("0"):
+                    stated_fund, counter_fund = Decimal(int(digits)), True
+                    break
     numbered = _prizes(lines)
     unnumbered = _unnumbered_prizes(lines, stated_fund)
     # С картинки номер места бывает съеден, а сумма искажена («2500008»): берём тот
@@ -369,6 +406,8 @@ def parse_promo(text: str, clubs: list[ClubRef], now: datetime | None = None) ->
 
     if stated_fund is not None:
         result.prize_fund = stated_fund
+        if counter_fund and money_total != stated_fund:
+            result.doubt("prize_fund")
         if money_total and result.prize_fund != money_total:
             result.doubt("prize_fund")
             result.doubt("prizes")
@@ -377,7 +416,7 @@ def parse_promo(text: str, clubs: list[ClubRef], now: datetime | None = None) ->
     else:
         result.doubt("prize_fund")
 
-    currency = _currency(text)
+    currency = _currency(text, from_image)
     if currency is None:
         currency = club.currency_code if club else None
         result.doubt("currency_code")

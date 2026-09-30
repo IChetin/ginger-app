@@ -164,9 +164,9 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def test_real_ocr_of_poker21_poster_parses_fully() -> None:
-    """Вывод Tesseract по настоящей афише (4 прохода): «₽» стал «Р/P/8», номера мест съедены."""
+    """Вывод Tesseract на проде по настоящей афише (4 прохода): «₽» стал «Р/P», мусор вокруг."""
     text = (FIXTURES / "promo_ocr_poker21_poster.txt").read_text(encoding="utf-8")
-    promo = parse_promo(text, CLUBS, NOW)
+    promo = parse_promo(text, CLUBS, NOW, from_image=True)
 
     assert promo.club_id == GINGER21.id
     assert promo.title == "Leaderboard MTT"
@@ -181,11 +181,21 @@ def test_real_ocr_of_poker21_poster_parses_fully() -> None:
 
 
 def test_real_ocr_of_lobby_screenshot_flags_what_was_lost() -> None:
-    """Скрин лобби читается хуже: бай-ин, даты и окно x2 есть, остальное — «проверить»."""
+    """Скрин лобби: фонд со счётчика, призы, бай-ин, даты и x2; клуб и валюту — проверить."""
     text = (FIXTURES / "promo_ocr_poker21_lobby.txt").read_text(encoding="utf-8")
-    promo = parse_promo(text, CLUBS, NOW)
+    promo = parse_promo(text, CLUBS, NOW, from_image=True)
 
     assert (promo.buyin_min, promo.buyin_max) == (Decimal("10"), Decimal("400"))
     assert promo.starts_at == datetime(2026, 9, 28, 14, 0, tzinfo=MSK)
     assert promo.ends_at == datetime(2026, 12, 28, 10, 0, tzinfo=MSK)
-    assert {"club_id", "starts_at", "ends_at", "prize_fund"} <= set(promo.uncertain)
+    assert promo.prize_fund == Decimal("90000")
+    assert [prize.amount for prize in promo.prizes] == [
+        Decimal("50000"),
+        Decimal("25000"),
+        Decimal("10000"),
+        Decimal("5000"),
+    ]
+    # Мусорный «$» с картинки долларом не считаем — валюту подтверждает человек.
+    assert promo.currency_code is None
+    assert {"club_id", "currency_code", "starts_at", "ends_at"} <= set(promo.uncertain)
+    assert "prize_fund" not in promo.uncertain

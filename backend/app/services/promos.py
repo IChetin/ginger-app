@@ -273,7 +273,7 @@ async def create_from_image(
         content_type=content_type,
     )
     text = await ocr.image_to_text(data)
-    parsed = parse_promo(text, await _club_refs(session))
+    parsed = parse_promo(text, await _club_refs(session), from_image=True)
     promo = _from_parsed(parsed, actor, text)
     promo.image_attachment_id = attachment.id
     await _known_currency(session, promo)
