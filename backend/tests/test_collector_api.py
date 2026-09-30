@@ -166,9 +166,16 @@ async def test_full_pass_cancels_what_lobby_no_longer_shows(
         club_id=club.id,
         name="ФАНТОМ 100K",
         buyin=Decimal("10"),
-        starts_at=now + timedelta(hours=4),
+        starts_at=now + timedelta(hours=1),
     )
-    db_session.add(phantom)
+    # Дальний старт лобби ещё не публикует — его отсутствие ничего не значит.
+    later = Tournament(
+        club_id=club.id,
+        name="ЗАВТРАШНИЙ 200K",
+        buyin=Decimal("20"),
+        starts_at=now + timedelta(hours=20),
+    )
+    db_session.add_all([phantom, later])
     await db_session.flush()
 
     async def send(*, complete: bool) -> dict[str, int]:
@@ -182,7 +189,7 @@ async def test_full_pass_cancels_what_lobby_no_longer_shows(
             json={
                 "club_slug": "ginger",
                 "window_from": now.isoformat(),
-                "window_to": (now + timedelta(hours=6)).isoformat(),
+                "window_to": (now + timedelta(hours=24)).isoformat(),
                 "complete": complete,
                 "tournaments": [],
             },
@@ -191,10 +198,12 @@ async def test_full_pass_cancels_what_lobby_no_longer_shows(
         return snapshot.json()
 
     partial = await send(complete=False)
-    assert partial["missing"] == 1
+    assert partial["missing"] == 2
     assert partial["cancelled"] == 0
     assert phantom.status is TournamentStatus.SCHEDULED
 
     full = await send(complete=True)
     assert full["cancelled"] == 1
     assert phantom.status is TournamentStatus.CANCELLED
+    # Завтрашний старт остался в расписании: его отсутствие в ночном лобби ничего не значит.
+    assert later.status is TournamentStatus.SCHEDULED

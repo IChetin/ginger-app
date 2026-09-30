@@ -46,6 +46,9 @@ from app.schemas.collector import (
 from app.services.tournaments.late_reg import late_reg_close_offset
 
 MATCH_TOLERANCE = timedelta(minutes=5)
+# Насколько вперёд лобби можно считать полным: старты ближе этого срока приложения уже
+# показывают, дальние — публикуют позже (решение после ночного прохода 01.10).
+CANCEL_HORIZON = timedelta(hours=3)
 # Уточняют турнир — применяются без человека.
 DETAIL_FIELDS = (
     "start_stack",
@@ -315,10 +318,13 @@ async def ingest_snapshot(
         )
         if queued:
             result.missing += 1
-        # Полный проход видел всё лобби, поэтому пропажа — это факт, а не повод для решения:
-        # турнир снимаем с расписания сразу. Частичная отправка так не умеет — у неё в окне
-        # оказывается всё подряд, и она бы вычистила живые турниры (обожглись 28.09).
-        if body.complete and item.status is TournamentStatus.SCHEDULED:
+        # Снимаем с расписания только ближайшие старты: их лобби показывает наверняка, и
+        # отсутствие там — факт. Дальние турниры приложения публикуют ближе к делу, поэтому
+        # их пропажа ничего не значит и уходит в очередь решений. Без этой границы ночной
+        # проход 01.10 снял 263 живых турнира: в лобби было видно ближайшие часы, а в окне
+        # сверки оказались сутки сетки.
+        near = item.starts_at <= datetime.now(UTC) + CANCEL_HORIZON
+        if body.complete and near and item.status is TournamentStatus.SCHEDULED:
             item.status = TournamentStatus.CANCELLED
             result.cancelled += 1
 
