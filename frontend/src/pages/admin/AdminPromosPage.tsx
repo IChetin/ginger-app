@@ -505,7 +505,9 @@ export function AdminPromosPage() {
                     <p className="text-ink-3 truncate text-[12px]">
                       {promo.club?.name ?? "клуб не выбран"} · {STATE_LABEL[state]}
                       {promo.starts_at ? ` · ${stamp.format(new Date(promo.starts_at))}` : ""}
-                      {promo.ends_at ? ` – ${stamp.format(new Date(promo.ends_at))}` : ""}
+                      {promo.ends_at
+                        ? ` – ${stamp.format(new Date(new Date(promo.ends_at).getTime() - 1))}`
+                        : ""}
                       {promo.uncertain.length > 0 ? " · ⚠ проверить" : ""}
                     </p>
                   </div>

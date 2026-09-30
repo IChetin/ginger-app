@@ -73,7 +73,7 @@ describe("плашка акции", () => {
       "Двойные очки каждый день 10:00–12:00 МСК",
     );
     expect(screen.getByText("Старт завтра")).toBeInTheDocument();
-    expect(screen.getByTestId("promo-when")).toHaveTextContent("с 1 октября по 1 ноября");
+    expect(screen.getByTestId("promo-when")).toHaveTextContent("с 1 октября по 31 октября");
     expect(screen.getByTestId("promo-when")).toHaveTextContent("каждый месяц");
   });
 });

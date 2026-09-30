@@ -20,12 +20,15 @@ export function formatPromoMoney(amount: string | null, symbol: string | null): 
   return `${symbol ?? ""}${numberFormat.format(Number(amount))}`;
 }
 
-/** «28 декабря», «28 декабря, 06:00» — время показываем, только если оно не полночь. */
-export function promoDate(iso: string): string {
-  const time = timeFormat.format(new Date(iso));
-  return time === "00:00"
-    ? dayFormat.format(new Date(iso))
-    : `${dayFormat.format(new Date(iso))}, ${time}`;
+/**
+ * «28 декабря», «28 декабря, 06:00» — время показываем, только если оно не полночь.
+ * Конец ровно в полночь 1 ноября — это «по 31 октября» включительно, так и пишем.
+ */
+export function promoDate(iso: string, asEnd = false): string {
+  const moment = new Date(iso);
+  const time = timeFormat.format(moment);
+  if (time !== "00:00") return `${dayFormat.format(moment)}, ${time}`;
+  return dayFormat.format(asEnd ? new Date(moment.getTime() - 1) : moment);
 }
 
 export type PromoPhase =

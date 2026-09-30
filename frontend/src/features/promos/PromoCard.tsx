@@ -85,11 +85,11 @@ export function PromoCard({
           {phase.kind === "upcoming" && promo.starts_at ? (
             <>
               с <b className="text-ink">{promoDate(promo.starts_at)}</b>
-              {promo.ends_at ? <> по {promoDate(promo.ends_at)}</> : null}
+              {promo.ends_at ? <> по {promoDate(promo.ends_at, true)}</> : null}
             </>
           ) : promo.ends_at ? (
             <>
-              до <b className="text-ink">{promoDate(promo.ends_at)}</b>
+              до <b className="text-ink">{promoDate(promo.ends_at, true)}</b>
               {phase.kind === "running" && phase.daysLeft > 0 ? (
                 <>
                   {" · осталось "}

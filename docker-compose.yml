@@ -50,6 +50,10 @@ services:
   backend:
     build:
       context: ./backend
+      args:
+        # Tesseract для афиш акций локально не ставим: из РФ он качается минутами.
+        # Нужно проверить распознавание — WITH_OCR=1 docker compose build backend.
+        WITH_OCR: ${WITH_OCR:-0}
     environment:
       APP_ENV: ${APP_ENV:-development}
       APP_NAME: ${APP_NAME:-Ginger}

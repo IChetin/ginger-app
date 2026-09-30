@@ -126,7 +126,8 @@ def _prizes(lines: list[str]) -> list[ParsedPrize]:
         value = match.group(2)
         if place < 1 or place > 100 or place in found:
             continue
-        amount = re.match(rf"^\W*({_NUMBER})\s*(?:{_CURRENCY})?\W*$", value, re.IGNORECASE)
+        # После суммы допускаем пару букв мусора: распознанный «₽» бывает «Р», «P», «в».
+        amount = re.match(rf"^\W*({_NUMBER})\s*[^\d\s]{{0,3}}\W*$", value, re.IGNORECASE)
         if amount:
             found[place] = ParsedPrize(place=place, amount=_money(amount.group(1)))
         else:
@@ -141,6 +142,42 @@ def _prizes(lines: list[str]) -> list[ParsedPrize]:
             break
         prizes.append(found[place])
     return prizes
+
+
+def _unnumbered_prizes(lines: list[str], fund: Decimal | None) -> list[ParsedPrize]:
+    """С картинки номера мест теряются: «— 250 000 P», «— 150 000 Р» подряд после «призов…».
+
+    Берём суммы по убыванию в порядке строк — места 1, 2, 3…; повтор той же суммы
+    (второй проход распознавания) пропускаем.
+    """
+    start = next(
+        (index for index, line in enumerate(lines) if re.search(r"призов", line, re.IGNORECASE)),
+        None,
+    )
+    if start is None:
+        return []
+    amounts: list[Decimal] = []
+    for line in lines[start + 1 :]:
+        match = re.match(rf"^\W*({_NUMBER})\s*[^\d\s]{{0,3}}\W*$", line)
+        if match is None:
+            continue
+        value = _money(match.group(1))
+        # Сам фонд стоит рядом с «Призовой фонд» — это не приз за место.
+        if value < 100 or (fund is not None and value >= fund):
+            continue
+        if amounts and value >= amounts[-1]:
+            break
+        amounts.append(value)
+    if len(amounts) < 2:
+        return []
+    return [ParsedPrize(place=index + 1, amount=value) for index, value in enumerate(amounts)]
+
+
+def _ocr_cleanup(text: str) -> str:
+    """Типичные ошибки распознавания в числах: «G10 000» → «610 000», «10 000 P» → «10 000 ₽»."""
+    text = re.sub(r"(?<![A-Za-z])G(?=\d)", "6", text)
+    text = re.sub(r"(\d)\s?[PРр](?![A-Za-zА-Яа-я])", r"\1 ₽", text)
+    return re.sub(r"\bMCK\b", "МСК", text)
 
 
 def _nearest_year(month: int, day: int, now: datetime) -> int:
@@ -282,7 +319,7 @@ def _club(text: str, clubs: list[ClubRef]) -> tuple[ClubRef | None, bool]:
 
 def parse_promo(text: str, clubs: list[ClubRef], now: datetime | None = None) -> ParsedPromo:
     now = (now or datetime.now(UTC)).astimezone(MSK)
-    text = _normalize(text)
+    text = _ocr_cleanup(_normalize(text))
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     lowered = text.lower()
     result = ParsedPromo()
@@ -307,19 +344,34 @@ def parse_promo(text: str, clubs: list[ClubRef], now: datetime | None = None) ->
     if club_unsure:
         result.doubt("club_id")
 
-    result.prizes = _prizes(lines)
-    extras = [prize.label for prize in result.prizes if prize.label]
-    if extras:
-        result.prize_extra = extras[0]
-    money_total = sum((prize.amount or Decimal(0) for prize in result.prizes), Decimal(0))
+    def total(prizes: list[ParsedPrize]) -> Decimal:
+        return sum((prize.amount or Decimal(0) for prize in prizes), Decimal(0))
 
     fund = re.search(
         rf"(?:призов\w*\s+фонд\w*|фонд\w*|награды)\D{{0,30}}?({_NUMBER})", text, re.IGNORECASE
     )
-    if fund:
-        result.prize_fund = _money(fund.group(1))
+    stated_fund = _money(fund.group(1)) if fund else None
+    numbered = _prizes(lines)
+    unnumbered = _unnumbered_prizes(lines, stated_fund)
+    # С картинки номер места бывает съеден, а сумма искажена («2500008»): берём тот
+    # вариант, что сходится с объявленным фондом.
+    if stated_fund is not None and unnumbered and total(numbered) != stated_fund:
+        if total(unnumbered) == stated_fund or not numbered:
+            numbered = unnumbered
+    elif not numbered and unnumbered:
+        numbered = unnumbered
+        result.doubt("prizes")
+    result.prizes = numbered
+    extras = [prize.label for prize in result.prizes if prize.label]
+    if extras:
+        result.prize_extra = extras[0]
+    money_total = total(result.prizes)
+
+    if stated_fund is not None:
+        result.prize_fund = stated_fund
         if money_total and result.prize_fund != money_total:
             result.doubt("prize_fund")
+            result.doubt("prizes")
     elif money_total:
         result.prize_fund = money_total
     else:
@@ -352,7 +404,17 @@ def parse_promo(text: str, clubs: list[ClubRef], now: datetime | None = None) ->
         if "мск" not in window_text and "мск" not in lowered:
             result.doubt("boost_windows")
 
-    moments = _moments(text, now)
+    # Несколько проходов распознавания повторяют даты: оставляем первое вхождение каждой,
+    # а концом считаем первую дату позже начала.
+    seen: set[datetime] = set()
+    moments = []
+    for moment in _moments(text, now):
+        if moment.at not in seen:
+            seen.add(moment.at)
+            moments.append(moment)
+    if len(moments) > 1:
+        later = next((moment for moment in moments[1:] if moment.at > moments[0].at), None)
+        moments = [moments[0], later] if later else moments[:1]
     if moments:
         result.starts_at = moments[0].at
         if len(moments) > 1:

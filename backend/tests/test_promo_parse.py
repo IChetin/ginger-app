@@ -3,6 +3,7 @@
 
 from datetime import datetime
 from decimal import Decimal
+from pathlib import Path
 from uuid import uuid4
 
 from app.services.promo_parse import MSK, ClubRef, add_month, parse_promo
@@ -157,3 +158,34 @@ def test_add_month_keeps_day_or_clamps() -> None:
         2027, 2, 28, 6, 0, tzinfo=MSK
     )
     assert add_month(datetime(2026, 12, 28, tzinfo=MSK)) == datetime(2027, 1, 28, tzinfo=MSK)
+
+
+FIXTURES = Path(__file__).parent / "fixtures"
+
+
+def test_real_ocr_of_poker21_poster_parses_fully() -> None:
+    """Вывод Tesseract по настоящей афише (4 прохода): «₽» стал «Р/P/8», номера мест съедены."""
+    text = (FIXTURES / "promo_ocr_poker21_poster.txt").read_text(encoding="utf-8")
+    promo = parse_promo(text, CLUBS, NOW)
+
+    assert promo.club_id == GINGER21.id
+    assert promo.title == "Leaderboard MTT"
+    assert promo.prize_fund == Decimal("610000")
+    assert promo.currency_code == "RUB"
+    assert (promo.buyin_min, promo.buyin_max) == (Decimal("500"), Decimal("10000"))
+    assert promo.starts_at == datetime(2026, 9, 28, 10, 0, tzinfo=MSK)
+    assert promo.ends_at == datetime(2026, 12, 28, 6, 0, tzinfo=MSK)
+    assert promo.boost_windows == [{"start": "10:00", "end": "12:00", "multiplier": 2}]
+    assert sum(prize.amount or 0 for prize in promo.prizes) == Decimal("610000")
+    assert promo.uncertain == []
+
+
+def test_real_ocr_of_lobby_screenshot_flags_what_was_lost() -> None:
+    """Скрин лобби читается хуже: бай-ин, даты и окно x2 есть, остальное — «проверить»."""
+    text = (FIXTURES / "promo_ocr_poker21_lobby.txt").read_text(encoding="utf-8")
+    promo = parse_promo(text, CLUBS, NOW)
+
+    assert (promo.buyin_min, promo.buyin_max) == (Decimal("10"), Decimal("400"))
+    assert promo.starts_at == datetime(2026, 9, 28, 14, 0, tzinfo=MSK)
+    assert promo.ends_at == datetime(2026, 12, 28, 10, 0, tzinfo=MSK)
+    assert {"club_id", "starts_at", "ends_at", "prize_fund"} <= set(promo.uncertain)

@@ -123,7 +123,8 @@ export function toPayload(form: PromoForm, publish: boolean): PromoPayload {
     buyin_max: money(form.buyinMax),
     prizes: textToPrizes(form.prizes),
     boost_windows: textToWindows(form.windows),
-    uncertain: form.uncertain,
+    // Опубликовал — значит, проверил: подсветка «проверить» снимается.
+    uncertain: publish ? [] : form.uncertain,
     is_published: publish,
   };
 }
