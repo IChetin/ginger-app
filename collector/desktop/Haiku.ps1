@@ -63,8 +63,13 @@ function Invoke-HaikuVision {
     $response = $null
     for ($attempt = 1; $attempt -le 4; $attempt++) {
         try {
-            $response = Invoke-RestMethod -Method Post -Uri 'https://api.anthropic.com/v1/messages' -Headers $headers `
-                -ContentType 'application/json; charset=utf-8' -Body ([System.Text.Encoding]::UTF8.GetBytes($json)) -TimeoutSec 120
+            # Invoke-WebRequest, а не Invoke-RestMethod: тело ответа разбираем сами из байтов.
+            # PowerShell 5.1 без charset в заголовке читает ответ как Latin-1, и «Магия
+            # Тракториста» приезжает как «ÐÐ°Ð³Ð¸Ñ» (обожглись 01.10).
+            $raw = Invoke-WebRequest -Method Post -Uri 'https://api.anthropic.com/v1/messages' -Headers $headers `
+                -ContentType 'application/json; charset=utf-8' -Body ([System.Text.Encoding]::UTF8.GetBytes($json)) `
+                -TimeoutSec 120 -UseBasicParsing
+            $response = [System.Text.Encoding]::UTF8.GetString($raw.RawContentStream.ToArray()) | ConvertFrom-Json
             break
         } catch {
             $status = $null

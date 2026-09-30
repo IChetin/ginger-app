@@ -69,6 +69,21 @@ Suprema — `DD/MM`. `ConvertTo-PhoneStart` разбирает все три (д
 7. **Ключ Anthropic** — `%USERPROFILE%\.ginger\anthropic_key`, **токен сборщика** —
    `%USERPROFILE%\.ginger\collector_token` (оба кладёт Иван, в репозиторий не попадают).
 
+## Правило: экран после работы гасим
+
+Любая работа с телефоном — проход, отладка, одиночный снимок — заканчивается так:
+
+```powershell
+Set-PhoneStayOn 'false'
+Invoke-PhoneKey 'KEYCODE_SLEEP'
+Invoke-PhoneShell 'dumpsys power | grep mWakefulness='   # ждём Dozing или Asleep
+```
+
+Проверять, а не надеяться: на время прохода экран удерживается включённым, и забытый
+телефон стоит с горящим лобби часами. От USB он почти не заряжается, а неподвижная шапка
+лобби выжигается в OLED. В `Run-Pass.ps1` это делает блок `finally`, ручные проходы его
+не используют — гасить руками (требование Ивана 01.10).
+
 ## Запуск
 
 ```powershell
