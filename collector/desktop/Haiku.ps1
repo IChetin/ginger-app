@@ -182,9 +182,12 @@ $script:PpPageSchema = @{
 $script:PpPagePrompt = @'
 This is a club lobby in the PPPoker poker app, and the collector wants its MTT list.
 
-First check the row of tabs at the top (ALL, NLH, PLO5, MTT, FLASH…). If the selected tab is not MTT, answer is_mtt_list=false and cards=[] — a cash list looks similar but its rows are blinds ("50-100bb", "1/5"), not tournaments, and they must never be collected.
+Cash tables must never be collected, so first decide what kind of list this is.
 
-When the MTT tab is selected, extract every tournament card with a blue "Buy-in" pill, top to bottom. Skip promo banners without a Buy-in pill (e.g. "Diamond Tournament").
+- If the row of tabs (ALL, NLH, PLO5, MTT, FLASH…) is visible and the selected tab is not MTT, answer is_mtt_list=false and cards=[].
+- If the tab row is scrolled out of sight, judge by the rows themselves: tournaments carry a blue "Buy-in: N" pill and a line with a start time, a registration countdown or a guarantee; cash tables instead show blinds ("50-100bb", "1/5", "15/30") and seat counters ("0/6"). Answer is_mtt_list=false only when the visible rows are cash.
+
+For an MTT list extract every tournament card with a blue "Buy-in" pill, top to bottom. Skip promo banners without a Buy-in pill (e.g. "Diamond Tournament").
 
 For each card:
 - name: title to the right of the pill, exactly as written. The small globe icon before the title is not a letter.
