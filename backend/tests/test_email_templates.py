@@ -26,6 +26,8 @@ def test_otp_email_shows_code_in_preview_body_and_plain_text() -> None:
     assert "788425" in plain
     assert "Код 788425 — действует 5 минут" in html  # строка превью в списке писем
     assert ">788425</td>" in html  # код одной строкой — работает «Скопировать код»
+    assert "Your Ginger verification code: 788425" in html  # подсказка для Gmail
+    assert "Your Ginger verification code: 788425" in plain
     assert 'src="https://lisa52.com/brand/email-header.png"' in html
     assert 'alt="Ginger"' in html
     assert "запрошен 14 сентября в 13:42 по Москве" in html

@@ -131,11 +131,13 @@ def build_otp_email(
     *, code: str, settings: Settings, requested_at: datetime | None = None
 ) -> tuple[str, str, str]:
     when = _moscow_time(requested_at or datetime.now(UTC))
+    app_name = escape(settings.app_name)
     # Код первым в теме: в списке писем и в уведомлении на телефоне он виден без открытия
     # письма, и Gmail чаще показывает карточку «Скопировать код» (идея Ивана 24.09).
     subject = f"{code} — код для входа в {settings.app_name}"
     plain = (
-        f"Ваш код для входа в {settings.app_name}: {code}\n\n"
+        f"Ваш код для входа в {settings.app_name}: {code}\n"
+        f"Your {settings.app_name} verification code: {code}\n\n"
         f"Действует 5 минут. Запрошен {when}.\n\n"
         "Никому не сообщайте код — менеджеры клуба его не спрашивают. "
         "Если вход запрашивали не вы, просто проигнорируйте письмо: без кода в аккаунт не попасть.\n\n"
@@ -148,6 +150,9 @@ def build_otp_email(
                 <td align="center" bgcolor="{CARD_2}" style="background:{CARD_2};border:1px solid {LINE_GOLD};border-radius:16px;padding:22px 8px 22px 20px;font-family:{DISPLAY_FONT};font-size:40px;line-height:1;font-weight:700;letter-spacing:0.3em;color:{GOLD_HI};">{escape(code)}</td>
               </tr>
             </table>"""
+        # Строка по-английски — для карточки Gmail «Copy code»: такие функции Gmail
+        # обкатывает прежде всего на английских письмах (Иван, 30.09).
+        + f'<p style="margin:0 0 8px 0;font-size:12px;line-height:1.5;color:{TEXT_3};text-align:center;">Your {app_name} verification code: {escape(code)}</p>'
         + f'<p style="margin:0;font-size:13px;line-height:1.55;color:{TEXT_3};text-align:center;">Действует <span style="color:{TEXT_2};font-weight:600;">5 минут</span> · запрошен {escape(when)}</p>'
         + _notice(
             "Никому не сообщайте код",
