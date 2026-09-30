@@ -9,6 +9,7 @@ from app.api.v1 import (
     feed,
     health,
     notifications,
+    promos,
     push,
     telegram,
     threads,
@@ -24,6 +25,7 @@ api_router.include_router(clubs.router)
 api_router.include_router(cash.router)
 api_router.include_router(collector.router)
 api_router.include_router(feed.router)
+api_router.include_router(promos.router)
 api_router.include_router(chips.router)
 api_router.include_router(threads.router)
 api_router.include_router(telegram.router)

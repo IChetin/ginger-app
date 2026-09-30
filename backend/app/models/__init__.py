@@ -15,6 +15,7 @@ from app.models.feed import FeedPost, PlayerWin
 from app.models.notifications import NotificationQueue
 from app.models.picks import EditorPick
 from app.models.players import Invite, Player, PlayerAccount
+from app.models.promos import Promotion
 from app.models.references import Currency, FxRate, Organizer
 from app.models.telegram import TelegramLink
 from app.models.threads import Thread, ThreadMessage
@@ -38,6 +39,7 @@ __all__ = [
     "Currency",
     "EditorPick",
     "FeedPost",
+    "Promotion",
     "FxRate",
     "Invite",
     "NotificationQueue",

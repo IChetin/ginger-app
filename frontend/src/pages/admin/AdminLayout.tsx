@@ -164,6 +164,13 @@ function SidebarNav({ showUsers, onNavigate }: { showUsers: boolean; onNavigate?
         </NavIcon>
         Записи в ленте
       </NavLink>
+      <NavLink to="/admin/promos" className={navClass} onClick={onNavigate}>
+        <NavIcon>
+          <path d="M4 10V5h5l10 10-5 5L4 10z" />
+          <circle cx="8" cy="8" r="1.2" />
+        </NavIcon>
+        Акции
+      </NavLink>
       <NavLink to="/admin/grids" className={navClass} onClick={onNavigate}>
         <NavIcon>
           <rect x="3" y="4" width="18" height="16" rx="2" />

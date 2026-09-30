@@ -43,13 +43,18 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
         schedule_fetch = asyncio.create_task(run_fetch(fetch_interval))
     autoposts: asyncio.Task[None] | None = None
+    renewals: asyncio.Task[None] | None = None
     autopost_interval = get_settings().feed_autopost_interval_seconds
     if autopost_interval > 0:
         from app.services.feed import run_autoposts_periodically
 
         autoposts = asyncio.create_task(run_autoposts_periodically(autopost_interval))
+        from app.services.promos import run_renewals_periodically
+
+        # Ежемесячные акции: черновик на новый месяц — тем же ритмом, что и автозаписи ленты.
+        renewals = asyncio.create_task(run_renewals_periodically(autopost_interval))
     yield
-    for task in (rollforward, housekeeping, schedule_fetch, autoposts):
+    for task in (rollforward, housekeeping, schedule_fetch, autoposts, renewals):
         if task is None:
             continue
         task.cancel()

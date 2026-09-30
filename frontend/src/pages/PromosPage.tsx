@@ -5,7 +5,10 @@ import { ScheduleTabs } from "@/components/layout/ScheduleTabs";
 import { rateLimitMessage } from "@/features/auth/useGuestGate";
 import { usePromotions } from "@/features/feed/api";
 import { PostCard } from "@/features/feed/FeedSections";
+import { usePromos } from "@/features/promos/api";
+import { PromoCard } from "@/features/promos/PromoCard";
 import { TournamentSheet } from "@/features/tournaments/components/TournamentSheet";
+import { useNow } from "@/features/tournaments/hooks";
 import { pluralRu } from "@/lib/plural";
 import { cn } from "@/lib/utils";
 
@@ -18,23 +21,32 @@ function untilLabel(expiresAt: string | null): string | null {
 }
 
 /**
- * Акции клубов — третий раздел рядом с MTT и CASH (решение Ивана 29.09). Записи те же, что
- * в ленте: менеджер ставит галочку «Акция», и запись появляется и там, и здесь.
+ * PROMO — третий раздел рядом с MTT и CASH (решение Ивана 29.09). Сверху акции единой
+ * плашкой (30.09): фонд, срок, кто участвует, призы, «x2 сейчас». Ниже — записи ленты
+ * с галочкой «Акция», пока они не истекут.
  */
 export function PromosPage() {
-  const query = usePromotions();
+  const plates = usePromos();
+  const posts = usePromotions();
+  // Минутный тик: «x2 сейчас» загорается и гаснет вовремя, без перезагрузки.
+  const now = useNow(60_000);
   const [selected, setSelected] = useState<Tournament | null>(null);
   const [club, setClub] = useState<string | null>(null);
 
-  const promos = query.data ?? [];
+  const promoList = plates.data ?? [];
+  const postList = posts.data ?? [];
   const clubs = useMemo(() => {
     const names = new Map<string, string>();
-    for (const post of promos) {
-      if (post.club) names.set(post.club.id, post.club.name);
+    for (const item of [...promoList, ...postList]) {
+      if (item.club) names.set(item.club.id, item.club.name);
     }
     return [...names].map(([id, name]) => ({ id, name }));
-  }, [promos]);
-  const visible = club ? promos.filter((post) => post.club?.id === club) : promos;
+  }, [promoList, postList]);
+  const visiblePromos = club ? promoList.filter((item) => item.club?.id === club) : promoList;
+  const visiblePosts = club ? postList.filter((item) => item.club?.id === club) : postList;
+  const total = promoList.length + postList.length;
+  const pending = plates.isPending || posts.isPending;
+  const failed = plates.isError && posts.isError;
 
   return (
     <div className="bg-bg min-h-full pb-4" data-testid="promos-page">
@@ -45,9 +57,7 @@ export function PromosPage() {
             aria-live="polite"
             className="text-ink-3 num min-w-0 flex-1 truncate text-right text-[11.5px] font-semibold"
           >
-            {query.isSuccess
-              ? `${promos.length} ${pluralRu(promos.length, "акция", "акции", "акций")}`
-              : ""}
+            {!pending ? `${total} ${pluralRu(total, "акция", "акции", "акций")}` : ""}
           </span>
         </div>
         {clubs.length > 1 ? (
@@ -75,26 +85,29 @@ export function PromosPage() {
         ) : null}
       </header>
 
-      {query.isPending ? (
+      {pending ? (
         <div className="space-y-2 px-3 pt-3" data-testid="promos-loading">
           {Array.from({ length: 3 }).map((_, index) => (
             <div key={index} className="bg-surface h-[120px] rounded-lg" />
           ))}
         </div>
-      ) : query.isError ? (
+      ) : failed ? (
         <div className="border-line bg-surface mx-3 mt-3 rounded-md border px-4 py-6 text-center">
           <p className="text-ink text-[14px] font-semibold">
-            {rateLimitMessage(query.error) ?? "Не удалось загрузить акции"}
+            {rateLimitMessage(plates.error) ?? "Не удалось загрузить акции"}
           </p>
           <button
             type="button"
-            onClick={() => void query.refetch()}
+            onClick={() => {
+              void plates.refetch();
+              void posts.refetch();
+            }}
             className="bg-gold-soft text-gold mt-3 h-10 rounded-full px-5 text-[13px] font-bold"
           >
             Повторить
           </button>
         </div>
-      ) : visible.length === 0 ? (
+      ) : visiblePromos.length === 0 && visiblePosts.length === 0 ? (
         <div className="border-line-gold bg-surface mx-3 mt-3 rounded-md border border-dashed px-4 py-6 text-center">
           <p className="text-ink text-[15px] font-bold">Сейчас акций нет</p>
           <p className="text-ink-2 mt-1 text-[13px]">
@@ -102,8 +115,11 @@ export function PromosPage() {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-2 px-3 pt-3">
-          {visible.map((post) => {
+        <div className="flex flex-col gap-3 px-3 pt-3">
+          {visiblePromos.map((item, index) => (
+            <PromoCard key={item.id} promo={item} now={now} main={index === 0} />
+          ))}
+          {visiblePosts.map((post) => {
             const until = untilLabel(post.expires_at);
             return (
               <div key={post.id}>

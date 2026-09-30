@@ -7,6 +7,7 @@ from app.api.v1.admin import (
     crm,
     picks,
     posts,
+    promos,
     references,
     users,
     wins,
@@ -26,6 +27,7 @@ router.include_router(admin_threads.router)
 router.include_router(users.router)
 router.include_router(wins.router)
 router.include_router(posts.router)
+router.include_router(promos.router)
 router.include_router(crm.router)
 router.include_router(collector.router)
 router.include_router(picks.router)
