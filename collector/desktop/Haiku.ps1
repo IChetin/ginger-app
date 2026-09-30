@@ -14,6 +14,15 @@
 
 $script:HaikuModel = 'claude-haiku-4-5'
 $script:HaikuSpend = @{ Calls = 0; InputTokens = 0; OutputTokens = 0 }
+# Потолок на сессию: если проход попал не на тот экран, он не должен жечь деньги молча.
+# Один нормальный проход по трём приложениям стоит около десяти центов (30.09 сбитый
+# проход по кэш-столам стоил 26 — как раз тот случай, ради которого потолок и нужен).
+$script:HaikuBudgetUsd = 0.30
+
+function Set-HaikuBudget {
+    param([Parameter(Mandatory)][double]$Usd)
+    $script:HaikuBudgetUsd = $Usd
+}
 
 function Get-AnthropicKey {
     if ($env:ANTHROPIC_API_KEY) { return $env:ANTHROPIC_API_KEY }
@@ -29,6 +38,10 @@ function Invoke-HaikuVision {
         [Parameter(Mandatory)][hashtable]$Schema,
         [int]$MaxTokens = 4000
     )
+    $spent = (Get-HaikuSpend).usd
+    if ($spent -ge $script:HaikuBudgetUsd) {
+        throw "Haiku budget spent: $spent USD of $($script:HaikuBudgetUsd). Stopped instead of burning more."
+    }
     $bytes = [System.IO.File]::ReadAllBytes((Resolve-Path $ImagePath).Path)
     $body = @{
         model = $script:HaikuModel
@@ -162,7 +175,11 @@ $script:PpPageSchema = @{
 }
 
 $script:PpPagePrompt = @'
-This is the MTT tournament list of a club in the PPPoker poker app. Extract every tournament card with a blue "Buy-in" pill, top to bottom. Skip promo banners without a Buy-in pill (e.g. "Diamond Tournament").
+This is a club lobby in the PPPoker poker app, and the collector wants its MTT list.
+
+First check the row of tabs at the top (ALL, NLH, PLO5, MTT, FLASH…). If the selected tab is not MTT, answer is_mtt_list=false and cards=[] — a cash list looks similar but its rows are blinds ("50-100bb", "1/5"), not tournaments, and they must never be collected.
+
+When the MTT tab is selected, extract every tournament card with a blue "Buy-in" pill, top to bottom. Skip promo banners without a Buy-in pill (e.g. "Diamond Tournament").
 
 For each card:
 - name: title to the right of the pill, exactly as written. The small globe icon before the title is not a letter.

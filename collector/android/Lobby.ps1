@@ -15,6 +15,7 @@
 # В строках кода - только латиница (Windows PowerShell 5.1).
 
 . "$PSScriptRoot\Adb.ps1"
+. "$PSScriptRoot\Navigate.ps1"
 . "$PSScriptRoot\..\desktop\Haiku.ps1"
 
 $script:PpPackage = 'com.lein.pppoker.android'
@@ -58,7 +59,7 @@ $script:XpListSchema = @{
 }
 
 $script:XpListPrompt = @'
-This is the tournament list of a club lobby in the X-Poker mobile app. Extract every row whose left badge says MTT, MAIN or STEP. Skip SNG rows and FLASH rows (those are cash tables), skip banners and filter chips.
+This is the tournament list of a club lobby in the X-Poker mobile app. Extract every row whose left badge says MTT, MAIN or STEP. Skip SNG rows and FLASH rows (those are cash tables), skip banners and filter chips. If the screen shows no such rows at all — a shop, a profile, a table or a cash-only list — answer is_mtt_list=false and cards=[].
 
 For each row:
 - name: the tournament title exactly as written (Latin or Cyrillic). Decorative icons (trophy, diamond, crown, clover, globe) are not letters.
@@ -103,7 +104,7 @@ $script:P21Schema = @{
 }
 
 $script:P21Prompt = @'
-This is a club lobby in the Poker21 app: a two-column grid of cards. Extract only the TOURNAMENT cards - the ones whose left badge says MTT. Skip cash tables (their badge shows the game name over a coloured chip and their card says "Blinds:"), skip OFC, DURAK and "21" tables.
+This is a club lobby in the Poker21 app: a two-column grid of cards. Extract only the TOURNAMENT cards - the ones whose left badge says MTT. Skip cash tables (their badge shows the game name over a coloured chip and their card says "Blinds:"), skip OFC, DURAK and "21" tables. If the screen is not a club lobby at all - a shop, a profile, a table - answer is_lobby=false and cards=[].
 
 For each tournament card, reading left to right, top to bottom:
 - name: the caption under the card, exactly as written (Latin or Cyrillic).
@@ -219,27 +220,6 @@ function Merge-PhoneCard {
     $Known
 }
 
-function Dismiss-PhoneOverlay {
-    # Поверх лобби периодически висят промо: приглашение привязать почту, карточка клуба,
-    # подсказки, лидерборд союза. Все закрываются крестиком в правом верхнем углу своего окна,
-    # но позиция окна разная - поэтому просто тыкаем в известные места. Лишний тап по пустому
-    # месту безопасен: списки на него не реагируют.
-    param([int]$SettleMs = 1200)
-    foreach ($point in @(@(0.926, 0.080), @(0.896, 0.230), @(0.896, 0.358), @(0.708, 0.198))) {
-        Invoke-PhoneTap -X $point[0] -Y $point[1] -SettleMs 400
-    }
-    Start-Sleep -Milliseconds $SettleMs
-}
-
-function Show-PhoneApp {
-    # Выводим приложение вперёд, но НИКОГДА не перезапускаем: X-Poker после рестарта упрётся
-    # в проверку сети, Suprema потребует ручной вход.
-    param([Parameter(Mandatory)][string]$Package, [int]$WaitSeconds = 25)
-    if ((Get-PhoneTopPackage) -eq $Package) { return $true }
-    if (-not (Start-PhoneApp -Package $Package -WaitSeconds $WaitSeconds)) { return $false }
-    Start-Sleep -Seconds 6
-    $true
-}
 
 function Invoke-PhoneListPass {
     # Общий проход по любому списку: снять страницу -> прочитать -> свайпнуть -> повторить.
@@ -260,11 +240,18 @@ function Invoke-PhoneListPass {
         [switch]$KeepShots,
         # Без ключа распознавания проход всё равно полезен: снимает лобби и складывает кадры,
         # читать их можно потом. Конец списка в этом режиме не виден — листаем до MaxPages.
-        [switch]$NoRead
+        [switch]$NoRead,
+        # Клуб, в лобби которого должен оказаться проход: приложение уходит на главный экран
+        # само, и без этого шага кадры снимаются с заставки (обожглись 29.09).
+        [string]$Club
     )
     if (-not $OutDir) { $OutDir = Join-Path $env:LOCALAPPDATA ("GingerCollector\{0}" -f (Get-Date -Format 'yyyy-MM-dd')) }
     if (-not (Test-Path $OutDir)) { [void](New-Item -ItemType Directory -Path $OutDir -Force) }
-    if (-not (Show-PhoneApp -Package $Package)) { throw "Cannot bring $Package to front (top is $(Get-PhoneTopPackage))" }
+    if ($Club -and -not $NoRead) {
+        if (-not (Enter-PhoneLobby -Package $Package -Club $Club)) { throw "Cannot reach the $Club lobby in $Package" }
+    } elseif (-not (Show-PhoneApp -Package $Package)) {
+        throw "Cannot bring $Package to front (top is $(Get-PhoneTopPackage))"
+    }
 
     $cards = [ordered]@{}
     $previousKeys = @()
@@ -280,9 +267,12 @@ function Invoke-PhoneListPass {
                 continue
             }
             $items = @(& $Reader $path)
-            if ($page -eq 1 -and $shot -eq 1 -and -not $items.Count) {
-                # Пустая первая страница - почти всегда промо поверх лобби, а не пустой клуб.
-                Dismiss-PhoneOverlay
+            if ($page -eq 1 -and $shot -eq 1 -and -not $items.Count -and $Club) {
+                # Пустая первая страница — либо промо поверх лобби, либо мы не на той вкладке.
+                # Переспрашиваем дорогу: Enter-PhoneLobby нажимает только по известным местам
+                # и только когда модель подтвердила, что там промо. Раньше здесь была серия
+                # тапов вслепую — один из них открыл кэш-стол (30.09), больше так не делаем.
+                [void](Enter-PhoneLobby -Package $Package -Club $Club)
                 [void](Get-PhoneShot -Path $path -MaxSide $MaxSide)
                 $items = @(& $Reader $path)
             }
@@ -322,25 +312,25 @@ function Invoke-PhoneListPass {
 function Invoke-PpMttPassPhone {
     # PPPoker: лента MTT клуба. Читает та же схема, что и на десктопе - приложение одно и то же.
     # Нижняя строка карточки крутится, поэтому кадров на страницу три.
-    param([string]$OutDir, [int]$MaxPages = 16, [switch]$KeepShots, [switch]$NoRead)
+    param([string]$OutDir, [int]$MaxPages = 16, [switch]$KeepShots, [switch]$NoRead, [string]$Club = "Ginger")
     Invoke-PhoneListPass -Package $script:PpPackage -Tag 'pppoker-mtt' -OutDir $OutDir -MaxPages $MaxPages `
-        -ShotsPerPage 3 -KeepShots:$KeepShots -NoRead:$NoRead -Reader { param($shot) Read-PpPageHaiku -Shot $shot }
+        -ShotsPerPage 3 -KeepShots:$KeepShots -NoRead:$NoRead -Club $Club -Reader { param($shot) Read-PpPageHaiku -Shot $shot }
 }
 
 function Invoke-XpMttPassPhone {
     # X-Poker: вкладка турниров клуба GINGER+ 2022497. Ниже списка турниров идут SNG и FLASH -
     # их схема отбрасывает сама, а проход останавливается на двух страницах без новых карточек.
-    param([string]$OutDir, [int]$MaxPages = 12, [switch]$KeepShots, [switch]$NoRead)
+    param([string]$OutDir, [int]$MaxPages = 12, [switch]$KeepShots, [switch]$NoRead, [string]$Club = "GINGER +")
     Invoke-PhoneListPass -Package $script:XpPackage -Tag 'xpoker-mtt' -OutDir $OutDir -MaxPages $MaxPages `
-        -KeepShots:$KeepShots -NoRead:$NoRead -Reader { param($shot) Read-XpListPageHaiku -Shot $shot }
+        -KeepShots:$KeepShots -NoRead:$NoRead -Club $Club -Reader { param($shot) Read-XpListPageHaiku -Shot $shot }
 }
 
 function Invoke-P21MttPassPhone {
     # Poker21: плитка в два столбца, турниры идут перед кэш-столами. Шрифт мелкий, поэтому
     # кадр не ужимаем - иначе модель начинает путать цифры бай-ина и гарантии.
-    param([string]$OutDir, [int]$MaxPages = 8, [switch]$KeepShots, [switch]$NoRead)
+    param([string]$OutDir, [int]$MaxPages = 8, [switch]$KeepShots, [switch]$NoRead, [string]$Club = "Ginger21")
     Invoke-PhoneListPass -Package $script:P21Package -Tag 'poker21-mtt' -OutDir $OutDir -MaxPages $MaxPages `
-        -MaxSide 0 -ShotsPerPage 1 -KeepShots:$KeepShots -NoRead:$NoRead -Reader { param($shot) Read-P21PageHaiku -Shot $shot }
+        -MaxSide 0 -ShotsPerPage 1 -KeepShots:$KeepShots -NoRead:$NoRead -Club $Club -Reader { param($shot) Read-P21PageHaiku -Shot $shot }
 }
 
 function Export-PhonePass {

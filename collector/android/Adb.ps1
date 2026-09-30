@@ -276,6 +276,16 @@ function Stop-PhoneApp {
     [void](Invoke-PhoneShell "am force-stop $Package")
 }
 
+function Show-PhoneApp {
+    # Выводим приложение вперёд, но НИКОГДА не перезапускаем: X-Poker после рестарта упрётся
+    # в проверку сети, Suprema потребует ручной вход.
+    param([Parameter(Mandatory)][string]$Package, [int]$WaitSeconds = 25)
+    if ((Get-PhoneTopPackage) -eq $Package) { return $true }
+    if (-not (Start-PhoneApp -Package $Package -WaitSeconds $WaitSeconds)) { return $false }
+    Start-Sleep -Seconds 6
+    $true
+}
+
 function Get-PhoneBattery {
     # Проход на телефоне без батареи (или на слабом питании) обрывается - лог должен это показывать.
     $out = (Invoke-PhoneShell 'dumpsys battery' | Out-String)
