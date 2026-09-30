@@ -248,11 +248,19 @@ function Test-PhoneAwake {
 }
 
 function Resume-Phone {
-    # Будим и снимаем блокировку свайпом. PIN сборщику не ставим - иначе проход встанет после перезагрузки.
-    param([int]$SettleMs = 1200)
-    if (-not (Test-PhoneAwake)) { Invoke-PhoneKey 'KEYCODE_WAKEUP' }
+    # Будим и снимаем блокировку. PIN сборщику не ставим - иначе проход встанет после перезагрузки.
+    # Свайп длинный, от самого низа: коротким экран блокировки не снимался, и проход упирался
+    # в него вместо лобби (обожглись 01.10). После — проверяем, что экран действительно живой.
+    param([int]$SettleMs = 1500)
+    if (-not (Test-PhoneAwake)) { Invoke-PhoneKey 'KEYCODE_WAKEUP' -SettleMs 1200 }
     Invoke-PhoneKey 'KEYCODE_MENU' -SettleMs 300
-    Invoke-PhoneSwipe -FromY 0.80 -ToY 0.35 -DurationMs 250 -SettleMs $SettleMs
+    [void](Invoke-PhoneShell 'input swipe 540 2100 540 700 250')
+    Start-Sleep -Milliseconds $SettleMs
+    if (-not (Test-PhoneAwake)) {
+        Invoke-PhoneKey 'KEYCODE_WAKEUP' -SettleMs 1200
+        [void](Invoke-PhoneShell 'input swipe 540 2100 540 700 250')
+        Start-Sleep -Milliseconds $SettleMs
+    }
 }
 
 function Set-PhoneStayOn {
