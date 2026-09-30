@@ -52,6 +52,22 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Если приложение не поднялось за 15 секунд — скрипт не догрузился. В РФ так бывает,
+      // когда провайдер замораживает соединение с зарубежным сервером (30.09): вместо белого
+      // экрана — объяснение. Сама страница маленькая и проходит, поэтому подсказка здесь.
+      setTimeout(function () {
+        var root = document.getElementById("root");
+        if (!root || root.childElementCount > 0) return;
+        root.innerHTML =
+          '<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;background:#0b0a09;color:#f3ead8;font:15px/1.5 system-ui,sans-serif;text-align:center">' +
+          '<img src="/favicon.svg" alt="" width="72" height="68" style="margin-bottom:20px">' +
+          '<p style="margin:0;font-weight:700;font-size:17px">Ginger не загрузился</p>' +
+          '<p style="margin:8px 0 0;max-width:300px;color:#b9ad97;font-size:14px">Проверьте интернет. Если вы в России — включите VPN: некоторые провайдеры ограничивают соединение с приложением.</p>' +
+          '<button type="button" onclick="location.reload()" style="margin-top:20px;height:44px;padding:0 28px;border:0;background:#d9b36a;color:#1a1408;font:700 15px system-ui,sans-serif">Повторить</button>' +
+          "</div>";
+      }, 15000);
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
