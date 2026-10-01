@@ -1,4 +1,4 @@
-﻿# Проход сборщика с телефона (Планировщик Windows): два раза в день — 10:00 и 22:00 МСК.
+﻿# Проход сборщика с телефона (Планировщик Windows): раз в день, 15:30 МСК.
 #
 #   powershell -NoProfile -ExecutionPolicy Bypass -File D:\...\collector\android\Run-Pass.ps1
 #
