@@ -111,6 +111,14 @@ function Enter-PhoneLobby {
             throw "$Package is at a table - the pass is stopped, nothing was tapped"
         }
 
+        # Сначала проверяем, не пришли ли мы, и только потом гасим промо. Иначе тап по
+        # «крестику» поверх готового списка попадает в строку и открывает стол (01.10).
+        if ($screen.screen -eq 'lobby') {
+            $done = $screen.list_kind -eq 'tournaments' -or
+                (-not $map.RequireMtt -and $screen.list_kind -eq 'mixed')
+            if ($done) { return $true }
+        }
+
         if ($screen.overlay) {
             # Крестики — по своему списку известных мест, по одному за шаг.
             if ($closeIndex -lt $map.Closes.Count) {

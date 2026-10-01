@@ -270,7 +270,7 @@ function Set-PhoneStayOn {
 }
 
 function Start-PhoneApp {
-    param([Parameter(Mandatory)][string]$Package, [int]$WaitSeconds = 25)
+    param([Parameter(Mandatory)][string]$Package, [int]$WaitSeconds = 60)
     [void](Invoke-PhoneShell "monkey -p $Package -c android.intent.category.LAUNCHER 1")
     for ($i = 0; $i -lt $WaitSeconds; $i++) {
         Start-Sleep -Seconds 1
@@ -287,9 +287,15 @@ function Stop-PhoneApp {
 function Show-PhoneApp {
     # Выводим приложение вперёд, но НИКОГДА не перезапускаем: X-Poker после рестарта упрётся
     # в проверку сети, Suprema потребует ручной вход.
-    param([Parameter(Mandatory)][string]$Package, [int]$WaitSeconds = 25)
+    # Минуты хватает с запасом: заставки этих приложений грузятся до сорока секунд, а на
+    # 25 секундах проход по расписанию 01.10 не дождался ни X-Poker, ни Poker21.
+    param([Parameter(Mandatory)][string]$Package, [int]$WaitSeconds = 60)
     if ((Get-PhoneTopPackage) -eq $Package) { return $true }
-    if (-not (Start-PhoneApp -Package $Package -WaitSeconds $WaitSeconds)) { return $false }
+    if (-not (Start-PhoneApp -Package $Package -WaitSeconds $WaitSeconds)) {
+        # Вторая попытка: первая могла прийтись на момент, когда телефон ещё просыпался.
+        Resume-Phone
+        if (-not (Start-PhoneApp -Package $Package -WaitSeconds $WaitSeconds)) { return $false }
+    }
     Start-Sleep -Seconds 6
     $true
 }
