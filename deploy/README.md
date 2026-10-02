@@ -42,6 +42,23 @@ bash deploy/deploy.sh
 собирается локально в dev-контейнере (на сервере мало памяти), бэкенд и воркер — на сервере.
 Миграции применяет `db-init` при каждом запуске.
 
+### Caddyfile
+
+`deploy/caddy/Caddyfile` деплой применяет без перезапуска Caddy:
+
+1. До выката новый файл проверяет работающий Caddy (`caddy validate`). С ошибкой деплой
+   останавливается, на сервере ничего не меняется.
+2. После `up -d` Caddy перечитывает файл на лету (`caddy reload`): соединения не рвутся, файл без
+   изменений — ничего не происходит.
+
+Только Caddyfile, не трогая остальной код (в HEAD бывают невыкаченные коммиты):
+`bash deploy/deploy.sh --caddy-only` — те же проверка и reload.
+
+В контейнер смонтирован каталог `deploy/caddy`, а не файл, и деплой его не удаляет. Смонтированный
+файл Docker держит по inode: деплой клал Caddyfile заново, а Caddy до пересоздания контейнера видел
+старый (02.10.2026 — «config is unchanged»). Ручной `caddy reload` — с `--config /etc/caddy/Caddyfile`
+(без него Caddy ищет Caddyfile в `/srv`); теперь этот путь всегда совпадает с файлом на диске.
+
 ## Защита от ошибок конфигурации
 
 С `APP_ENV=production` бэкенд **не стартует**, если: секреты подписи по умолчанию, cookie без
@@ -55,6 +72,7 @@ bash deploy/deploy.sh
 | Сайт не открывается | `ssh ginger 'cd /opt/ginger/app && docker compose -f docker-compose.prod.yml ps'` |
 | Ошибка бэкенда | `... logs --tail=100 backend` |
 | Нет сертификата | `... logs caddy` — DNS должен указывать на сервер, порт 80 открыт |
+| Правка Caddyfile не видна | `... exec caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile`, ошибки — в выводе |
 | Не приходят коды | `... logs backend | grep -i smtp`, статистика в Brevo |
 | Не приходят пуши | `... logs worker`, `VAPID_*` в `.env` |
 

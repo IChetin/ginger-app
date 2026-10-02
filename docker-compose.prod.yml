@@ -65,7 +65,9 @@ services:
       - "443:443"
       - "443:443/udp"
     volumes:
-      - ./deploy/Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      # Каталог, а не файл: смонтированный файл контейнер держит по inode, а деплой кладёт
+      # Caddyfile заново — Caddy видел бы старую версию. Каталог деплой не удаляет.
+      - ./deploy/caddy:/etc/caddy:ro
       - ./frontend-dist:/srv/frontend:ro
       - caddy_data:/data
       - caddy_config:/config
