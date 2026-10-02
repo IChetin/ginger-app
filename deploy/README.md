@@ -59,6 +59,16 @@ bash deploy/deploy.sh
 старый (02.10.2026 — «config is unchanged»). Ручной `caddy reload` — с `--config /etc/caddy/Caddyfile`
 (без него Caddy ищет Caddyfile в `/srv`); теперь этот путь всегда совпадает с файлом на диске.
 
+Из `.env` Caddy получает только `DOMAIN` и `RELAY_CIDRS` (`environment` у caddy в
+`docker-compose.prod.yml`), секретов бэкенда у него нет. `RELAY_CIDRS` — адреса релея через
+пробел; без неё в `.env` действует адрес из Caddyfile, а пустое `RELAY_CIDRS=` оставляет список
+пустым — игроки через релей теряют сайт. Новую переменную для Caddyfile дописать в `environment`.
+Это правка compose: reload её не видит, нужен новый контейнер — и только он:
+`git show HEAD:docker-compose.prod.yml | ssh ginger 'cat > /opt/ginger/app/docker-compose.prod.yml'`,
+затем `ssh ginger 'cd /opt/ginger/app && docker compose -f docker-compose.prod.yml up -d --no-deps caddy'`.
+Обычный деплой пересоздаст Caddy в одном `up -d` с backend, если тот пересобирается, а новый Caddy
+ждёт healthy backend — 02.10.2026 это ~14 с полного простоя.
+
 ## Защита от ошибок конфигурации
 
 С `APP_ENV=production` бэкенд **не стартует**, если: секреты подписи по умолчанию, cookie без

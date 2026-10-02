@@ -59,7 +59,13 @@ services:
 
   caddy:
     image: caddy:2.9-alpine
-    env_file: .env
+    # Не весь .env, а только то, что читает Caddyfile: Caddy смотрит в интернет, секреты бэкенда
+    # ему ни к чему, а правка прочих строк .env (MIN_CLIENT_BUILD, секреты) не пересоздаёт Caddy.
+    # Значения compose берёт из того же .env. Без «=» намеренно: нет RELAY_CIDRS в .env — нет и
+    # переменной, и Caddyfile берёт адрес релея по умолчанию; пустое значение обнулило бы список.
+    environment:
+      - DOMAIN
+      - RELAY_CIDRS
     ports:
       - "80:80"
       - "443:443"
