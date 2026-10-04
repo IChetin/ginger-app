@@ -20,8 +20,8 @@ param(
     [switch]$SkipPoker21,
     [string]$PhoneAddress,
     [switch]$KeepShots,
-    # Пройти заодно по клубам, чьи сетки приходят из листов союзов — сверить лист с лобби.
-    [switch]$WithSheets
+    # Потолок расходов на проход: три клуба укладываются в 0.30 с запасом.
+    [double]$BudgetUsd = 0.30
 )
 
 $ErrorActionPreference = 'Stop'
@@ -48,6 +48,7 @@ try {
     [void](Connect-Phone -Address $PhoneAddress)
     Resume-Phone
     Set-PhoneStayOn 'true'
+    Set-HaikuBudget -Usd $BudgetUsd
     $stayOn = $true
     $battery = Get-PhoneBattery
     Write-Host ("Battery: level {0}%, {1} mV, health {2}, {3} C" -f $battery.level, $battery.voltage_mv, $battery.health, $battery.temperature_c)
@@ -58,18 +59,14 @@ try {
     if ($noRead) { Write-Warning 'No Anthropic key: shots only, nothing is parsed or sent' }
 
     $stamp = Get-Date -Format 'yyyyMMdd-HHmm'
-    # Ходим по клубам, у которых сетку некому прислать: Ginger и Private.G забирают её из
-    # листов союзов сами (решение Ивана 01.10 — не тратить кадры на то, что и так приходит).
-    # Ключ -WithSheets добавляет и эти два, когда лист хочется сверить с живым лобби.
+    # Ходим только по клубам без своей таблицы. Ginger и Private.G забирают сетку из
+    # листов союзов сами — по ним не ходим вовсе (Иван, 04.10: будет проблема с таблицей —
+    # спросить, а не собирать телефоном).
     $passes = @(
         [pscustomobject]@{ Skip = $SkipPPPoker; Name = 'PPPoker · GoDaddy!'; Tag = 'godaddy-mtt'; Slug = 'godaddy'; App = 'pppoker'; Run = { Invoke-PpMttPassPhone -Club 'Go Daddy!' -OutDir $day -KeepShots:($KeepShots -or $noRead) -NoRead:$noRead } },
         [pscustomobject]@{ Skip = $SkipXPoker; Name = 'X-Poker · GINGER +'; Tag = 'xpoker-mtt'; Slug = 'ginger-plus'; App = 'xpoker'; Run = { Invoke-XpMttPassPhone -OutDir $day -KeepShots:($KeepShots -or $noRead) -NoRead:$noRead } },
         [pscustomobject]@{ Skip = $SkipPoker21; Name = 'Poker21 · Ginger21'; Tag = 'poker21-mtt'; Slug = 'ginger21'; App = 'poker21'; Run = { Invoke-P21MttPassPhone -OutDir $day -KeepShots:($KeepShots -or $noRead) -NoRead:$noRead } }
     )
-    if ($WithSheets) {
-        $passes += [pscustomobject]@{ Skip = $SkipPPPoker; Name = 'PPPoker · Ginger'; Tag = 'pppoker-mtt'; Slug = 'ginger'; App = 'pppoker'; Run = { Invoke-PpMttPassPhone -Club 'Ginger' -OutDir $day -KeepShots:($KeepShots -or $noRead) -NoRead:$noRead } }
-        $passes += [pscustomobject]@{ Skip = $SkipPPPoker; Name = 'PPPoker · Private.G'; Tag = 'private-g-mtt'; Slug = 'private-g'; App = 'pppoker'; Run = { Invoke-PpMttPassPhone -Club 'Private.G' -OutDir $day -KeepShots:($KeepShots -or $noRead) -NoRead:$noRead } }
-    }
 
     foreach ($pass in $passes) {
         if ($pass.Skip) { continue }
