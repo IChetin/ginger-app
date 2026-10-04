@@ -85,12 +85,12 @@ $script:P21Schema = @{
             items = @{
                 type = 'object'
                 additionalProperties = $false
-                required = @('name', 'buyin', 'game', 'bounty', 'guarantee', 'start_time', 'status', 'entries', 'level_minutes', 'fully_visible')
+                required = @('name', 'buyin', 'game', 'bounty_mark', 'guarantee', 'start_time', 'status', 'entries', 'level_minutes', 'fully_visible')
                 properties = @{
                     name = @{ type = 'string' }
                     buyin = New-NullableType 'number'
                     game = @{ type = 'string'; enum = @('nlh', 'plo', 'plo5', 'other') }
-                    bounty = @{ type = 'string'; enum = @('none', 'pko', 'ko', 'mystery') }
+                    bounty_mark = New-NullableType 'string'
                     guarantee = New-NullableType 'number'
                     start_time = New-NullableType 'string'
                     status = @{ type = 'string'; enum = @('future', 'running', 'unknown') }
@@ -104,18 +104,18 @@ $script:P21Schema = @{
 }
 
 $script:P21Prompt = @'
-This is a club lobby in the Poker21 app: a two-column grid of cards. Extract only the TOURNAMENT cards - the ones whose left badge says MTT. Skip cash tables (their badge shows the game name over a coloured chip and their card says "Blinds:"), skip OFC, DURAK and "21" tables. If the screen is not a club lobby at all - a shop, a profile, a table - answer is_lobby=false and cards=[].
+This is a club lobby in the Poker21 app: a vertical list of wide cards, one per row (an older layout packed the same cards into a two-column grid — read that the same way). Extract only the TOURNAMENT cards - the ones whose round chip on the left says MTT and whose body says "Buy-in:". Skip cash tables: their card says "Blinds:" instead of "Buy-in:", and their chip shows a game name or a number instead of MTT. Judge by "Buy-in:" versus "Blinds:" alone — a card is still a tournament when the small label under its MTT chip reads 21, OFC, DURAK, PLO4 or PLO6 instead of NLH, and when its chip is green rather than gold. If the screen is not a club lobby at all - a shop, a profile, a table - answer is_lobby=false and cards=[].
 
-For each tournament card, reading left to right, top to bottom:
-- name: the caption under the card, exactly as written (Latin or Cyrillic).
-- buyin: the number after "Buy-in:".
-- game: from the badge - NLH -> nlh, PLO4 -> plo, PLO5 -> plo5, PLO6 or "21" -> other.
-- bounty: the badge printed on THIS card: MKO -> mystery, PKO -> pko, KO -> ko. Never take a badge from a neighbouring card — cards are packed in a grid and their badges sit close. No badge on the card itself means "none".
-- guarantee: the number after "GTD:" ("GTD:36,465" -> 36465, "GTD:250,000" -> 250000).
+For each tournament card, top to bottom:
+- name: the tournament title printed inside the card on its bottom line, to the right of the clock and player counters ("DV Rebuy", "Tournament Rebuy", "2 билета", "Magic Chest"). Copy it exactly as written, Latin or Cyrillic. It is never the "7 MAX" seat count and never the "Buy-in" or "GTD" labels.
+- buyin: the large number under "Buy-in:".
+- game: from the label under the MTT chip - NLH -> nlh, PLO4 -> plo, PLO5 -> plo5, PLO6 or "21" -> other.
+- bounty_mark: the bounty mark at the right end of THIS card's bottom line, transcribed exactly as its letters appear. It comes in two styles and both count: red capitals standing on their own, or a small round red medallion with the letters written across it — the medallion is much smaller than the word and easy to miss, so look for it. Copy only the letters you actually see and never expand them: a mark reading "Ko" is "KO", not "MKO". Null when this card carries no mark at all. Never take a mark from the card above or below — the cards are stacked tightly.
+- guarantee: the large number under "GTD:" ("30,000" -> 30000, "250,000" -> 250000).
 - start_time: from "start: YYYY-MM-DD HH:MM" -> "YYYY-MM-DD HH:MM", else null.
 - status: "running" when the card says "Registration ended ..." , "future" when it shows a start time, "unknown" when it only shows "Registration closes in ...".
-- entries: the players counter at the bottom of the card ("2/41" -> 2), else null.
-- level_minutes: the level lengths as written ("lvl 22/12" -> "22/12", "10/8/8m" -> "10/8/8"), else null.
+- entries: the players counter next to the small person icon ("2/7" -> 2), else null.
+- level_minutes: the level lengths next to the clock icon ("10/10/8m" -> "10/10/8", "8 min" -> "8", "lvl 22/12" -> "22/12"), else null.
 - fully_visible: false if the card is cut off by the top or bottom edge.
 Use null for anything not visible. Do not guess.
 '@
@@ -144,6 +144,22 @@ function Read-XpListPageHaiku {
     }
 }
 
+function ConvertTo-PhoneBounty {
+    # Значок баунти разбираем сами: модель только переписывает буквы, какие видит. Классификацию
+    # ей не доверяем - круглую медальку «Ko» она охотно дочитывала до «MKO» (04.10).
+    param([string]$Mark)
+    $letters = ("$Mark" -replace '[^A-Za-zА-Яа-я]', '').ToUpperInvariant()
+    switch ($letters) {
+        'MKO' { 'mystery' }
+        'МКО' { 'mystery' }
+        'PKO' { 'pko' }
+        'РКО' { 'pko' }
+        'KO' { 'ko' }
+        'КО' { 'ko' }
+        default { 'none' }
+    }
+}
+
 function Read-P21PageHaiku {
     param([Parameter(Mandatory)][string]$Shot)
     $page = Invoke-HaikuVision -ImagePath $Shot -Prompt $script:P21Prompt -Schema $script:P21Schema -MaxTokens 4000
@@ -157,7 +173,7 @@ function Read-P21PageHaiku {
             name = $card.name
             buyin = $(if ($null -ne $card.buyin) { [decimal]$card.buyin } else { $null })
             game_type = $card.game
-            bounty_kind = $card.bounty
+            bounty_kind = ConvertTo-PhoneBounty $card.bounty_mark
             guarantee = $card.guarantee
             entries = $card.entries
             level_minutes = $card.level_minutes
@@ -326,9 +342,11 @@ function Invoke-XpMttPassPhone {
 }
 
 function Invoke-P21MttPassPhone {
-    # Poker21: плитка в два столбца, турниры идут перед кэш-столами. Шрифт мелкий, поэтому
+    # Poker21: список в один столбец, турниры идут перед кэш-столами. Шрифт мелкий, поэтому
     # кадр не ужимаем - иначе модель начинает путать цифры бай-ина и гарантии.
-    param([string]$OutDir, [int]$MaxPages = 8, [switch]$KeepShots, [switch]$NoRead, [string]$Club = "Ginger21")
+    # Страниц больше, чем у плитки: в один столбец на экран помещается вдвое меньше карточек
+    # (Иван сменил вид лобби 04.10 — читать стало точнее, но листать приходится дольше).
+    param([string]$OutDir, [int]$MaxPages = 14, [switch]$KeepShots, [switch]$NoRead, [string]$Club = "Ginger21")
     Invoke-PhoneListPass -Package $script:P21Package -Tag 'poker21-mtt' -OutDir $OutDir -MaxPages $MaxPages `
         -MaxSide 0 -ShotsPerPage 1 -KeepShots:$KeepShots -NoRead:$NoRead -Club $Club -Reader { param($shot) Read-P21PageHaiku -Shot $shot }
 }
