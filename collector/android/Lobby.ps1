@@ -104,7 +104,7 @@ $script:P21Schema = @{
 }
 
 $script:P21Prompt = @'
-This is a club lobby in the Poker21 app: a vertical list of wide cards, one per row (an older layout packed the same cards into a two-column grid — read that the same way). Extract only the TOURNAMENT cards - the ones whose round chip on the left says MTT and whose body says "Buy-in:". Skip cash tables: their card says "Blinds:" instead of "Buy-in:", and their chip shows a game name or a number instead of MTT. Judge by "Buy-in:" versus "Blinds:" alone — a card is still a tournament when the small label under its MTT chip reads 21, OFC, DURAK, PLO4 or PLO6 instead of NLH, and when its chip is green rather than gold. If the screen is not a club lobby at all - a shop, a profile, a table - answer is_lobby=false and cards=[].
+This is a club lobby in the Poker21 app: a vertical list of wide cards, one per row (an older layout packed the same cards into a two-column grid — read that the same way). Extract only the TOURNAMENT cards - the ones whose round chip on the left says exactly MTT. That chip is the only thing that makes a card a tournament. The smaller label printed under it (NLH, PLO4, PLO5, PLO6, 21) names the game, nothing more: a card with an MTT chip is still a tournament when that label reads 21 and when the chip is green instead of gold. Skip every card whose chip says anything else: a chip reading SNG is a sit-and-go and NOT a tournament even though its card also shows "Buy-in:", and a chip reading PLO5, NLH, 21 or a number on its own belongs to a cash table, whose card says "Blinds:". If the screen is not a club lobby at all - a shop, a profile, a table - answer is_lobby=false and cards=[].
 
 For each tournament card, top to bottom:
 - name: the tournament title printed inside the card on its bottom line, to the right of the clock and player counters ("DV Rebuy", "Tournament Rebuy", "2 билета", "Magic Chest"). Copy it exactly as written, Latin or Cyrillic. It is never the "7 MAX" seat count and never the "Buy-in" or "GTD" labels.
@@ -166,6 +166,10 @@ function Read-P21PageHaiku {
     if (-not $page.is_lobby) { return @() }
     foreach ($card in $page.cards) {
         if (-not $card.fully_visible) { continue }
+        # Турнира без названия не бывает: так отсеиваются обрезанные строки и чужие карточки,
+        # с которых модель успела снять только бай-ин. Пустые проходу дороги: по ним он решает,
+        # что турниров на экране нет вовсе, и листает список в начало.
+        if (-not "$($card.name)".Trim()) { continue }
         $startsAt = ConvertTo-PhoneStart $card.start_time
         $status = $card.status
         if ($startsAt) { $status = 'future' }
@@ -278,6 +282,7 @@ function Invoke-PhoneListPass {
     $previousKeys = @()
     $emptyPages = 0
     $beyondHorizon = $false
+    $scrolledToTop = $false
     for ($page = 1; $page -le $MaxPages; $page++) {
         $newOnPage = 0
         $pageKeys = New-Object System.Collections.Generic.List[string]
@@ -322,6 +327,17 @@ function Invoke-PhoneListPass {
             continue
         }
         Write-Host ("  page {0}: +{1} new, {2} total" -f $page, $newOnPage, $cards.Count)
+        # Турниры лежат в самом верху списка, под ними кэш-столы. Если не нашли ни одной
+        # карточки, список просто оставили прокрученным вниз (Иван, 04.10) — листаем наверх
+        # до упора и переснимаем ту же страницу. Только пока не видели ни одного турнира:
+        # дальше пустые страницы законны, это пошли кэш-столы, и наверх возвращаться нельзя.
+        if (-not $cards.Count -and -not $scrolledToTop) {
+            Write-Host '  турниров на экране нет - листаем в начало списка'
+            [void](Move-PhoneListToTop)
+            $scrolledToTop = $true
+            $page--
+            continue
+        }
         if ($beyondHorizon) {
             Write-Host ("  дальше {0:dd.MM HH:mm} не смотрим - список кончился на сегодняшних" -f $Horizon)
             break

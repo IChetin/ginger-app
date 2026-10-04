@@ -56,6 +56,72 @@ $script:ScreenSchema = @{
     }
 }
 
+function Get-PhoneListSignature {
+    <#
+        .SYNOPSIS
+        Грубый слепок левой колонки списка - по нему видно, двигается он ещё или уже упёрся.
+    #>
+    # Берём узкую полосу у левого края: там фишки игр, а таймеры и счётчики игроков в неё не
+    # попадают (по всему кадру сравнивать нельзя - обожглись 26.09). Полосу ужимаем до
+    # 16x64 серых точек: фишки в приложении переливаются, и побайтовое сравнение не совпало
+    # бы никогда, а на таком масштабе блеск уходит в шум, прокрутка - нет.
+    param([Parameter(Mandatory)][string]$Path)
+    Add-Type -AssemblyName System.Drawing
+    $bitmap = [System.Drawing.Bitmap]::FromFile($Path)
+    try {
+        $rect = New-Object System.Drawing.Rectangle(
+            0, [int]($bitmap.Height * 0.47), [int]($bitmap.Width * 0.2), [int]($bitmap.Height * 0.5))
+        $crop = $bitmap.Clone($rect, $bitmap.PixelFormat)
+        $small = New-Object System.Drawing.Bitmap 16, 64
+        try {
+            $canvas = [System.Drawing.Graphics]::FromImage($small)
+            $canvas.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+            $canvas.DrawImage($crop, 0, 0, 16, 64)
+            $canvas.Dispose()
+            $grey = New-Object 'System.Collections.Generic.List[int]'
+            for ($y = 0; $y -lt 64; $y++) {
+                for ($x = 0; $x -lt 16; $x++) {
+                    $pixel = $small.GetPixel($x, $y)
+                    $grey.Add([int](0.299 * $pixel.R + 0.587 * $pixel.G + 0.114 * $pixel.B))
+                }
+            }
+            , $grey.ToArray()
+        } finally { $crop.Dispose(); $small.Dispose() }
+    } finally { $bitmap.Dispose() }
+}
+
+function Test-PhoneListSettled {
+    # Список считаем остановившимся, когда картинка сдвинулась меньше, чем на уровень шума.
+    param($Previous, $Current, [int]$Tolerance = 6)
+    if ($null -eq $Previous -or $null -eq $Current) { return $false }
+    if ($Previous.Count -ne $Current.Count) { return $false }
+    $sum = 0
+    for ($i = 0; $i -lt $Current.Count; $i++) { $sum += [math]::Abs($Current[$i] - $Previous[$i]) }
+    ($sum / $Current.Count) -lt $Tolerance
+}
+
+function Move-PhoneListToTop {
+    <#
+        .SYNOPSIS
+        Пролистать список в самое начало: турниры лежат там, кэш-столы под ними.
+    #>
+    # Фиксированным числом свайпов не обойтись - в лобби Ginger21 под семьсот позиций, и из
+    # глубины списка тридцати флингов не хватало. Листаем, пока отпечаток меняется, и
+    # останавливаемся, когда список упёрся. Палец ведём от 0.55 к 0.95: выше 0.46 начинается
+    # шапка с фишкой клуба и вкладками, и жест туда до списка просто не доходит (04.10).
+    param([int]$MaxRounds = 15, [int]$FlingsPerRound = 6)
+    $shot = Join-Path $env:TEMP 'ginger-top.png'
+    $previous = $null
+    for ($round = 1; $round -le $MaxRounds; $round++) {
+        1..$FlingsPerRound | ForEach-Object { Invoke-PhoneSwipe -FromY 0.55 -ToY 0.95 -DurationMs 120 -SettleMs 220 }
+        [void](Get-PhoneShot -Path $shot)
+        $signature = Get-PhoneListSignature -Path $shot
+        if (Test-PhoneListSettled -Previous $previous -Current $signature) { return $true }
+        $previous = $signature
+    }
+    $false
+}
+
 function Get-PhoneScreenKind {
     <#
         .SYNOPSIS
@@ -137,14 +203,17 @@ function Enter-PhoneLobby {
                 $ok = $screen.list_kind -eq 'tournaments' -or
                     (-not $map.RequireMtt -and $screen.list_kind -eq 'mixed')
                 if ($ok) { return $true }
-                if (-not $map.TabY) { throw "$Package shows $($screen.list_kind), and it has no tabs to switch" }
-                # Лента вкладок живёт в шапке: если список прокручен вниз, её на экране нет,
-                # и свайпы по «ленте» двигали бы сам список (обожглись 30.09).
+                # Турниры лежат в самом верху списка, кэш-столы под ними. Видим кэш — значит
+                # список оставили прокрученным вниз: поднимаемся до упора и смотрим снова
+                # (Иван, 04.10). Заодно это возвращает на экран ленту вкладок — она живёт в
+                # шапке, и при прокрученном списке свайпы «по ленте» двигали бы сам список
+                # (обожглись 30.09).
                 if (-not $listAtTop) {
-                    1..3 | ForEach-Object { Invoke-PhoneSwipe -FromY 0.35 -ToY 0.85 -DurationMs 500 -SettleMs 500 }
+                    [void](Move-PhoneListToTop)
                     $listAtTop = $true
                     continue
                 }
+                if (-not $map.TabY) { throw "$Package shows $($screen.list_kind), and it has no tabs to switch" }
                 # Модель называет номер видимого слота с вкладкой MTT — выбор из известного
                 # ряда, а не координата. Нет в кадре: тянем ленту и смотрим снова.
                 if ($null -ne $screen.mtt_slot) {
