@@ -65,7 +65,7 @@ For each row:
 - name: the tournament title exactly as written (Latin or Cyrillic). Decorative icons (trophy, diamond, crown, clover, globe) are not letters.
 - buyin: the number under the "Buy-in" label at the right edge; null if not visible.
 - game: from the badge under the title: NLH -> nlh, PLO4 -> plo, PLO5 -> plo5, else other.
-- bounty: the coloured badge next to the game: MKO -> mystery, PKO -> pko, KO -> ko, else none.
+- bounty: the coloured badge that belongs to THIS row, next to its own game label: MKO -> mystery, PKO -> pko, KO -> ko. Rows are stacked tightly and a neighbour usually has a badge of its own — never carry it over. A row without its own badge is "none".
 - guarantee_rub: the guarantee in rubles when the NAME contains one ("800K" -> 800000, "220k" -> 220000, "15k" -> 15000, "5K" -> 5000). Null when the name has no such number. Never use the prize pool.
 - start_time: "MM/DD HH:MM" from a blue "Start: MM/DD HH:MM" label, else null.
 - status: "running" when the label says "Registration ended" or "Registration closes in N mins", "future" when a start time is shown, else "unknown".
@@ -110,7 +110,7 @@ For each tournament card, reading left to right, top to bottom:
 - name: the caption under the card, exactly as written (Latin or Cyrillic).
 - buyin: the number after "Buy-in:".
 - game: from the badge - NLH -> nlh, PLO4 -> plo, PLO5 -> plo5, PLO6 or "21" -> other.
-- bounty: MKO -> mystery, PKO -> pko, KO -> ko, else none.
+- bounty: the badge printed on THIS card: MKO -> mystery, PKO -> pko, KO -> ko. Never take a badge from a neighbouring card — cards are packed in a grid and their badges sit close. No badge on the card itself means "none".
 - guarantee: the number after "GTD:" ("GTD:36,465" -> 36465, "GTD:250,000" -> 250000).
 - start_time: from "start: YYYY-MM-DD HH:MM" -> "YYYY-MM-DD HH:MM", else null.
 - status: "running" when the card says "Registration ended ..." , "future" when it shows a start time, "unknown" when it only shows "Registration closes in ...".

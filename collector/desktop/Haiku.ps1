@@ -193,7 +193,7 @@ For each card:
 - name: title to the right of the pill, exactly as written. The small globe icon before the title is not a letter.
 - buyin: the number in "Buy-in: N".
 - game: from the text under the buy-in ("PPST NLH", "PPST PLO5", "PLO4" -> plo, "PLO6" -> other).
-- bounty: small red badge next to the pill: PKO -> pko, MKO -> mystery, KO -> ko, none otherwise.
+- bounty: the small badge inside THIS card, right of its game label: PKO -> pko, MKO -> mystery, KO -> ko. Cards sit close together and neighbours often carry a badge — never take one from the card above or below. No badge of its own means "none".
 - entries / max_entries: the person-icon counter "18/34" -> 18 and 34; a single number "16" -> entries 16, max_entries null.
 - level_minutes: the clock-icon value "8 min" -> 8.
 - The bottom line of a card is ONE of: "Start Time: MM/DD HH:MM" (-> start_time "MM/DD HH:MM", status "future"); a guarantee with a coin-stack icon before it, like "564+36" or "1,600" (-> guarantee = the sum, 600 or 1600; the icon is not a digit; status "unknown"); "Registration closes in N min" or "Registration ended" (-> status "running").
