@@ -259,7 +259,12 @@ function Invoke-PhoneListPass {
         [switch]$NoRead,
         # Клуб, в лобби которого должен оказаться проход: приложение уходит на главный экран
         # само, и без этого шага кадры снимаются с заставки (обожглись 29.09).
-        [string]$Club
+        [string]$Club,
+        # Дальше конца суток не ходим и не смотрим (решение Ивана 04.10). Списки отсортированы
+        # по старту, поэтому первая карточка с датой за горизонтом — это конец нашей работы:
+        # её саму выбрасываем и дальше не листаем. Иначе окно сверки растягивалось на неделю
+        # вперёд, а с ним и право сервера снимать «пропавшие» турниры.
+        [datetime]$Horizon = (Get-Date).Date.AddDays(1).AddSeconds(-1)
     )
     if (-not $OutDir) { $OutDir = Join-Path $env:LOCALAPPDATA ("GingerCollector\{0}" -f (Get-Date -Format 'yyyy-MM-dd')) }
     if (-not (Test-Path $OutDir)) { [void](New-Item -ItemType Directory -Path $OutDir -Force) }
@@ -272,6 +277,7 @@ function Invoke-PhoneListPass {
     $cards = [ordered]@{}
     $previousKeys = @()
     $emptyPages = 0
+    $beyondHorizon = $false
     for ($page = 1; $page -le $MaxPages; $page++) {
         $newOnPage = 0
         $pageKeys = New-Object System.Collections.Generic.List[string]
@@ -295,6 +301,10 @@ function Invoke-PhoneListPass {
             foreach ($item in $items) {
                 $key = Get-PhoneCardKey $item
                 if ($key -eq '|') { continue }
+                if ($item.starts_at) {
+                    $start = [DateTimeOffset]::Parse($item.starts_at, [Globalization.CultureInfo]::InvariantCulture)
+                    if ($start.LocalDateTime -gt $Horizon) { $beyondHorizon = $true; continue }
+                }
                 $pageKeys.Add($key)
                 if ($cards.Contains($key)) {
                     $cards[$key] = Merge-PhoneCard -Known $cards[$key] -Fresh $item
@@ -312,6 +322,10 @@ function Invoke-PhoneListPass {
             continue
         }
         Write-Host ("  page {0}: +{1} new, {2} total" -f $page, $newOnPage, $cards.Count)
+        if ($beyondHorizon) {
+            Write-Host ("  дальше {0:dd.MM HH:mm} не смотрим - список кончился на сегодняшних" -f $Horizon)
+            break
+        }
 
         $keys = @($pageKeys | Select-Object -Unique)
         $sameAsPrevious = $previousKeys.Count -and $keys.Count -eq $previousKeys.Count -and

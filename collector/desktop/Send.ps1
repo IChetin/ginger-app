@@ -41,10 +41,15 @@ function Send-CollectorSnapshot {
         }
     }
     # Уже начавшиеся к моменту отправки турниры не шлём: вне окна сверки приёмник записал бы их «новыми».
+    # Верхняя граница — конец суток, а не самый поздний старт из лобби (решение Ивана 04.10):
+    # Poker21 показывает турниры на неделю вперёд, и окно растягивалось до них. С ключом -Complete
+    # это дало бы приёмнику право снять всё, чего проход не увидел за неделю.
     $windowFrom = [DateTimeOffset](Get-Date).AddMinutes(10)
+    $windowTo = [DateTimeOffset](Get-Date).Date.AddDays(1).AddSeconds(-1)
     $future = @($items | Where-Object {
         $_.starts_at -and $_.name -and $_.status -ne 'running' -and
-        [DateTimeOffset]::Parse($_.starts_at, [Globalization.CultureInfo]::InvariantCulture) -ge $windowFrom
+        [DateTimeOffset]::Parse($_.starts_at, [Globalization.CultureInfo]::InvariantCulture) -ge $windowFrom -and
+        [DateTimeOffset]::Parse($_.starts_at, [Globalization.CultureInfo]::InvariantCulture) -le $windowTo
     })
     if (-not $future.Count) { throw 'No upcoming tournaments in the pass' }
 
@@ -60,8 +65,6 @@ function Send-CollectorSnapshot {
             ConvertTo-XpCollected $_
         }
     })
-    $starts = $future | ForEach-Object { [DateTimeOffset]::Parse($_.starts_at, [Globalization.CultureInfo]::InvariantCulture) }
-    $windowTo =($starts | Measure-Object -Maximum).Maximum
     $body = [ordered]@{
         club_slug = $ClubSlug
         window_from = $windowFrom.ToString('yyyy-MM-ddTHH:mm:sszzz')
