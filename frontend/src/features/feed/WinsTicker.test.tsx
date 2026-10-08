@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
 import * as feedApi from "@/features/feed/feedApi";
@@ -29,6 +29,10 @@ function win(id: string, nickname: string, wonOn: string, prize = "1000"): WinIt
   };
 }
 
+function Where() {
+  return <span data-testid="where">{useLocation().pathname}</span>;
+}
+
 function renderWith(node: React.ReactNode) {
   return render(
     <QueryClientProvider client={new QueryClient()}>
@@ -53,6 +57,62 @@ describe("WinsTicker", () => {
     expect(track).toHaveTextContent("1 место · Дижестив");
     // Кнопку паузы убрали (Иван, 08.10) — в рамке баннера не осталось ни одной кнопки.
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("замирает, пока палец держат на блоке, и едет дальше, когда отпустили", async () => {
+    vi.mocked(feedApi.fetchFeed).mockResolvedValue({
+      posts: [],
+      majors: [],
+      evening: [],
+      wins: ["a", "b", "c", "d"].map((id) => win(id, `Игрок ${id}`, "2026-09-27")),
+    });
+    renderWith(<WinsTicker />);
+    const track = await screen.findByTestId("wins-ticker-track");
+    const block = screen.getByRole("link", { name: "Выигрыши — открыть всю историю" });
+
+    expect(track.style.animationPlayState).toBe("running");
+    fireEvent.pointerDown(block);
+    expect(track.style.animationPlayState).toBe("paused");
+    fireEvent.pointerUp(block);
+    expect(track.style.animationPlayState).toBe("running");
+  });
+
+  it("долгое удержание не уводит на историю, а короткий тап уводит", async () => {
+    vi.mocked(feedApi.fetchFeed).mockResolvedValue({
+      posts: [],
+      majors: [],
+      evening: [],
+      wins: ["a", "b", "c", "d"].map((id) => win(id, `Игрок ${id}`, "2026-09-27")),
+    });
+    // Сам Link всегда гасит событие, чтобы увести роутером, поэтому смотрим не на событие,
+    // а на адрес: после удержания он не меняется, после короткого тапа — меняется.
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter initialEntries={["/"]}>
+          <WinsTicker />
+          <Routes>
+            <Route path="*" element={<Where />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    const block = await screen.findByRole("link", { name: "Выигрыши — открыть всю историю" });
+
+    const now = vi.spyOn(Date, "now");
+    now.mockReturnValue(1_000);
+    fireEvent.pointerDown(block);
+    now.mockReturnValue(1_400);
+    fireEvent.pointerUp(block);
+    fireEvent.click(block);
+    expect(screen.getByTestId("where")).toHaveTextContent("/");
+
+    now.mockReturnValue(2_000);
+    fireEvent.pointerDown(block);
+    now.mockReturnValue(2_080);
+    fireEvent.pointerUp(block);
+    fireEvent.click(block);
+    expect(screen.getByTestId("where")).toHaveTextContent("/wins");
+    now.mockRestore();
   });
 
   it("три выигрыша и меньше стоят на месте", async () => {
