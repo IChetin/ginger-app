@@ -54,16 +54,13 @@ export function WinRow({ win, showDate = true }: { win: WinItem; showDate?: bool
           {win.tournament_name}
         </span>
       </span>
-      {/* «Приз: ₽27 000», а не «+₽27 000» (Иван, 08.10): плюс читался как изменение баланса. */}
-      <span className="shrink-0 whitespace-nowrap">
-        <span className="text-ink-3 text-[11px]">Приз: </span>
-        <span className="font-display num text-value-hi text-[15px] font-bold">
-          {formatMoney(
-            Math.round(Number(win.prize_amount)),
-            win.currency_symbol,
-            win.currency_code,
-          )}
-        </span>
+      {/* Одна сумма, без «+» и без слова «Приз» (Иван, 08.10). Плюс читался как изменение
+          баланса, а подпись «Приз» двадцать раз подряд и шумит, и обещает больше, чем есть:
+          это призовые грязными, вход в них не вычтен, так что фактический плюс бывает меньше
+          или нулевой. Голая цифра ничего не утверждает — и колонка снова узкая, названия
+          турниров перестали обрезаться. */}
+      <span className="font-display num text-value-hi shrink-0 text-[15px] font-bold">
+        {formatMoney(Math.round(Number(win.prize_amount)), win.currency_symbol, win.currency_code)}
       </span>
     </div>
   );
