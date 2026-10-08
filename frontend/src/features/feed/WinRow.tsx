@@ -54,8 +54,16 @@ export function WinRow({ win, showDate = true }: { win: WinItem; showDate?: bool
           {win.tournament_name}
         </span>
       </span>
-      <span className="font-display num text-value-hi shrink-0 text-[15px] font-bold">
-        +{formatMoney(Math.round(Number(win.prize_amount)), win.currency_symbol, win.currency_code)}
+      {/* «Приз: ₽27 000», а не «+₽27 000» (Иван, 08.10): плюс читался как изменение баланса. */}
+      <span className="shrink-0 whitespace-nowrap">
+        <span className="text-ink-3 text-[11px]">Приз: </span>
+        <span className="font-display num text-value-hi text-[15px] font-bold">
+          {formatMoney(
+            Math.round(Number(win.prize_amount)),
+            win.currency_symbol,
+            win.currency_code,
+          )}
+        </span>
       </span>
     </div>
   );

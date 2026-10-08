@@ -29,14 +29,16 @@ function useReducedMotion(): boolean {
 /**
  * Баннер «Выигрыши» сверху главной (Иван, 28.09): окно в три строки, список медленно и без
  * остановок ползёт вверх, как титры. Выигрыши — за две недели, от 10 000 ₽ (так отдаёт лента).
- * Тап — вся история на /wins. Движение можно остановить (WCAG 2.2.2); при «уменьшить движение»
- * окно стоит и листается пальцем.
+ * Тап — вся история на /wins.
+ *
+ * Кнопки паузы нет (Иван, 08.10): она занимала место в рамке и сбивала вид. Остановить титры
+ * можно только системной настройкой «уменьшить движение» — тогда окно стоит и листается
+ * пальцем. Это слабее, чем требует WCAG 2.2.2: там нужен способ, доступный всем.
  */
 export function WinsTicker({ fallback = null }: { fallback?: ReactNode }) {
   const feed = useFeed();
   const wins = feed.data?.wins ?? [];
   const reduced = useReducedMotion();
-  const [paused, setPaused] = useState(false);
 
   if (wins.length === 0) return <>{fallback}</>;
 
@@ -65,12 +67,7 @@ export function WinsTicker({ fallback = null }: { fallback?: ReactNode }) {
           data-testid="wins-ticker-track"
           className={cn(scrolling && "animate-[deco-credits_60s_linear_infinite]")}
           style={
-            scrolling
-              ? {
-                  animationDuration: `${wins.length * SECONDS_PER_ROW}s`,
-                  animationPlayState: paused ? "paused" : "running",
-                }
-              : undefined
+            scrolling ? { animationDuration: `${wins.length * SECONDS_PER_ROW}s` } : undefined
           }
         >
           {rows.map((win, position) => (
@@ -84,19 +81,6 @@ export function WinsTicker({ fallback = null }: { fallback?: ReactNode }) {
           ))}
         </div>
       </Link>
-      {scrolling ? (
-        <button
-          type="button"
-          aria-pressed={paused}
-          aria-label={paused ? "Запустить выигрыши" : "Остановить выигрыши"}
-          onClick={() => setPaused((value) => !value)}
-          className="bg-bg text-gold absolute right-3 bottom-0 z-10 flex h-6 w-7 translate-y-1/2 items-center justify-center"
-        >
-          <svg className="h-3 w-3 fill-current" viewBox="0 0 24 24" aria-hidden="true">
-            {paused ? <path d="M7 4l13 8-13 8z" /> : <path d="M6 4h4v16H6zM14 4h4v16h-4z" />}
-          </svg>
-        </button>
-      ) : null}
     </section>
   );
 }

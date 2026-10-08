@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
@@ -38,7 +38,7 @@ function renderWith(node: React.ReactNode) {
 }
 
 describe("WinsTicker", () => {
-  it("ползёт вверх, как титры, и останавливается кнопкой", async () => {
+  it("ползёт вверх, как титры, и кнопки паузы не показывает", async () => {
     vi.mocked(feedApi.fetchFeed).mockResolvedValue({
       posts: [],
       majors: [],
@@ -50,15 +50,9 @@ describe("WinsTicker", () => {
     // Список повторён дважды — титры идут по кругу без рывка.
     expect(within(track).getAllByTestId("win-row")).toHaveLength(8);
     expect(track.style.animationDuration).toBe("12s");
-    expect(track.style.animationPlayState).toBe("running");
     expect(track).toHaveTextContent("1 место · Дижестив");
-
-    fireEvent.click(screen.getByRole("button", { name: "Остановить выигрыши" }));
-    expect(track.style.animationPlayState).toBe("paused");
-    expect(screen.getByRole("button", { name: "Запустить выигрыши" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    // Кнопку паузы убрали (Иван, 08.10) — в рамке баннера не осталось ни одной кнопки.
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
   it("три выигрыша и меньше стоят на месте", async () => {
