@@ -11,6 +11,7 @@ import {
   fetchAdminChipRequests,
   fetchAdminPlayers,
   fetchInvites,
+  fetchAccountDuplicates,
   fetchPendingAccounts,
   fetchRequisiteTemplates,
   rejectChipRequest,
@@ -134,6 +135,7 @@ export function useReviewAccount() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: keys.pending });
       await queryClient.invalidateQueries({ queryKey: keys.players });
+      await queryClient.invalidateQueries({ queryKey: ["admin", "account-duplicates"] });
     },
   });
 }
@@ -180,4 +182,12 @@ export function useModeratePlayer() {
     onSuccess: refresh,
   });
   return { approve, reject };
+}
+
+export function useAccountDuplicates() {
+  return useQuery({
+    queryKey: ["admin", "account-duplicates"],
+    queryFn: fetchAccountDuplicates,
+    refetchInterval: 60_000,
+  });
 }

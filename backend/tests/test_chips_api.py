@@ -1,3 +1,4 @@
+import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
@@ -589,3 +590,86 @@ async def test_player_cancels_request_until_payment_sent(
     assert NotificationType.CHIP_REQUEST_CANCELLED in await _push_types(
         db_session, settings.seed_editor_email
     )
+
+
+async def test_game_id_is_unique_per_app_across_players(
+    client: AsyncClient, seeded_db: None, db_session: AsyncSession
+) -> None:
+    """Иван, 08.10: ID в приложении — один на всю базу. Чужой ID в соседнем клубе того же
+    приложения не привязать: на нём держится то, что начисляется по рейку (лисята)."""
+    owner = await _make_player(db_session, "owner", PlayerKind.CREDIT, clubs=())
+    thief = await _make_player(db_session, "thief", PlayerKind.CREDIT, clubs=())
+    rows = await db_session.execute(
+        select(Club.slug, Club.id).where(Club.slug.in_(["ginger", "private-g", "ginger21"]))
+    )
+    clubs = {slug: str(club_id) for slug, club_id in rows.all()}
+    game_id = "1595654"
+
+    def bind(club: str, nickname: str, app_account_id: str = game_id) -> dict[str, object]:
+        return {"club_ids": [clubs[club]], "nickname": nickname, "app_account_id": app_account_id}
+
+    async with (
+        _logged_in(owner["email"]) as owner_client,
+        _logged_in(thief["email"]) as thief_client,
+        _logged_in(get_settings().seed_editor_email) as editor,
+    ):
+        created = await owner_client.post("/api/v1/me/app-accounts", json=bind("ginger", "Хозяин"))
+        assert created.status_code == 201, created.text
+
+        # Тот же ID PPPoker в другом клубе PPPoker — нельзя, даже с пробелами внутри.
+        for path, body in (
+            ("/api/v1/me/app-accounts", bind("private-g", "Вор", "1595 654")),
+            (
+                "/api/v1/me/accounts",
+                {"club_id": clubs["private-g"], "nickname": "Вор", "app_account_id": game_id},
+            ),
+        ):
+            taken = await thief_client.post(path, json=body)
+            assert taken.status_code == 409, taken.text
+            assert taken.json()["error"]["code"] == "account_taken"
+            assert "напишите менеджеру" in taken.json()["error"]["message"]
+
+        # В другом приложении (Poker21) такой же номер — чужой аккаунт, это разрешено.
+        other_app = await thief_client.post("/api/v1/me/app-accounts", json=bind("ginger21", "Вор"))
+        assert other_app.status_code == 201, other_app.text
+
+        # Правкой своего аккаунта чужой ID тоже не взять.
+        mine = await thief_client.post(
+            "/api/v1/me/app-accounts", json=bind("private-g", "Вор", "777")
+        )
+        edited = await thief_client.patch(
+            f"/api/v1/me/accounts/{mine.json()[0]['id']}", json={"app_account_id": game_id}
+        )
+        assert edited.status_code == 409
+        assert edited.json()["error"]["code"] == "account_taken"
+
+        # Дубли, которые были до проверки, менеджер видит списком.
+        db_session.add(
+            PlayerAccount(
+                player_id=uuid.UUID(thief["player_id"]),
+                club_id=uuid.UUID(clubs["private-g"]),
+                nickname="Старый",
+                app_account_id=game_id,
+                status=PlayerAccountStatus.CONFIRMED,
+            )
+        )
+        await db_session.flush()
+        duplicates = (await editor.get("/api/v1/admin/player-accounts/duplicates")).json()
+        assert [(group["app"], group["app_account_id"]) for group in duplicates] == [
+            ("pppoker", game_id)
+        ]
+        owners = {item["player_nickname"]: item for item in duplicates[0]["owners"]}
+        assert {name: item["clubs"] for name, item in owners.items()} == {
+            "owner": ["Ginger"],
+            "thief": ["Private.G"],
+        }
+
+        # Менеджер отклоняет чужую привязку — дубль уходит, владелец берёт ID в том же клубе.
+        for account_id in owners["thief"]["account_ids"]:
+            rejected = await editor.post(f"/api/v1/admin/player-accounts/{account_id}/reject")
+            assert rejected.status_code == 200, rejected.text
+        assert (await editor.get("/api/v1/admin/player-accounts/duplicates")).json() == []
+        reclaimed = await owner_client.post(
+            "/api/v1/me/app-accounts", json=bind("private-g", "Хозяин")
+        )
+        assert reclaimed.status_code == 201, reclaimed.text

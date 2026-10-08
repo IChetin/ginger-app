@@ -4,6 +4,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import type { PlayerKind } from "@/api/types/chips";
 import type { PendingAccount, PlayerAdmin } from "@/features/admin/chips/api";
 import {
+  useAccountDuplicates,
   useAdminPlayers,
   usePendingAccounts,
   useReviewAccount,
@@ -173,6 +174,8 @@ export function AdminPlayersPage() {
   const { data: me } = useMe();
   const [params, setParams] = useSearchParams();
   const pending = usePendingAccounts();
+  const duplicates = useAccountDuplicates();
+  const reviewDuplicate = useReviewAccount();
   const players = useAdminPlayers();
   const [search, setSearch] = useState("");
 
@@ -242,6 +245,60 @@ export function AdminPlayersPage() {
           </>
         ) : null}
       </div>
+
+      {duplicates.data && duplicates.data.length > 0 ? (
+        <section className="mt-2" data-testid="account-duplicates">
+          <h2 className="text-danger text-[11px] font-bold tracking-[0.08em] uppercase">
+            Один ID у нескольких игроков · {duplicates.data.length}
+          </h2>
+          <p className="text-ink-3 mt-0.5 text-[12px]">
+            Чей ID — тому и остаётся; у чужого нажмите «Отклонить привязку».
+          </p>
+          <div className="mt-1 flex flex-col gap-1.5">
+            {duplicates.data.map((group) => (
+              <div
+                key={`${group.app}-${group.app_account_id}`}
+                className="border-danger/40 bg-surface rounded-md border px-2.5 py-2"
+              >
+                <p className="text-ink flex items-center gap-1.5 text-[13px] font-bold">
+                  {APP_ICONS[group.app] ? (
+                    <img src={APP_ICONS[group.app]} alt="" className="h-4 w-4" />
+                  ) : null}
+                  ID {group.app_account_id}
+                </p>
+                <ul className="mt-1 flex flex-col gap-0.5">
+                  {group.owners.map((owner) => (
+                    <li key={owner.player_id} className="text-[12.5px]">
+                      <Link
+                        to={`/admin/players/${owner.player_id}`}
+                        className="text-gold font-bold"
+                      >
+                        {owner.player_nickname}
+                      </Link>
+                      <span className="text-ink-3">
+                        {" "}
+                        · {owner.account_nickname} · {owner.clubs.join(", ")} · {owner.email}
+                      </span>{" "}
+                      <button
+                        type="button"
+                        disabled={reviewDuplicate.isPending}
+                        onClick={() => {
+                          for (const id of owner.account_ids) {
+                            reviewDuplicate.mutate({ id, approve: false });
+                          }
+                        }}
+                        className="text-danger text-[12px] font-bold disabled:opacity-45"
+                      >
+                        Отклонить привязку
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {pending.data && pending.data.length > 0 ? (
         <section className="mt-2">

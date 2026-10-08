@@ -15,7 +15,7 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import Select, select
+from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -47,6 +47,8 @@ from app.schemas.chips import (
     ChipRequestEventRead,
     ChipRequestItemRead,
     ChipRequestRead,
+    DuplicateAccountGroup,
+    DuplicateAccountOwner,
     MoneyTotal,
     PendingAccountRead,
     PlayerAccountCreate,
@@ -350,6 +352,46 @@ async def update_player_me(session: AsyncSession, user: User, body: PlayerMeUpda
     return await player_me(session, user)
 
 
+ACCOUNT_TAKEN = "account_taken"
+
+
+def normalize_app_account_id(value: str) -> str:
+    """«1 595 654» и «1595654» — один ID: пробелы внутри игроки ставят по-разному."""
+    return "".join(value.split())
+
+
+async def _ensure_app_id_free(
+    session: AsyncSession,
+    *,
+    player_id: uuid.UUID,
+    club: Club,
+    app_account_id: str,
+) -> None:
+    """Игровой ID уникален на всю базу в пределах приложения (Иван, 08.10).
+
+    ID в PPPoker один на все клубы приложения, а ник и ID с 24.09 игрок вводит сам. Без
+    этой проверки можно вписать ID чужого игрока в соседнем клубе и получать то, что
+    начисляется по его рейку (раздача дня, лисята). Конфликт решает менеджер.
+    """
+    owner = await session.scalar(
+        select(PlayerAccount.player_id)
+        .join(Club, Club.id == PlayerAccount.club_id)
+        .where(
+            Club.app == club.app,
+            PlayerAccount.app_account_id == app_account_id,
+            PlayerAccount.status != PlayerAccountStatus.REJECTED,
+            PlayerAccount.player_id != player_id,
+        )
+        .limit(1)
+    )
+    if owner is not None:
+        raise ConflictError(
+            f"ID {app_account_id} уже привязан к другому игроку. Если это ваш ID — "
+            "напишите менеджеру, разберёмся.",
+            code=ACCOUNT_TAKEN,
+        )
+
+
 async def add_account(
     session: AsyncSession, user: User, body: PlayerAccountCreate
 ) -> PlayerAccountRead:
@@ -358,10 +400,15 @@ async def add_account(
     club = await session.get(Club, body.club_id)
     if club is None or not club.is_visible:
         raise NotFoundError("Клуб не найден")
-    app_account_id = body.app_account_id.strip()
+    app_account_id = normalize_app_account_id(body.app_account_id)
+    await _ensure_app_id_free(
+        session, player_id=player.id, club=club, app_account_id=app_account_id
+    )
     taken = await session.scalar(
         select(PlayerAccount.id).where(
-            PlayerAccount.club_id == club.id, PlayerAccount.app_account_id == app_account_id
+            PlayerAccount.club_id == club.id,
+            PlayerAccount.app_account_id == app_account_id,
+            PlayerAccount.status != PlayerAccountStatus.REJECTED,
         )
     )
     if taken is not None:
@@ -393,7 +440,7 @@ async def add_app_account(
     player = await get_player(session, user)
     _require_active(player)
     nickname = body.nickname.strip()
-    app_account_id = body.app_account_id.strip()
+    app_account_id = normalize_app_account_id(body.app_account_id)
     clubs = [await session.get(Club, club_id) for club_id in dict.fromkeys(body.club_ids)]
     if any(club is None or not club.is_visible for club in clubs):
         raise NotFoundError("Клуб не найден")
@@ -401,11 +448,16 @@ async def add_app_account(
     created: list[uuid.UUID] = []
     for club in clubs:
         assert club is not None
+        await _ensure_app_id_free(
+            session, player_id=player.id, club=club, app_account_id=app_account_id
+        )
         if (club.id, app_account_id) in mine:
             continue
         taken = await session.scalar(
             select(PlayerAccount.id).where(
-                PlayerAccount.club_id == club.id, PlayerAccount.app_account_id == app_account_id
+                PlayerAccount.club_id == club.id,
+                PlayerAccount.app_account_id == app_account_id,
+                PlayerAccount.status != PlayerAccountStatus.REJECTED,
             )
         )
         if taken is not None:
@@ -444,12 +496,16 @@ async def update_account(
         if item.club.app == account.club.app and item.app_account_id == account.app_account_id
     ]
     if body.app_account_id is not None:
-        app_account_id = body.app_account_id.strip()
+        app_account_id = normalize_app_account_id(body.app_account_id)
+        await _ensure_app_id_free(
+            session, player_id=player.id, club=account.club, app_account_id=app_account_id
+        )
         for item in siblings:
             taken = await session.scalar(
                 select(PlayerAccount.id).where(
                     PlayerAccount.club_id == item.club_id,
                     PlayerAccount.app_account_id == app_account_id,
+                    PlayerAccount.status != PlayerAccountStatus.REJECTED,
                     PlayerAccount.id.not_in([sibling.id for sibling in siblings]),
                 )
             )
@@ -1057,6 +1113,59 @@ async def list_pending_accounts(session: AsyncSession) -> list[PendingAccountRea
         .order_by(PlayerAccount.created_at)
     )
     return [_pending_read(account) for account in accounts]
+
+
+async def account_duplicates(session: AsyncSession) -> list[DuplicateAccountGroup]:
+    """Игровые ID, привязанные к нескольким игрокам в одном приложении (Иван, 08.10).
+
+    Новые такие привязки не пропускает проверка при вводе; здесь — то, что накопилось
+    до неё. Решает менеджер: чей ID — тому и остаётся, лишнюю привязку он отклоняет.
+    """
+    clashes = (
+        await session.execute(
+            select(Club.app, PlayerAccount.app_account_id)
+            .join(Club, Club.id == PlayerAccount.club_id)
+            .where(PlayerAccount.status != PlayerAccountStatus.REJECTED)
+            .group_by(Club.app, PlayerAccount.app_account_id)
+            .having(func.count(func.distinct(PlayerAccount.player_id)) > 1)
+            .order_by(Club.app, PlayerAccount.app_account_id)
+        )
+    ).all()
+    groups: list[DuplicateAccountGroup] = []
+    for app, app_account_id in clashes:
+        accounts = (
+            await session.scalars(
+                _accounts_query()
+                .join(Club, Club.id == PlayerAccount.club_id)
+                .where(
+                    Club.app == app,
+                    PlayerAccount.app_account_id == app_account_id,
+                    PlayerAccount.status != PlayerAccountStatus.REJECTED,
+                )
+                .order_by(PlayerAccount.created_at)
+            )
+        ).all()
+        owners: dict[uuid.UUID, DuplicateAccountOwner] = {}
+        for account in accounts:
+            owner = owners.get(account.player_id)
+            if owner is None:
+                owner = DuplicateAccountOwner(
+                    player_id=account.player_id,
+                    player_nickname=account.player.user.nickname,
+                    email=account.player.user.email,
+                    account_nickname=account.nickname,
+                    clubs=[],
+                    account_ids=[],
+                )
+                owners[account.player_id] = owner
+            owner.clubs.append(account.club.name)
+            owner.account_ids.append(account.id)
+        groups.append(
+            DuplicateAccountGroup(
+                app=app, app_account_id=app_account_id, owners=list(owners.values())
+            )
+        )
+    return groups
 
 
 async def review_account(

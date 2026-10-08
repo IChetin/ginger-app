@@ -22,6 +22,28 @@ function errorText(error: unknown): string {
   return error instanceof ApiError ? error.message : "Не удалось сохранить";
 }
 
+const TAKEN_MESSAGE =
+  "Мой игровой ID уже привязан к другому игроку в Ginger. Это мой аккаунт — помогите разобраться.";
+
+/**
+ * Ошибка привязки. ID занят другим игроком (Иван, 08.10) — сразу ведём к менеджеру с
+ * готовым текстом обращения: разбирается он, а не игрок.
+ */
+function AccountErrorText({ error }: { error: unknown }) {
+  if (error instanceof ApiError && error.code === "account_taken") {
+    const params = new URLSearchParams({ topic: "data_change", text: TAKEN_MESSAGE });
+    return (
+      <>
+        {error.message}{" "}
+        <Link to={`/dialogs/new?${params.toString()}`} className="text-gold font-bold underline">
+          Написать менеджеру
+        </Link>
+      </>
+    );
+  }
+  return <>{errorText(error)}</>;
+}
+
 function AppIcon({ app, className }: { app: PokerApp; className: string }) {
   const src = APP_ICONS[app];
   return src ? (
@@ -95,7 +117,7 @@ function AppAccountCard({ account, clubs }: { account: AppAccount; clubs: Public
       </div>
       {add.isError ? (
         <p role="alert" className="text-danger mt-1.5 text-[12.5px] font-semibold">
-          {errorText(add.error)}
+          <AccountErrorText error={add.error} />
         </p>
       ) : null}
 
@@ -128,7 +150,7 @@ function AppAccountCard({ account, clubs }: { account: AppAccount; clubs: Public
           <p className="text-ink-3 text-[11.5px]">Поменяется во всех клубах этого приложения.</p>
           {update.isError ? (
             <p role="alert" className="text-danger text-[12.5px] font-semibold">
-              {errorText(update.error)}
+              <AccountErrorText error={update.error} />
             </p>
           ) : null}
           <div className="flex gap-1.5">
@@ -287,7 +309,7 @@ function AddAppAccount({ clubs, onDone }: { clubs: PublicClub[]; onDone?: () => 
 
       {add.isError ? (
         <p role="alert" className="text-danger text-[13px] font-semibold">
-          {errorText(add.error)}
+          <AccountErrorText error={add.error} />
         </p>
       ) : null}
       {add.isSuccess ? (

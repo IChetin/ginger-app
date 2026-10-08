@@ -11,6 +11,7 @@ from app.core.deps import get_current_user, require_admin
 from app.models.auth import User
 from app.schemas.chips import (
     ChipRequestAdminRead,
+    DuplicateAccountGroup,
     InviteCreate,
     InviteCreated,
     InviteRead,
@@ -140,6 +141,12 @@ async def reject_player(
 async def rotate_player_referral(player_id: UUID, _: Admin, db: Db) -> ReferralRead:
     """Перевыпуск личной ссылки игрока — когда она приостановлена или утекла."""
     return await chips_service.rotate_player_referral(db, player_id)
+
+
+@router.get("/player-accounts/duplicates", response_model=list[DuplicateAccountGroup])
+async def list_account_duplicates(db: Db) -> list[DuplicateAccountGroup]:
+    """Один игровой ID у нескольких игроков — список для решения менеджера (Иван, 08.10)."""
+    return await chips_service.account_duplicates(db)
 
 
 @router.get("/player-accounts/pending", response_model=list[PendingAccountRead])

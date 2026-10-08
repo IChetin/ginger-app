@@ -6,6 +6,7 @@ import type {
   PlayerKind,
   PlayerStatus,
 } from "@/api/types/chips";
+import type { PokerApp } from "@/api/types/tournaments";
 
 const ADMIN = "/api/v1/admin";
 
@@ -164,3 +165,20 @@ export const createInvite = (body: {
 
 export const revokeInvite = (id: string): Promise<Invite> =>
   apiPost(`${ADMIN}/invites/${id}/revoke`);
+
+/** Один игровой ID у нескольких игроков (Иван, 08.10) — решает менеджер. */
+export interface DuplicateAccountGroup {
+  app: PokerApp;
+  app_account_id: string;
+  owners: {
+    player_id: string;
+    player_nickname: string;
+    email: string;
+    account_nickname: string;
+    clubs: string[];
+    account_ids: string[];
+  }[];
+}
+
+export const fetchAccountDuplicates = (): Promise<DuplicateAccountGroup[]> =>
+  apiGet(`${ADMIN}/player-accounts/duplicates`);

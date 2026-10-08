@@ -10,7 +10,6 @@ from sqlalchemy import (
     Index,
     String,
     Text,
-    UniqueConstraint,
     func,
     text,
 )
@@ -140,8 +139,14 @@ class PlayerAccount(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     __tablename__ = "player_accounts"
     __table_args__ = (
-        UniqueConstraint(
-            "club_id", "app_account_id", name="uq_player_accounts_club_id_app_account_id"
+        # Отклонённая привязка ID не держит: чужой аккаунт менеджер отклоняет, и настоящий
+        # владелец привязывает свой ID в том же клубе (Иван, 08.10).
+        Index(
+            "uq_player_accounts_club_id_app_account_id",
+            "club_id",
+            "app_account_id",
+            unique=True,
+            postgresql_where=text("status <> 'rejected'"),
         ),
         Index("ix_player_accounts_player_id", "player_id"),
         Index("ix_player_accounts_status", "status"),

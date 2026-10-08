@@ -231,6 +231,23 @@ class PendingAccountRead(PlayerAccountRead):
     player_nickname: str
 
 
+class DuplicateAccountOwner(BaseModel):
+    player_id: UUID
+    player_nickname: str
+    email: str
+    account_nickname: str
+    clubs: list[str]
+    account_ids: list[UUID]
+
+
+class DuplicateAccountGroup(BaseModel):
+    """Один игровой ID у нескольких игроков — решает менеджер (Иван, 08.10)."""
+
+    app: PokerApp
+    app_account_id: str
+    owners: list[DuplicateAccountOwner]
+
+
 class InviteCreate(BaseModel):
     player_kind: PlayerKind = PlayerKind.CREDIT
     note: str | None = Field(default=None, max_length=200)
